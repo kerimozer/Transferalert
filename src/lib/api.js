@@ -53,4 +53,8 @@ export const api = {
   // Platform admin (sadece is_platform_admin=true kullanıcılar erişebilir)
   listAdminOrgs:  () => req('GET', '/api/admin/organizations'),
   getAdminStats:  () => req('GET', '/api/admin/stats'),
+  updatePlan:     (key, data) => req('PUT', `/api/admin/plans/${key}`, data),
+
+  // Planlar (herhangi bir giriş yapmış kullanıcı görebilir)
+  listPlans: () => req('GET', '/api/plans'),
 };

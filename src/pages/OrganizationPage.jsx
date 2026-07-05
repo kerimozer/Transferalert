@@ -2,10 +2,6 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle } from 'lucide-react';
 
-const PLAN_LIMITS = { individual: 1, starter: 3, professional: 10, enterprise: 30 };
-const PLAN_LABELS = { individual: 'Bireysel', starter: 'Starter', professional: 'Professional', enterprise: 'Enterprise' };
-const PLAN_PRICES = { individual: 150, professional: 499, enterprise: 1499 };
-const PLAN_ORDER = { individual: 0, starter: 1, professional: 2, enterprise: 3 };
 const ROLE_LABELS = { admin: 'Admin', dispatcher: 'Operasyon', driver: 'Sürücü' };
 const ROLE_ICONS  = { admin: Shield, dispatcher: Headset, driver: Truck };
 
@@ -13,8 +9,11 @@ export default function OrganizationPage() {
   const [org,      setOrg]      = useState(null);
   const [role,     setRole]     = useState(null);
   const [members,  setMembers]  = useState([]);
+  const [plans,    setPlans]    = useState([]);
   const [loading,  setLoading]  = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const plansByKey = Object.fromEntries(plans.map(p => [p.key, p]));
 
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', plan: 'starter' });
@@ -43,7 +42,10 @@ export default function OrganizationPage() {
       setLoading(false);
     }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.listPlans().then(setPlans).catch(() => setPlans([]));
+  }, []);
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -155,8 +157,8 @@ export default function OrganizationPage() {
                     onChange={e => setCreateForm(f => ({ ...f, plan: e.target.value }))}
                     className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {Object.entries(PLAN_LIMITS).map(([key, limit]) => (
-                      <option key={key} value={key}>{PLAN_LABELS[key]} ({limit} kişi)</option>
+                    {plans.map(p => (
+                      <option key={p.key} value={p.key}>{p.label} ({p.driver_limit} kişi)</option>
                     ))}
                   </select>
                 </div>
@@ -174,7 +176,7 @@ export default function OrganizationPage() {
     );
   }
 
-  const limit = org.driver_limit ?? PLAN_LIMITS[org.plan] ?? 3;
+  const limit = org.driver_limit ?? plansByKey[org.plan]?.driver_limit ?? 3;
   const activeCount = members.filter(m => m.status === 'active').length;
   const canManage = role === 'admin' || role === 'dispatcher';
 
@@ -202,7 +204,7 @@ export default function OrganizationPage() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-900">{org.name}</p>
-          <p className="text-sm text-gray-400">{PLAN_LABELS[org.plan] || org.plan} plan · {activeCount}/{limit} kişi</p>
+          <p className="text-sm text-gray-400">{plansByKey[org.plan]?.label || org.plan} plan · {activeCount}/{limit} kişi</p>
         </div>
         <span className="text-xs font-medium px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full shrink-0">
           {ROLE_LABELS[role] || role}
@@ -210,7 +212,7 @@ export default function OrganizationPage() {
       </div>
 
       {/* Plan Yükseltme */}
-      {role === 'admin' && PLAN_ORDER[org.plan] < PLAN_ORDER.enterprise && (
+      {role === 'admin' && plans.some(p => p.is_purchasable && p.sort_order > (plansByKey[org.plan]?.sort_order ?? -1)) && (
         <div className="mb-6">
           {error && (
             <div className="mb-3 flex gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -218,20 +220,20 @@ export default function OrganizationPage() {
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {Object.entries(PLAN_PRICES)
-              .filter(([plan]) => PLAN_ORDER[plan] > PLAN_ORDER[org.plan])
-              .map(([plan, price]) => (
-                <div key={plan} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+            {plans
+              .filter(p => p.is_purchasable && p.sort_order > (plansByKey[org.plan]?.sort_order ?? -1))
+              .map(p => (
+                <div key={p.key} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-gray-900">{PLAN_LABELS[plan]}</p>
-                    <p className="text-sm text-gray-400">{PLAN_LIMITS[plan]} kişi · {price}₺/ay</p>
+                    <p className="font-medium text-gray-900">{p.label}</p>
+                    <p className="text-sm text-gray-400">{p.driver_limit} kişi · {p.price}₺/ay</p>
                   </div>
                   <button
-                    onClick={() => handleUpgrade(plan)}
-                    disabled={upgrading === plan}
+                    onClick={() => handleUpgrade(p.key)}
+                    disabled={upgrading === p.key}
                     className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-3.5 py-2 text-sm font-medium transition-colors shrink-0"
                   >
-                    <ArrowUpCircle size={15} /> {upgrading === plan ? 'Yönlendiriliyor...' : 'Yükselt'}
+                    <ArrowUpCircle size={15} /> {upgrading === p.key ? 'Yönlendiriliyor...' : 'Yükselt'}
                   </button>
                 </div>
               ))}
