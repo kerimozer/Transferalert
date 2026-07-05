@@ -23,7 +23,12 @@ function PrivateRoute({ children }) {
 }
 
 function PlatformAdminRoute({ children }) {
-  const { isPlatformAdmin } = useAuth();
+  const { isPlatformAdmin, platformAdminLoading } = useAuth();
+  if (platformAdminLoading) return (
+    <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
+      Yükleniyor...
+    </div>
+  );
   return isPlatformAdmin ? children : <Navigate to="/app" replace />;
 }
 
