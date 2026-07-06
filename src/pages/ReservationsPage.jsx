@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
+import PaymentLinkModal from '../components/PaymentLinkModal';
 
 // Bugünün datetime-local değeri (min için)
 function nowLocal() {
@@ -35,6 +36,7 @@ export default function ReservationsPage() {
   const [flightInfo, setFlightInfo]     = useState(null);
   const [searching, setSearching]       = useState(false);
   const [signFor, setSignFor]           = useState(null);
+  const [payFor, setPayFor]             = useState(null);
 
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
@@ -204,13 +206,14 @@ export default function ReservationsPage() {
       )}
 
       {signFor && <WelcomeSignModal reservation={signFor} onClose={() => setSignFor(null)} />}
+      {payFor && <PaymentLinkModal reservation={payFor} onClose={() => setPayFor(null)} onPaid={load} />}
 
       {/* Gruplu Liste */}
       {Object.entries(grouped).map(([label, flights]) => (
         <div key={label} className="mb-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{label} ({flights.length})</h2>
           <div className="space-y-3">
-            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} />)}
+            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} onShowPay={setPayFor} />)}
           </div>
         </div>
       ))}
@@ -261,7 +264,7 @@ function groupByDate(reservations) {
   return groups;
 }
 
-function FlightCard({ r, onDelete, onComplete, onShowSign, isPast }) {
+function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) {
   const [copied, setCopied] = useState(false);
   const ls   = r.latest_status;
   const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
@@ -323,6 +326,17 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, isPast }) {
           <button onClick={() => onShowSign(r)} title="Karşılama tabelası" className="p-1.5 text-gray-300 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition-colors">
             <UserCheck size={14} />
           </button>
+        )}
+        {!isPast && onShowPay && (
+          r.payment_status === 'paid' ? (
+            <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-50 text-green-700 flex items-center gap-1">
+              <CheckCircle size={11} /> Ödendi
+            </span>
+          ) : (
+            <button onClick={() => onShowPay(r)} title="Ödeme linki oluştur" className="p-1.5 text-gray-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors">
+              <CreditCard size={14} />
+            </button>
+          )
         )}
         {!isPast && onComplete && (
           <button onClick={() => onComplete(r.id)} title="Tamamlandı" className="p-1.5 text-gray-300 hover:text-green-500 hover:bg-green-50 rounded-lg transition-colors">

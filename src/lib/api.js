@@ -49,6 +49,7 @@ export const api = {
 
   // Ödeme (iyzico)
   createCheckout: (plan) => req('POST', '/api/billing/checkout', { plan }),
+  createReservationCheckout: (reservation_id, amount) => req('POST', '/api/billing/checkout-reservation', { reservation_id, amount }),
 
   // Platform admin (sadece is_platform_admin=true kullanıcılar erişebilir)
   listAdminOrgs:  () => req('GET', '/api/admin/organizations'),
