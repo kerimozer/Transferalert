@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2 } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck } from 'lucide-react';
+import WelcomeSignModal from '../components/WelcomeSignModal';
 
 // Bugünün datetime-local değeri (min için)
 function nowLocal() {
@@ -33,6 +34,7 @@ export default function ReservationsPage() {
   const [error, setError]               = useState('');
   const [flightInfo, setFlightInfo]     = useState(null);
   const [searching, setSearching]       = useState(false);
+  const [signFor, setSignFor]           = useState(null);
 
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
@@ -201,12 +203,14 @@ export default function ReservationsPage() {
         </div>
       )}
 
+      {signFor && <WelcomeSignModal reservation={signFor} onClose={() => setSignFor(null)} />}
+
       {/* Gruplu Liste */}
       {Object.entries(grouped).map(([label, flights]) => (
         <div key={label} className="mb-6">
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{label} ({flights.length})</h2>
           <div className="space-y-3">
-            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} />)}
+            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} />)}
           </div>
         </div>
       ))}
@@ -257,7 +261,7 @@ function groupByDate(reservations) {
   return groups;
 }
 
-function FlightCard({ r, onDelete, onComplete, isPast }) {
+function FlightCard({ r, onDelete, onComplete, onShowSign, isPast }) {
   const [copied, setCopied] = useState(false);
   const ls   = r.latest_status;
   const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
@@ -313,6 +317,11 @@ function FlightCard({ r, onDelete, onComplete, isPast }) {
         {r.share_token && (
           <button onClick={handleShare} title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
             {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+          </button>
+        )}
+        {!isPast && onShowSign && (
+          <button onClick={() => onShowSign(r)} title="Karşılama tabelası" className="p-1.5 text-gray-300 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition-colors">
+            <UserCheck size={14} />
           </button>
         )}
         {!isPast && onComplete && (
