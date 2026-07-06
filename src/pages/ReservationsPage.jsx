@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2 } from 'lucide-react';
 
 // Bugünün datetime-local değeri (min için)
 function nowLocal() {
@@ -258,10 +258,18 @@ function groupByDate(reservations) {
 }
 
 function FlightCard({ r, onDelete, onComplete, isPast }) {
+  const [copied, setCopied] = useState(false);
   const ls   = r.latest_status;
   const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
   const rs   = RES_STATUS[r.status] || RES_STATUS.active;
   const Icon = fs?.icon || Clock;
+
+  function handleShare() {
+    const link = `${window.location.origin}/track/${r.share_token}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   const pickup = new Date(r.scheduled_pickup);
   const now    = new Date();
@@ -302,6 +310,11 @@ function FlightCard({ r, onDelete, onComplete, isPast }) {
       {/* Sağ */}
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-xs font-medium px-2 py-1 rounded-full ${rs.cls}`}>{rs.label}</span>
+        {r.share_token && (
+          <button onClick={handleShare} title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-500 bg-green-50' : 'text-gray-300 hover:text-blue-500 hover:bg-blue-50'}`}>
+            {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+          </button>
+        )}
         {!isPast && onComplete && (
           <button onClick={() => onComplete(r.id)} title="Tamamlandı" className="p-1.5 text-gray-300 hover:text-green-500 hover:bg-green-50 rounded-lg transition-colors">
             <CheckSquare size={14} />
