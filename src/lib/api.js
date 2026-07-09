@@ -26,6 +26,7 @@ export const api = {
   // Rezervasyonlar
   listReservations:  ()         => req('GET',    '/api/reservations'),
   createReservation: (data)     => req('POST',   '/api/reservations', data),
+  bulkCreateReservations: (rows) => req('POST',  '/api/reservations/bulk', { rows }),
   updateReservation: (id, data) => req('PATCH',  `/api/reservations/${id}`, data),
   deleteReservation: (id)       => req('DELETE', `/api/reservations/${id}`),
 

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
+
+// xlsx ağır — sadece modal açılınca yüklensin (ana bundle'ı şişirmesin)
+const BulkImportModal = lazy(() => import('../components/BulkImportModal'));
 
 // Bugünün datetime-local değeri (min için)
 function nowLocal() {
@@ -37,6 +40,7 @@ export default function ReservationsPage() {
   const [searching, setSearching]       = useState(false);
   const [signFor, setSignFor]           = useState(null);
   const [payFor, setPayFor]             = useState(null);
+  const [showBulk, setShowBulk]         = useState(false);
 
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
@@ -109,10 +113,17 @@ export default function ReservationsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Uçuş Takibi</h1>
           <p className="text-sm text-gray-400 mt-0.5">Gelecekteki uçuşları önceden ekleyin. Yaklaştığında otomatik bildirim alırsınız.</p>
         </div>
-        <button onClick={openForm} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-colors shadow-sm">
-          <Plus size={16} /> Uçuş Ekle
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowBulk(true)} className="flex items-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors">
+            <FileSpreadsheet size={16} className="text-emerald-600" /> Toplu İçe Aktar
+          </button>
+          <button onClick={openForm} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-colors shadow-sm">
+            <Plus size={16} /> Uçuş Ekle
+          </button>
+        </div>
       </div>
+
+      {showBulk && <Suspense fallback={null}><BulkImportModal onClose={() => setShowBulk(false)} onDone={load} /></Suspense>}
 
       {/* Form Modal */}
       {showForm && (
