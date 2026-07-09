@@ -12,6 +12,7 @@ import DriversPage       from './pages/DriversPage';
 import OrganizationPage  from './pages/OrganizationPage';
 import PlatformAdminPage from './pages/PlatformAdminPage';
 import TrackPage         from './pages/TrackPage';
+import RequestPage       from './pages/RequestPage';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/track/:token" element={<TrackPage />} />
+          <Route path="/request/:token" element={<RequestPage />} />
           <Route path="/app/login" element={<LoginPage />} />
           <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index                element={<DashboardPage />} />

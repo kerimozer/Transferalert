@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
 
@@ -41,6 +41,7 @@ export default function ReservationsPage() {
   const [signFor, setSignFor]           = useState(null);
   const [payFor, setPayFor]             = useState(null);
   const [showBulk, setShowBulk]         = useState(false);
+  const [linkCopied, setLinkCopied]     = useState(false);
 
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
@@ -99,9 +100,35 @@ export default function ReservationsPage() {
     load();
   }
 
+  async function handleApprove(id) {
+    await api.updateReservation(id, { status: 'active' });
+    load();
+  }
+
+  async function handleReject(id) {
+    if (!confirm('Bu talebi reddetmek istiyor musunuz?')) return;
+    await api.updateReservation(id, { status: 'cancelled' });
+    load();
+  }
+
+  async function copyBookingLink() {
+    try {
+      const { token } = await api.getBookingLink();
+      const url = `${window.location.origin}/request/${token}`;
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch (err) {
+      alert('Link alınamadı: ' + err.message);
+    }
+  }
+
+  const pending = reservations.filter(r => r.status === 'pending')
+    .sort((a, b) => new Date(a.scheduled_pickup) - new Date(b.scheduled_pickup));
+
   // Tarihe göre sırala, aktif + bekleyenleri önce
   const upcoming  = reservations.filter(r => r.status === 'active').sort((a, b) => new Date(a.scheduled_pickup) - new Date(b.scheduled_pickup));
-  const past      = reservations.filter(r => r.status !== 'active').sort((a, b) => new Date(b.scheduled_pickup) - new Date(a.scheduled_pickup));
+  const past      = reservations.filter(r => r.status !== 'active' && r.status !== 'pending').sort((a, b) => new Date(b.scheduled_pickup) - new Date(a.scheduled_pickup));
 
   // Tarih gruplarına ayır (bugün, yarın, bu hafta, gelecek)
   const grouped = groupByDate(upcoming);
@@ -114,6 +141,9 @@ export default function ReservationsPage() {
           <p className="text-sm text-gray-400 mt-0.5">Gelecekteki uçuşları önceden ekleyin. Yaklaştığında otomatik bildirim alırsınız.</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={copyBookingLink} className="flex items-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors" title="Otel/acentalarınızın transfer talep edebileceği link">
+            {linkCopied ? <><Check size={16} className="text-green-600" /> Kopyalandı</> : <><Link2 size={16} className="text-blue-600" /> Talep Linki</>}
+          </button>
           <button onClick={() => setShowBulk(true)} className="flex items-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors">
             <FileSpreadsheet size={16} className="text-emerald-600" /> Toplu İçe Aktar
           </button>
@@ -124,6 +154,39 @@ export default function ReservationsPage() {
       </div>
 
       {showBulk && <Suspense fallback={null}><BulkImportModal onClose={() => setShowBulk(false)} onDone={load} /></Suspense>}
+
+      {/* Onay Bekleyen Talepler (otel/acenta) */}
+      {pending.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <h2 className="text-sm font-semibold text-amber-800 flex items-center gap-2 mb-3">
+            <Inbox size={16} /> Onay Bekleyen Talepler ({pending.length})
+          </h2>
+          <div className="space-y-2">
+            {pending.map(r => (
+              <div key={r.id} className="bg-white border border-amber-100 rounded-xl p-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono font-bold text-gray-900">{r.flight_number}</span>
+                    {r.source && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">{r.source}</span>}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                    <span className="flex items-center gap-1"><Calendar size={11} />{new Date(r.scheduled_pickup).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                    {r.passenger_name && r.passenger_name !== r.flight_number && <span>{r.passenger_name}</span>}
+                    {r.passenger_phone && <span>{r.passenger_phone}</span>}
+                  </div>
+                  {r.notes && <p className="text-xs text-gray-500 mt-0.5">{r.notes}</p>}
+                </div>
+                <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white rounded-lg px-3 py-1.5 text-xs font-medium">
+                  <Check size={14} /> Onayla
+                </button>
+                <button onClick={() => handleReject(r.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Reddet">
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Form Modal */}
       {showForm && (
