@@ -66,7 +66,7 @@ export default function DashboardPage() {
       <div className="bg-white border border-gray-200 rounded-xl">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-gray-800 text-sm">Son Rezervasyonlar</h2>
-          <Link to="/reservations" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+          <Link to="/app/reservations" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
             Tümü <ArrowRight size={12} />
           </Link>
         </div>
@@ -74,7 +74,7 @@ export default function DashboardPage() {
         {recent.length === 0 ? (
           <div className="py-12 text-center text-sm text-gray-400">
             Henüz rezervasyon yok.{' '}
-            <Link to="/reservations" className="text-blue-600 hover:underline">Ekle →</Link>
+            <Link to="/app/reservations" className="text-blue-600 hover:underline">Ekle →</Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">

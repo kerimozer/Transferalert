@@ -251,8 +251,8 @@ export default function OrganizationPage() {
         <div className="space-y-3">
           {members.map(m => {
             const RoleIcon = ROLE_ICONS[m.role] || Truck;
-            const displayName = m.profiles?.full_name || m.invited_email || 'Davet bekleniyor';
-            const displayPhone = m.profiles?.phone;
+            const displayName = m.profiles?.full_name || m.invited_phone || m.invited_email || 'Davet bekleniyor';
+            const displayPhone = m.profiles?.phone || m.invited_phone;
             return (
               <div key={m.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4">
                 <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
