@@ -34,65 +34,65 @@ export default function ProfilePage() {
     else { setSaved(true); setTimeout(() => setSaved(false), 2500); }
   }
 
-  if (loading) return <div className="p-8 text-sm text-gray-400">Yükleniyor...</div>;
+  if (loading) return <div className="p-8 text-sm text-ink-muted">Yükleniyor...</div>;
 
   return (
     <div className="p-8 max-w-lg">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">Profil</h1>
-      <p className="text-sm text-gray-400 mb-8">Bildirimler buradaki telefon numarasına gider.</p>
+      <h1 className="text-2xl font-bold text-ink mb-1">Profil</h1>
+      <p className="text-sm text-ink-muted mb-8">Bildirimler buradaki telefon numarasına gider.</p>
 
       {error && (
-        <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+        <div className="mb-4 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">{error}</div>
       )}
 
       <form onSubmit={handleSave} className="space-y-5">
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
+        <div className="bg-white border border-surface-border rounded-card p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+            <label className="block text-sm font-semibold text-ink-soft mb-1">Ad Soyad</label>
             <input
               value={form.full_name}
               onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="Mehmet Demir"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Firma Adı</label>
+            <label className="block text-sm font-semibold text-ink-soft mb-1">Firma Adı</label>
             <input
               value={form.company_name}
               onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))}
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="Transfer Co."
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
-              <Phone size={13} className="text-blue-500" />
+            <label className="block text-sm font-semibold text-ink-soft mb-1 flex items-center gap-1.5">
+              <Phone size={13} className="text-brand-600" />
               Telefon Numarası
-              <span className="text-blue-500 font-normal text-xs">(SMS/WhatsApp bildirimleri buraya gelir)</span>
+              <span className="text-brand-600 font-normal text-xs">(SMS/WhatsApp bildirimleri buraya gelir)</span>
             </label>
             <input
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               type="tel"
-              className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="0532 000 00 00"
               required
             />
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-2xl p-6">
-          <p className="text-sm font-medium text-gray-700 mb-1">E-posta</p>
-          <p className="text-sm text-gray-400">{user.email}</p>
+        <div className="bg-white border border-surface-border rounded-card p-6">
+          <p className="text-sm font-semibold text-ink-soft mb-1">E-posta</p>
+          <p className="text-sm text-ink-muted">{user.email}</p>
         </div>
 
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-5 py-2.5 text-sm font-semibold transition-colors"
         >
           {saved
             ? <><CheckCircle size={15} /> Kaydedildi</>

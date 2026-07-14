@@ -29,9 +29,9 @@ export default function Layout() {
 
   const navContent = (
     <>
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-        <Plane size={20} className="text-blue-600" />
-        <span className="font-bold text-gray-900 tracking-tight">TransferAlert</span>
+      <div className="px-5 py-4 border-b border-surface-border flex items-center gap-2">
+        <Plane size={20} className="text-brand-600" />
+        <span className="font-bold text-ink tracking-tight">TransferAlert</span>
       </div>
       <nav className="flex-1 p-3 space-y-0.5">
         {nav.map(({ to, label, icon: Icon, end }) => (
@@ -41,8 +41,8 @@ export default function Layout() {
             end={end}
             onClick={() => setOpen(false)}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100'
+              `flex items-center gap-3 px-3 py-2 rounded-control text-sm transition-colors ${
+                isActive ? 'bg-brand-50 text-brand-700 font-semibold' : 'text-ink-soft hover:bg-surface-alt'
               }`
             }
           >
@@ -51,10 +51,10 @@ export default function Layout() {
           </NavLink>
         ))}
       </nav>
-      <div className="p-3 border-t border-gray-100">
+      <div className="p-3 border-t border-surface-border">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-gray-500 hover:bg-gray-100 transition-colors"
+          className="flex items-center gap-3 px-3 py-2 w-full rounded-control text-sm text-ink-muted hover:bg-surface-alt transition-colors"
         >
           <LogOut size={16} /> Çıkış Yap
         </button>
@@ -63,20 +63,20 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex h-screen bg-gray-50 font-sans">
+    <div className="flex h-screen bg-surface-bg font-sans">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 bg-white border-r border-gray-200 flex-col">
+      <aside className="hidden md:flex w-60 shrink-0 bg-white border-r border-surface-border flex-col">
         {navContent}
       </aside>
 
       {/* Mobile: hamburger + drawer */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 flex items-center gap-3 px-4 py-3">
-        <button onClick={() => setOpen(true)} className="text-gray-600">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-surface-border flex items-center gap-3 px-4 py-3">
+        <button onClick={() => setOpen(true)} className="text-ink-soft">
           <Menu size={22} />
         </button>
         <div className="flex items-center gap-2">
-          <Plane size={18} className="text-blue-600" />
-          <span className="font-bold text-gray-900 text-sm">TransferAlert</span>
+          <Plane size={18} className="text-brand-600" />
+          <span className="font-bold text-ink text-sm">TransferAlert</span>
         </div>
       </div>
 
@@ -84,7 +84,7 @@ export default function Layout() {
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <aside className="relative w-64 bg-white flex flex-col h-full shadow-xl">
-            <button onClick={() => setOpen(false)} className="absolute top-4 right-4 text-gray-400">
+            <button onClick={() => setOpen(false)} className="absolute top-4 right-4 text-ink-muted">
               <X size={20} />
             </button>
             {navContent}

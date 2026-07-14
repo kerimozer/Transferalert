@@ -108,54 +108,54 @@ export default function OrganizationPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-sm text-gray-400">Yükleniyor...</div>;
+  if (loading) return <div className="p-8 text-sm text-ink-muted">Yükleniyor...</div>;
 
   if (notFound) {
     return (
       <div className="p-8 max-w-3xl">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Firma Yönetimi</h1>
-        <p className="text-sm text-gray-400 mb-8">Ekip üyelerinizi ve rollerini yönetmek için önce bir firma oluşturun.</p>
+        <h1 className="text-2xl font-bold text-ink mb-1">Firma Yönetimi</h1>
+        <p className="text-sm text-ink-muted mb-8">Ekip üyelerinizi ve rollerini yönetmek için önce bir firma oluşturun.</p>
 
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-gray-200 rounded-2xl">
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
-            <Building2 size={28} className="text-blue-400" />
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-surface-border rounded-card">
+          <div className="w-16 h-16 bg-brand-50 rounded-card flex items-center justify-center mb-4">
+            <Building2 size={28} className="text-brand-600" />
           </div>
-          <p className="text-gray-700 font-medium mb-1">Henüz firmanız yok</p>
-          <p className="text-sm text-gray-400 mb-5">Firma oluşturup ekip üyelerinizi davet edin.</p>
-          <button onClick={() => { setShowCreate(true); setError(''); }} className="bg-blue-600 text-white rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-blue-700">
+          <p className="text-ink-soft font-semibold mb-1">Henüz firmanız yok</p>
+          <p className="text-sm text-ink-muted mb-5">Firma oluşturup ekip üyelerinizi davet edin.</p>
+          <button onClick={() => { setShowCreate(true); setError(''); }} className="bg-brand-600 text-white rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700">
             Firma Oluştur
           </button>
         </div>
 
         {showCreate && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h2 className="font-semibold text-gray-900">Firma Oluştur</h2>
-                <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+            <div className="bg-white rounded-card shadow-xl w-full max-w-sm">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
+                <h2 className="font-semibold text-ink">Firma Oluştur</h2>
+                <button onClick={() => setShowCreate(false)} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
               </div>
               {error && (
-                <div className="mx-6 mt-4 flex gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                <div className="mx-6 mt-4 flex gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
                   <AlertCircle size={15} className="mt-0.5 shrink-0" />{error}
                 </div>
               )}
               <form onSubmit={handleCreate} className="px-6 py-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Firma Adı <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Firma Adı <span className="text-bad-600">*</span></label>
                   <input
                     value={createForm.name}
                     onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Örnek Transfer Ltd."
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Plan</label>
                   <select
                     value={createForm.plan}
                     onChange={e => setCreateForm(f => ({ ...f, plan: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   >
                     {plans.map(p => (
                       <option key={p.key} value={p.key}>{p.label} ({p.driver_limit} kişi)</option>
@@ -163,8 +163,8 @@ export default function OrganizationPage() {
                   </select>
                 </div>
                 <div className="flex gap-3">
-                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">İptal</button>
-                  <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 text-sm font-medium">
+                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
+                  <button type="submit" disabled={saving} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
                     {saving ? 'Oluşturuluyor...' : 'Oluştur'}
                   </button>
                 </div>
@@ -184,13 +184,13 @@ export default function OrganizationPage() {
     <div className="p-8 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Firma Yönetimi</h1>
-          <p className="text-sm text-gray-400 mt-0.5">Ekip üyelerinizi ve rollerini yönetin.</p>
+          <h1 className="text-2xl font-bold text-ink">Firma Yönetimi</h1>
+          <p className="text-sm text-ink-muted mt-0.5">Ekip üyelerinizi ve rollerini yönetin.</p>
         </div>
         {canManage && (
           <button
             onClick={() => { setShowInvite(true); setError(''); }}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-sm font-medium transition-colors"
+            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-card px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             <UserPlus size={16} /> Üye Davet Et
           </button>
@@ -198,15 +198,15 @@ export default function OrganizationPage() {
       </div>
 
       {/* Firma Bilgi Kartı */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 flex items-center gap-4">
-        <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-          <Building2 size={22} className="text-blue-600" />
+      <div className="bg-white border border-surface-border rounded-card p-5 mb-6 flex items-center gap-4">
+        <div className="w-12 h-12 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
+          <Building2 size={22} className="text-brand-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900">{org.name}</p>
-          <p className="text-sm text-gray-400">{plansByKey[org.plan]?.label || org.plan} plan · {activeCount}/{limit} kişi</p>
+          <p className="font-semibold text-ink">{org.name}</p>
+          <p className="text-sm text-ink-muted">{plansByKey[org.plan]?.label || org.plan} plan · {activeCount}/{limit} kişi</p>
         </div>
-        <span className="text-xs font-medium px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full shrink-0">
+        <span className="text-xs font-semibold px-3 py-1.5 bg-brand-50 text-brand-700 rounded-full shrink-0">
           {ROLE_LABELS[role] || role}
         </span>
       </div>
@@ -215,7 +215,7 @@ export default function OrganizationPage() {
       {role === 'admin' && plans.some(p => p.is_purchasable && p.sort_order > (plansByKey[org.plan]?.sort_order ?? -1)) && (
         <div className="mb-6">
           {error && (
-            <div className="mb-3 flex gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            <div className="mb-3 flex gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
               <AlertCircle size={15} className="mt-0.5 shrink-0" />{error}
             </div>
           )}
@@ -223,15 +223,15 @@ export default function OrganizationPage() {
             {plans
               .filter(p => p.is_purchasable && p.sort_order > (plansByKey[org.plan]?.sort_order ?? -1))
               .map(p => (
-                <div key={p.key} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+                <div key={p.key} className="bg-white border border-surface-border rounded-card p-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-gray-900">{p.label}</p>
-                    <p className="text-sm text-gray-400">{p.driver_limit} kişi · {p.price}₺/ay</p>
+                    <p className="font-semibold text-ink">{p.label}</p>
+                    <p className="text-sm text-ink-muted">{p.driver_limit} kişi · {p.price}₺/ay</p>
                   </div>
                   <button
                     onClick={() => handleUpgrade(p.key)}
                     disabled={upgrading === p.key}
-                    className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-3.5 py-2 text-sm font-medium transition-colors shrink-0"
+                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-3.5 py-2 text-sm font-semibold transition-colors shrink-0"
                   >
                     <ArrowUpCircle size={15} /> {upgrading === p.key ? 'Yönlendiriliyor...' : 'Yükselt'}
                   </button>
@@ -243,9 +243,9 @@ export default function OrganizationPage() {
 
       {/* Üye Listesi */}
       {members.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-gray-200 rounded-2xl">
-          <p className="text-gray-700 font-medium mb-1">Henüz ekip üyesi yok</p>
-          <p className="text-sm text-gray-400">Ekip üyelerinizi davet edin.</p>
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-surface-border rounded-card">
+          <p className="text-ink-soft font-semibold mb-1">Henüz ekip üyesi yok</p>
+          <p className="text-sm text-ink-muted">Ekip üyelerinizi davet edin.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -254,22 +254,22 @@ export default function OrganizationPage() {
             const displayName = m.profiles?.full_name || m.invited_phone || m.invited_email || 'Davet bekleniyor';
             const displayPhone = m.profiles?.phone || m.invited_phone;
             return (
-              <div key={m.id} className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                  <RoleIcon size={18} className="text-blue-600" />
+              <div key={m.id} className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-4">
+                <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
+                  <RoleIcon size={18} className="text-brand-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{displayName}</p>
-                  <div className="flex items-center gap-3 text-sm text-gray-400">
+                  <p className="font-semibold text-ink">{displayName}</p>
+                  <div className="flex items-center gap-3 text-sm text-ink-muted">
                     {displayPhone && <span className="flex items-center gap-1"><Phone size={11} /> {displayPhone}</span>}
-                    {m.status === 'pending' && <span className="flex items-center gap-1 text-amber-500"><Clock size={11} /> Beklemede</span>}
+                    {m.status === 'pending' && <span className="flex items-center gap-1 text-warn-600"><Clock size={11} /> Beklemede</span>}
                   </div>
                 </div>
-                <span className="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full shrink-0">
+                <span className="text-xs font-semibold px-2.5 py-1 bg-surface-alt text-ink-soft rounded-full shrink-0">
                   {ROLE_LABELS[m.role] || m.role}
                 </span>
                 {role === 'admin' && (
-                  <button onClick={() => handleRemove(m.id)} className="p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors shrink-0">
+                  <button onClick={() => handleRemove(m.id)} className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control transition-colors shrink-0">
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -282,71 +282,71 @@ export default function OrganizationPage() {
       {/* Davet Modalı */}
       {showInvite && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-semibold text-gray-900">Üye Davet Et</h2>
-              <button onClick={closeInviteModal} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          <div className="bg-white rounded-card shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
+              <h2 className="font-semibold text-ink">Üye Davet Et</h2>
+              <button onClick={closeInviteModal} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
             </div>
 
             {error && (
-              <div className="mx-6 mt-4 flex gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="mx-6 mt-4 flex gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
                 <AlertCircle size={15} className="mt-0.5 shrink-0" />{error}
               </div>
             )}
 
             {inviteLink ? (
               <div className="px-6 py-5 space-y-4">
-                <div className="flex gap-2 px-3 py-2.5 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+                <div className="flex gap-2 px-3 py-2.5 bg-ok-50 border border-ok-600/20 rounded-control text-sm text-ok-800">
                   <CheckCircle size={15} className="mt-0.5 shrink-0" /> Davet oluşturuldu. Linki paylaşın:
                 </div>
                 <div className="flex items-center gap-2">
-                  <input readOnly value={inviteLink} className="flex-1 border border-gray-300 rounded-xl px-3 py-2.5 text-xs text-gray-500 bg-gray-50" />
-                  <button onClick={copyLink} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors">
-                    {copied ? <><CheckCircle size={12} className="text-green-500" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
+                  <input readOnly value={inviteLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+                  <button onClick={copyLink} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-surface-alt hover:bg-surface-alt text-ink-soft rounded-control transition-colors">
+                    {copied ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                   </button>
                 </div>
-                <button onClick={closeInviteModal} className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2.5 text-sm font-medium">
+                <button onClick={closeInviteModal} className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
                   Tamam
                 </button>
               </div>
             ) : (
               <form onSubmit={handleInvite} className="px-6 py-5 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Telefon <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Telefon <span className="text-bad-600">*</span></label>
                   <input
                     value={inviteForm.phone}
                     onChange={e => setInviteForm(f => ({ ...f, phone: e.target.value }))}
                     placeholder="0532 000 00 00"
                     type="tel"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required autoFocus
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">E-posta <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">E-posta <span className="text-ink-muted font-normal">(opsiyonel)</span></label>
                   <input
                     value={inviteForm.email}
                     onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
                     placeholder="ornek@sirket.com"
                     type="email"
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Rol</label>
                   <select
                     value={inviteForm.role}
                     onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   >
                     <option value="driver">Sürücü</option>
                     <option value="dispatcher">Operasyon</option>
                   </select>
                 </div>
-                <p className="text-xs text-gray-400">Davet linki oluşturulacak, WhatsApp ile gönderebilirsiniz. Üye mobil uygulamadan katılır.</p>
+                <p className="text-xs text-ink-muted">Davet linki oluşturulacak, WhatsApp ile gönderebilirsiniz. Üye mobil uygulamadan katılır.</p>
                 <div className="flex gap-3">
-                  <button type="button" onClick={closeInviteModal} className="flex-1 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">İptal</button>
-                  <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 text-sm font-medium">
+                  <button type="button" onClick={closeInviteModal} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
+                  <button type="submit" disabled={saving} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
                     {saving ? 'Gönderiliyor...' : 'Davet Gönder'}
                   </button>
                 </div>

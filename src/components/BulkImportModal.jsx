@@ -139,19 +139,19 @@ export default function BulkImportModal({ onClose, onDone }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 flex items-center gap-2"><FileSpreadsheet size={18} className="text-emerald-600" /> Toplu İçe Aktar (Excel / CSV)</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+      <div className="bg-white rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
+          <h2 className="font-semibold text-ink flex items-center gap-2"><FileSpreadsheet size={18} className="text-ok-600" /> Toplu İçe Aktar (Excel / CSV)</h2>
+          <button onClick={onClose} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
         </div>
 
         <div className="px-6 py-5 overflow-y-auto">
           {result ? (
             <div className="text-center py-8">
-              <CheckCircle size={48} className="text-green-500 mx-auto mb-4" />
-              <p className="text-lg font-semibold text-gray-900">{result.inserted} transfer eklendi</p>
-              {result.skipped > 0 && <p className="text-sm text-amber-600 mt-1">{result.skipped} satır atlandı (eksik/hatalı)</p>}
-              <button onClick={onClose} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-6 py-2.5 text-sm font-medium">Kapat</button>
+              <CheckCircle size={48} className="text-ok-600 mx-auto mb-4" />
+              <p className="text-lg font-semibold text-ink">{result.inserted} transfer eklendi</p>
+              {result.skipped > 0 && <p className="text-sm text-warn-600 mt-1">{result.skipped} satır atlandı (eksik/hatalı)</p>}
+              <button onClick={onClose} className="mt-6 bg-brand-600 hover:bg-brand-700 text-white rounded-card px-6 py-2.5 text-sm font-semibold">Kapat</button>
             </div>
           ) : (
             <>
@@ -159,25 +159,25 @@ export default function BulkImportModal({ onClose, onDone }) {
               <div className="flex flex-col sm:flex-row gap-3 mb-4">
                 <button
                   onClick={() => inputRef.current?.click()}
-                  className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 rounded-xl px-4 py-6 text-sm text-gray-600 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 border-2 border-dashed border-surface-borderstrong hover:border-brand-600 hover:bg-brand-50 rounded-card px-4 py-6 text-sm text-ink-soft transition-colors"
                 >
                   <Upload size={18} /> {fileName || 'Dosya seç (.xlsx / .csv)'}
                 </button>
                 <button
                   onClick={downloadTemplate}
-                  className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 rounded-xl px-4 py-3 text-sm text-gray-600 transition-colors sm:w-44"
+                  className="flex items-center justify-center gap-2 border border-surface-border hover:bg-surface-bg rounded-card px-4 py-3 text-sm text-ink-soft transition-colors sm:w-44"
                 >
                   <Download size={16} /> Şablonu indir
                 </button>
                 <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={e => handleFile(e.target.files[0])} />
               </div>
 
-              <p className="text-xs text-gray-400 mb-4">
+              <p className="text-xs text-ink-muted mb-4">
                 Şablonu indirip doldurun ya da otelinizden gelen listeyi yükleyin. Sütun başlıkları: Tarih, Uçuş No, Yolcu Adı, Telefon, Plaka, Dil, PNR, Not. Yolcu dili boşsa isimden otomatik algılanır.
               </p>
 
               {error && (
-                <div className="flex items-start gap-2 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-4">
+                <div className="flex items-start gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800 mb-4">
                   <AlertCircle size={15} className="mt-0.5 shrink-0" />{error}
                 </div>
               )}
@@ -186,13 +186,13 @@ export default function BulkImportModal({ onClose, onDone }) {
               {rows.length > 0 && (
                 <>
                   <div className="flex items-center gap-3 mb-2 text-sm">
-                    <span className="font-medium text-gray-700">{rows.length} satır</span>
-                    <span className="text-green-600">{validRows.length} geçerli</span>
-                    {invalidCount > 0 && <span className="text-red-500">{invalidCount} hatalı</span>}
+                    <span className="font-semibold text-ink-soft">{rows.length} satır</span>
+                    <span className="text-ok-600">{validRows.length} geçerli</span>
+                    {invalidCount > 0 && <span className="text-bad-600">{invalidCount} hatalı</span>}
                   </div>
-                  <div className="border border-gray-200 rounded-xl overflow-auto max-h-72">
+                  <div className="border border-surface-border rounded-card overflow-auto max-h-72">
                     <table className="w-full text-xs">
-                      <thead className="bg-gray-50 text-gray-500 sticky top-0">
+                      <thead className="bg-surface-bg text-ink-muted sticky top-0">
                         <tr>
                           <th className="px-2 py-2 text-left">Uçuş</th>
                           <th className="px-2 py-2 text-left">Tarih</th>
@@ -204,7 +204,7 @@ export default function BulkImportModal({ onClose, onDone }) {
                       </thead>
                       <tbody>
                         {rows.slice(0, 100).map((r, i) => (
-                          <tr key={i} className={r._errors.length ? 'bg-red-50' : 'border-t border-gray-100'}>
+                          <tr key={i} className={r._errors.length ? 'bg-bad-50' : 'border-t border-surface-border'}>
                             <td className="px-2 py-1.5 font-mono font-semibold">{r.flight_number || '—'}</td>
                             <td className="px-2 py-1.5">{r.scheduled_pickup ? r.scheduled_pickup.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_name || '—'}</td>
@@ -212,20 +212,20 @@ export default function BulkImportModal({ onClose, onDone }) {
                             <td className="px-2 py-1.5 uppercase">{r.passenger_lang || '—'}</td>
                             <td className="px-2 py-1.5">
                               {r._errors.length
-                                ? <span className="text-red-600">Eksik: {r._errors.join(', ')}</span>
-                                : <span className="text-green-600">✓</span>}
+                                ? <span className="text-bad-800">Eksik: {r._errors.join(', ')}</span>
+                                : <span className="text-ok-600">✓</span>}
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  {rows.length > 100 && <p className="text-xs text-gray-400 mt-1">İlk 100 satır gösteriliyor ({rows.length} toplam).</p>}
+                  {rows.length > 100 && <p className="text-xs text-ink-muted mt-1">İlk 100 satır gösteriliyor ({rows.length} toplam).</p>}
 
                   <button
                     onClick={handleImport}
                     disabled={importing || !validRows.length}
-                    className="w-full mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl px-4 py-3 text-sm font-medium transition-colors"
+                    className="w-full mt-4 bg-ok-600 hover:bg-ok-800 disabled:opacity-50 text-white rounded-card px-4 py-3 text-sm font-semibold transition-colors"
                   >
                     {importing ? 'İçe aktarılıyor...' : `${validRows.length} transferi içe aktar`}
                   </button>

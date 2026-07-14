@@ -17,7 +17,7 @@ import RequestPage       from './pages/RequestPage';
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
+    <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
       Yükleniyor...
     </div>
   );
@@ -27,7 +27,7 @@ function PrivateRoute({ children }) {
 function PlatformAdminRoute({ children }) {
   const { isPlatformAdmin, platformAdminLoading } = useAuth();
   if (platformAdminLoading) return (
-    <div className="flex items-center justify-center h-screen text-gray-400 text-sm">
+    <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
       Yükleniyor...
     </div>
   );

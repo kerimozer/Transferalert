@@ -34,28 +34,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-surface-bg">
+      <div className="bg-white border border-surface-border rounded-card shadow-sm p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-7">
-          <div className="bg-blue-600 text-white p-1.5 rounded-lg">
+          <div className="bg-brand-600 text-white p-1.5 rounded-control">
             <Plane size={18} />
           </div>
-          <span className="text-xl font-bold text-gray-900">TransferAlert</span>
+          <span className="text-xl font-bold text-ink">TransferAlert</span>
         </div>
 
-        <h1 className="text-lg font-semibold text-gray-800 mb-1">
+        <h1 className="text-lg font-semibold text-ink mb-1">
           {mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}
         </h1>
         {mode === 'register' && (
-          <p className="text-xs text-gray-400 mb-5">
+          <p className="text-xs text-ink-muted mb-5">
             Bir kez kayıt ol — sonra sadece uçuş numarası gir, gerisini biz halledelim.
           </p>
         )}
         {mode === 'login' && <div className="mb-5" />}
 
         {error && (
-          <div className="mb-4 px-3 py-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="mb-4 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
             {error}
           </div>
         )}
@@ -63,12 +63,12 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+              <label className="block text-sm font-semibold text-ink-soft mb-1">Ad Soyad</label>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-surface-borderstrong rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-transparent"
                 placeholder="Mehmet Demir"
                 required
                 autoFocus
@@ -77,12 +77,12 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+            <label className="block text-sm font-semibold text-ink-soft mb-1">E-posta</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-surface-borderstrong rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-transparent"
               placeholder="firma@ornek.com"
               required
               autoFocus={mode === 'login'}
@@ -90,27 +90,27 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+            <label className="block text-sm font-semibold text-ink-soft mb-1">Şifre</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-surface-borderstrong rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-transparent"
               required
             />
           </div>
 
           {mode === 'register' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-ink-soft mb-1">
                 Telefon Numarası
-                <span className="text-blue-500 font-normal ml-1">(SMS/WhatsApp bildirimleri buraya gelir)</span>
+                <span className="text-brand-600 font-normal ml-1">(SMS/WhatsApp bildirimleri buraya gelir)</span>
               </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-surface-borderstrong rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-transparent"
                 placeholder="0532 000 00 00"
                 required
               />
@@ -120,7 +120,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             {loading
               ? (mode === 'login' ? 'Giriş yapılıyor...' : 'Kaydediliyor...')
@@ -128,16 +128,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-5 text-center text-sm text-gray-500">
+        <div className="mt-5 text-center text-sm text-ink-muted">
           {mode === 'login' ? (
             <>Hesabın yok mu?{' '}
-              <button onClick={() => { setMode('register'); setError(''); }} className="text-blue-600 hover:underline font-medium">
+              <button onClick={() => { setMode('register'); setError(''); }} className="text-brand-600 hover:underline font-semibold">
                 Kayıt ol
               </button>
             </>
           ) : (
             <>Zaten hesabın var mı?{' '}
-              <button onClick={() => { setMode('login'); setError(''); }} className="text-blue-600 hover:underline font-medium">
+              <button onClick={() => { setMode('login'); setError(''); }} className="text-brand-600 hover:underline font-semibold">
                 Giriş yap
               </button>
             </>
