@@ -39,10 +39,6 @@ export const api = {
   // Bildirimler
   listNotifications: () => req('GET', '/api/notifications'),
 
-  // Sürücüler
-  listDrivers:  ()         => req('GET',    '/api/drivers'),
-  addDriver:    (data)     => req('POST',   '/api/drivers', data),
-  deleteDriver: (id)       => req('DELETE', `/api/drivers/${id}`),
 
   // Firma (Organization)
   getMyOrg:      ()     => req('GET',    '/api/organizations/my'),

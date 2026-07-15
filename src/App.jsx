@@ -8,7 +8,6 @@ import ReservationsPage  from './pages/ReservationsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ProfilePage       from './pages/ProfilePage';
 import ReportsPage       from './pages/ReportsPage';
-import DriversPage       from './pages/DriversPage';
 import OrganizationPage  from './pages/OrganizationPage';
 import PlatformAdminPage from './pages/PlatformAdminPage';
 import TrackPage         from './pages/TrackPage';
@@ -47,7 +46,6 @@ export default function App() {
             <Route index                element={<DashboardPage />} />
             <Route path="reservations"  element={<ReservationsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="drivers"       element={<DriversPage />} />
             <Route path="organization"  element={<OrganizationPage />} />
             <Route path="reports"       element={<ReportsPage />} />
             <Route path="profile"       element={<ProfilePage />} />
