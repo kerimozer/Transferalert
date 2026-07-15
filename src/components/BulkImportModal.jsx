@@ -1,3 +1,4 @@
+import { formatPickup } from '../lib/format';
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { api } from '../lib/api';
@@ -206,7 +207,7 @@ export default function BulkImportModal({ onClose, onDone }) {
                         {rows.slice(0, 100).map((r, i) => (
                           <tr key={i} className={r._errors.length ? 'bg-bad-50' : 'border-t border-surface-border'}>
                             <td className="px-2 py-1.5 font-mono font-semibold">{r.flight_number || '—'}</td>
-                            <td className="px-2 py-1.5">{r.scheduled_pickup ? r.scheduled_pickup.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                            <td className="px-2 py-1.5">{r.scheduled_pickup ? formatPickup(r.scheduled_pickup) : '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_name || '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_phone || '—'}</td>
                             <td className="px-2 py-1.5 uppercase">{r.passenger_lang || '—'}</td>

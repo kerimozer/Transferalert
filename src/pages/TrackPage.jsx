@@ -1,3 +1,4 @@
+import { formatPickup } from '../lib/format';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
@@ -77,14 +78,14 @@ export default function TrackPage() {
             <div className="flex justify-between border-b border-surface-border pb-2">
               <span className="text-ink-muted">Tahmini Varış</span>
               <span className="font-semibold text-ink">
-                {new Date(ls.estimated_arrival).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                {formatPickup(ls.estimated_arrival)}
               </span>
             </div>
           )}
           <div className="flex justify-between">
             <span className="text-ink-muted">Planlanan Alış</span>
             <span className="font-semibold text-ink">
-              {new Date(data.scheduled_pickup).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+              {formatPickup(data.scheduled_pickup)}
             </span>
           </div>
         </div>

@@ -1,5 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
+import { RES_STATUS_BADGE } from '../lib/status';
+import { formatPickup } from '../lib/format';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
@@ -24,10 +26,10 @@ const FLIGHT_STATUS = {
   diverted:  { label: 'Yönlendi',      icon: AlertTriangle, cls: 'text-warn-600 bg-warn-50 border-warn-600/20' },
 };
 
+// Ortak haritayı kullan; bu sayfada aktif rezervasyon "Takipte" olarak etiketlenir.
 const RES_STATUS = {
-  active:    { label: 'Takipte',    cls: 'bg-brand-50 text-brand-700' },
-  completed: { label: 'Tamamlandı', cls: 'bg-ok-50 text-ok-800' },
-  cancelled: { label: 'İptal',      cls: 'bg-bad-50 text-bad-800' },
+  ...RES_STATUS_BADGE,
+  active: { ...RES_STATUS_BADGE.active, label: 'Takipte' },
 };
 
 export default function ReservationsPage() {
@@ -170,7 +172,7 @@ export default function ReservationsPage() {
                     {r.source && <span className="text-xs bg-warn-50 text-warn-800 px-2 py-0.5 rounded-full">{r.source}</span>}
                   </div>
                   <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-2 flex-wrap">
-                    <span className="flex items-center gap-1"><Calendar size={11} />{new Date(r.scheduled_pickup).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="flex items-center gap-1"><Calendar size={11} />{formatPickup(r.scheduled_pickup)}</span>
                     {r.passenger_name && r.passenger_name !== r.flight_number && <span>{r.passenger_name}</span>}
                     {r.passenger_phone && <span>{r.passenger_phone}</span>}
                   </div>
@@ -382,7 +384,7 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
           )}
         </div>
         <div className="flex items-center gap-2 flex-wrap text-xs text-ink-muted">
-          <span className="flex items-center gap-1"><Calendar size={11} />{pickup.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="flex items-center gap-1"><Calendar size={11} />{formatPickup(pickup)}</span>
           {r.pnr   && <span className="font-mono bg-surface-alt px-1.5 py-0.5 rounded">PNR: {r.pnr}</span>}
           {r.notes && <span className="text-ink-muted">{r.notes}</span>}
         </div>
