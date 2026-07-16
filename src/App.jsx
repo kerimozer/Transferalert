@@ -1,17 +1,28 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Layout            from './components/Layout';
-import LandingPage       from './pages/LandingPage';
-import LoginPage         from './pages/LoginPage';
-import DashboardPage     from './pages/DashboardPage';
-import ReservationsPage  from './pages/ReservationsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import ProfilePage       from './pages/ProfilePage';
-import ReportsPage       from './pages/ReportsPage';
-import OrganizationPage  from './pages/OrganizationPage';
-import PlatformAdminPage from './pages/PlatformAdminPage';
-import TrackPage         from './pages/TrackPage';
-import RequestPage       from './pages/RequestPage';
+import Layout from './components/Layout';
+
+// Rota bazlı kod bölme: önceden TÜM sayfalar tek pakette geliyordu — yolcunun
+// telefonda açtığı /track linki bile 570KB'lık admin panelini indiriyordu.
+// Artık her sayfa kendi parçası; ziyaretçi yalnız gittiği sayfanın kodunu indirir.
+const LandingPage       = lazy(() => import('./pages/LandingPage'));
+const LoginPage         = lazy(() => import('./pages/LoginPage'));
+const DashboardPage     = lazy(() => import('./pages/DashboardPage'));
+const ReservationsPage  = lazy(() => import('./pages/ReservationsPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const ProfilePage       = lazy(() => import('./pages/ProfilePage'));
+const ReportsPage       = lazy(() => import('./pages/ReportsPage'));
+const OrganizationPage  = lazy(() => import('./pages/OrganizationPage'));
+const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
+const TrackPage         = lazy(() => import('./pages/TrackPage'));
+const RequestPage       = lazy(() => import('./pages/RequestPage'));
+
+const pageFallback = (
+  <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
+    Yükleniyor...
+  </div>
+);
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -37,6 +48,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <Suspense fallback={pageFallback}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/track/:token" element={<TrackPage />} />
@@ -53,6 +65,7 @@ export default function App() {
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );
