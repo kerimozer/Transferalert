@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -12,19 +13,16 @@ export default function NotificationsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-ink-muted">Yükleniyor...</div>;
+  if (loading) return <div className="p-8"><LoadingBlock /></div>;
 
   return (
     <div className="p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-ink mb-6">Bildirim Geçmişi</h1>
 
-      <div className="bg-white border border-surface-border rounded-card overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
         {notifications.length === 0 ? (
-          <div className="py-16 text-center">
-            <Bell size={36} className="mx-auto text-ink-muted mb-3" />
-            <p className="text-sm text-ink-muted">Henüz bildirim gönderilmedi.</p>
-            <p className="text-xs text-ink-muted mt-1">Uçuş durumu değiştiğinde SMS otomatik gönderilir.</p>
-          </div>
+          <EmptyState icon={Bell} title="Henüz bildirim gönderilmedi"
+            description="Uçuş durumu değiştiğinde bildirimler otomatik gönderilir ve burada listelenir." />
         ) : (
           <div className="divide-y divide-surface-border">
             {notifications.map(n => (
@@ -47,15 +45,9 @@ export default function NotificationsPage() {
                     <span className="text-xs text-ink-muted">
                       {n.reservations?.passenger_name}
                     </span>
-                    <span className={`ml-auto text-xs font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1 ${
-                      n.status === 'sent'
-                        ? 'bg-ok-50 text-ok-800'
-                        : 'bg-bad-50 text-bad-800'
-                    }`}>
-                      {n.status === 'sent'
-                        ? <><CheckCircle size={10} /> Gönderildi</>
-                        : <><XCircle size={10} /> Başarısız</>}
-                    </span>
+                    <Badge className="ml-auto" tone={n.status === 'sent' ? 'ok' : 'bad'} icon={n.status === 'sent' ? CheckCircle : XCircle}>
+                      {n.status === 'sent' ? 'Gönderildi' : 'Başarısız'}
+                    </Badge>
                   </div>
 
                   <p className="text-sm text-ink-soft mb-1">{n.message}</p>
@@ -69,7 +61,7 @@ export default function NotificationsPage() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

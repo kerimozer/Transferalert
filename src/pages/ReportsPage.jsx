@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { TrendingUp, Plane, CheckCircle, XCircle, Clock, Bell } from 'lucide-react';
+import { EmptyState, LoadingBlock } from '../components/ui';
 
 export default function ReportsPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -13,7 +14,7 @@ export default function ReportsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-ink-muted">Yükleniyor...</div>;
+  if (loading) return <div className="p-8"><LoadingBlock /></div>;
 
   const total     = reservations.length;
   const completed = reservations.filter(r => r.status === 'completed').length;
@@ -60,7 +61,7 @@ export default function ReportsPage() {
               </div>
             ))}
             {last30.every(d => d.count === 0) && (
-              <p className="text-sm text-ink-muted text-center py-4">Henüz veri yok</p>
+              <EmptyState size="sm" title="Henüz veri yok" />
             )}
           </div>
         </div>
@@ -71,7 +72,7 @@ export default function ReportsPage() {
             <Plane size={16} className="text-brand-600" /> En Çok Takip Edilen
           </h2>
           {topFlights.length === 0 ? (
-            <p className="text-sm text-ink-muted text-center py-4">Henüz veri yok</p>
+            <EmptyState size="sm" title="Henüz veri yok" />
           ) : (
             <div className="space-y-3">
               {topFlights.map(({ flight, count }) => (
@@ -96,7 +97,7 @@ export default function ReportsPage() {
         <div className="bg-white border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Tamamlanma Oranı</h2>
           {total === 0 ? (
-            <p className="text-sm text-ink-muted text-center py-4">Henüz veri yok</p>
+            <EmptyState size="sm" title="Henüz veri yok" />
           ) : (
             <>
               <div className="flex items-end gap-2 mb-3">
@@ -119,7 +120,7 @@ export default function ReportsPage() {
         <div className="bg-white border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Bildirim Başarı Oranı</h2>
           {notifications.length === 0 ? (
-            <p className="text-sm text-ink-muted text-center py-4">Henüz bildirim yok</p>
+            <EmptyState size="sm" title="Henüz bildirim yok" />
           ) : (
             <>
               <div className="flex items-end gap-2 mb-3">

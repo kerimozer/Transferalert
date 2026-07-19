@@ -2,6 +2,7 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE } from '../lib/status';
 import { formatPickup } from '../lib/format';
+import { Button } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
@@ -137,21 +138,17 @@ export default function ReservationsPage() {
 
   return (
     <div className="p-8 max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div>
           <h1 className="text-2xl font-bold text-ink">Uçuş Takibi</h1>
           <p className="text-sm text-ink-muted mt-0.5">Gelecekteki uçuşları önceden ekleyin. Yaklaştığında otomatik bildirim alırsınız.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={copyBookingLink} className="flex items-center gap-2 border border-surface-border hover:bg-surface-bg text-ink-soft rounded-card px-4 py-2.5 text-sm font-semibold transition-colors" title="Otel/acentalarınızın transfer talep edebileceği link">
-            {linkCopied ? <><Check size={16} className="text-ok-600" /> Kopyalandı</> : <><Link2 size={16} className="text-brand-600" /> Talep Linki</>}
-          </button>
-          <button onClick={() => setShowBulk(true)} className="flex items-center gap-2 border border-surface-border hover:bg-surface-bg text-ink-soft rounded-card px-4 py-2.5 text-sm font-semibold transition-colors">
-            <FileSpreadsheet size={16} className="text-ok-600" /> Toplu İçe Aktar
-          </button>
-          <button onClick={openForm} className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white rounded-card px-4 py-2.5 text-sm font-semibold transition-colors shadow-sm">
-            <Plus size={16} /> Uçuş Ekle
-          </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="secondary" onClick={copyBookingLink} icon={linkCopied ? Check : Link2} title="Otel/acentalarınızın transfer talep edebileceği link">
+            {linkCopied ? 'Kopyalandı' : 'Talep Linki'}
+          </Button>
+          <Button variant="secondary" onClick={() => setShowBulk(true)} icon={FileSpreadsheet}>Toplu İçe Aktar</Button>
+          <Button onClick={openForm} icon={Plus}>Uçuş Ekle</Button>
         </div>
       </div>
 
@@ -181,7 +178,7 @@ export default function ReservationsPage() {
                 <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-ok-600 hover:bg-ok-800 text-white rounded-control px-3 py-1.5 text-xs font-semibold">
                   <Check size={14} /> Onayla
                 </button>
-                <button onClick={() => handleReject(r.id)} className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control" title="Reddet">
+                <button onClick={() => handleReject(r.id)} aria-label="Reddet" title="Reddet" className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control">
                   <X size={16} />
                 </button>
               </div>
@@ -394,12 +391,12 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
       <div className="flex items-center gap-2 shrink-0">
         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${rs.cls}`}>{rs.label}</span>
         {r.share_token && (
-          <button onClick={handleShare} title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-control transition-colors ${copied ? 'text-ok-600 bg-ok-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
+          <button onClick={handleShare} aria-label="Takip linkini kopyala" title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-control transition-colors ${copied ? 'text-ok-600 bg-ok-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
             {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
           </button>
         )}
         {!isPast && onShowSign && (
-          <button onClick={() => onShowSign(r)} title="Karşılama tabelası" className="p-1.5 text-ink-muted hover:text-accent-600 hover:bg-accent-50 rounded-control transition-colors">
+          <button onClick={() => onShowSign(r)} aria-label="Karşılama tabelası" title="Karşılama tabelası" className="p-1.5 text-ink-muted hover:text-accent-600 hover:bg-accent-50 rounded-control transition-colors">
             <UserCheck size={14} />
           </button>
         )}
@@ -409,13 +406,13 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
               <CheckCircle size={11} /> Ödendi
             </span>
           ) : (
-            <button onClick={() => onShowPay(r)} title="Ödeme linki oluştur" className="p-1.5 text-ink-muted hover:text-ok-600 hover:bg-ok-50 rounded-control transition-colors">
+            <button onClick={() => onShowPay(r)} aria-label="Ödeme linki oluştur" title="Ödeme linki oluştur" className="p-1.5 text-ink-muted hover:text-ok-600 hover:bg-ok-50 rounded-control transition-colors">
               <CreditCard size={14} />
             </button>
           )
         )}
         {!isPast && onComplete && (
-          <button onClick={() => onComplete(r.id)} title="Tamamlandı" className="p-1.5 text-ink-muted hover:text-ok-600 hover:bg-ok-50 rounded-control transition-colors">
+          <button onClick={() => onComplete(r.id)} aria-label="Tamamlandı" title="Tamamlandı" className="p-1.5 text-ink-muted hover:text-ok-600 hover:bg-ok-50 rounded-control transition-colors">
             <CheckSquare size={14} />
           </button>
         )}

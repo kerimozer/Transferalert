@@ -2,19 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE } from '../lib/status';
+import { StatCard, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
 import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight } from 'lucide-react';
-
-function StatCard({ label, value, icon: Icon, color }) {
-  return (
-    <div className="bg-white border border-surface-border rounded-card p-5">
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-sm text-ink-muted">{label}</span>
-        <div className={`p-2 rounded-control ${color}`}><Icon size={15} /></div>
-      </div>
-      <div className="text-3xl font-bold text-ink">{value}</div>
-    </div>
-  );
-}
 
 export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -27,7 +16,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-ink-muted">Yükleniyor...</div>;
+  if (loading) return <div className="p-8"><LoadingBlock /></div>;
 
   const active    = reservations.filter(r => r.status === 'active').length;
   const completed = reservations.filter(r => r.status === 'completed').length;
@@ -41,28 +30,30 @@ export default function DashboardPage() {
     <div className="p-8 max-w-5xl">
       <h1 className="text-2xl font-bold text-ink mb-6">Dashboard</h1>
 
-      {/* İstatistik kartları */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <StatCard label="Aktif Takip"   value={active}              icon={Plane}         color="text-brand-600 bg-brand-50" />
-        <StatCard label="Tamamlanan"    value={completed}           icon={CheckCircle}   color="text-ok-600 bg-ok-50" />
-        <StatCard label="İptal"         value={cancelled}           icon={XCircle}       color="text-bad-600 bg-bad-50" />
-        <StatCard label="Toplam Bildirim" value={notifications.length} icon={MessageSquare} color="text-accent-600 bg-accent-50" />
+      {/* İstatistik kartları — dar ekranda 2 sütuna kırılır */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard label="Aktif Takip"     value={active}               icon={Plane}         tone="brand" />
+        <StatCard label="Tamamlanan"      value={completed}            icon={CheckCircle}   tone="ok" />
+        <StatCard label="İptal"           value={cancelled}            icon={XCircle}       tone="bad" />
+        <StatCard label="Toplam Bildirim" value={notifications.length} icon={MessageSquare} tone="accent" />
       </div>
 
       {/* Son rezervasyonlar */}
-      <div className="bg-white border border-surface-border rounded-card">
+      <Card padding="none">
         <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
           <h2 className="font-semibold text-ink text-sm">Son Rezervasyonlar</h2>
           <Link to="/app/reservations" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-            Tümü <ArrowRight size={12} />
+            Tümü <ArrowRight size={12} aria-hidden="true" />
           </Link>
         </div>
 
         {recent.length === 0 ? (
-          <div className="py-12 text-center text-sm text-ink-muted">
-            Henüz rezervasyon yok.{' '}
-            <Link to="/app/reservations" className="text-brand-600 hover:underline">Ekle →</Link>
-          </div>
+          <EmptyState
+            icon={Plane}
+            title="Henüz rezervasyon yok"
+            description="İlk uçuşu ekleyin — yaklaştığında durum güncellemeleri otomatik gelir."
+            action={<Link to="/app/reservations" className="text-sm font-semibold text-brand-600 hover:underline">Uçuş Ekle →</Link>}
+          />
         ) : (
           <div className="divide-y divide-surface-border">
             {recent.map(r => {
@@ -74,24 +65,22 @@ export default function DashboardPage() {
                     {r.flight_number}
                   </span>
                   <span className="text-sm text-ink flex-1 truncate">{r.passenger_name}</span>
-                  <span className="text-xs text-ink-muted">
+                  <span className="text-xs text-ink-muted whitespace-nowrap">
                     {new Date(r.scheduled_pickup).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })}
                   </span>
                   {flight && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${flight.cls}`}>
+                    <Badge cls={flight.cls}>
                       {flight.label}
                       {r.latest_status.arrival_delay > 0 && ` +${r.latest_status.arrival_delay}dk`}
-                    </span>
+                    </Badge>
                   )}
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${status.cls}`}>
-                    {status.label}
-                  </span>
+                  <Badge cls={status.cls}>{status.label}</Badge>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
