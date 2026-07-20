@@ -1,0 +1,29 @@
+name: frontend-ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Build kapısı — production deploy'u Vercel yapar (push=deploy),
+      # bu iş PR aşamasında "build kırık mı" erken uyarısı verir.
+      # Değerler build'in geçmesi için yeterli placeholder'lardır; gerçek
+      # değerler Vercel env'inde yaşar, build çıktısı burada dağıtılmaz.
+      - run: npm run build
+        env:
+          VITE_API_URL: https://diligent-commitment-production-eb75.up.railway.app
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
