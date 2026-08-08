@@ -1,44 +1,45 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plane, Bell, MessageCircle, CheckCircle, Zap, Users, Shield } from 'lucide-react';
+import { Plane, Bell, MessageCircle, CheckCircle, Zap } from 'lucide-react';
+import { api } from '../lib/api';
 
 const FEATURES = [
-  { icon: Plane,          title: 'Gerçek Zamanlı Uçuş Takibi',  desc: 'AviationStack ile uçuş durumunu 5 dakikada bir kontrol eder. İniş, rötar, iptal — anında bilirsiniz.' },
+  { icon: Plane,          title: 'Gerçek Zamanlı Uçuş Takibi',  desc: 'Uçuş durumunu düzenli aralıklarla kontrol eder. İniş, rötar, iptal — anında bilirsiniz.' },
   { icon: MessageCircle,  title: 'WhatsApp + SMS Bildirimi',      desc: 'Uçuş durumu değişince telefonunuza otomatik WhatsApp veya SMS gönderilir. Hiçbir şeyi kaçırmayın.' },
   { icon: Zap,            title: 'Tek Tıkla Takip',              desc: 'Sadece uçuş numarası girin. Sistem geri kalanı halleder. Karmaşık form yok, gereksiz adım yok.' },
 ];
 
-const PLANS = [
-  {
-    name:  'Ücretsiz',
-    price: '0 ₺',
-    period: '/ay',
-    desc:  '7 günlük deneme',
-    features: ['5 uçuş takibi/ay', 'SMS bildirimi', 'E-posta desteği'],
-    cta:   'Hemen Başla',
-    highlight: false,
-  },
-  {
-    name:  'Standart',
-    price: '299 ₺',
-    period: '/ay',
-    desc:  'Bireysel sürücüler için',
-    features: ['100 uçuş takibi/ay', 'SMS + WhatsApp bildirimi', 'Günlük özet', 'Öncelikli destek'],
-    cta:   'Başla',
-    highlight: true,
-  },
-  {
-    name:  'İşletme',
-    price: '899 ₺',
-    period: '/ay',
-    desc:  'Transfer firmaları için',
-    features: ['Sınırsız uçuş takibi', 'SMS + WhatsApp bildirimi', 'Takım hesapları (5 kullanıcı)', 'Günlük özet', '7/24 destek'],
-    cta:   'Başla',
-    highlight: false,
-  },
-];
+// Planlar arası tek fark ekip/sürücü limiti — özellik seti hepsinde aynı.
+// Uydurma ayrıcalık listesi yerine gerçekte var olanı gösteriyoruz.
+const PLAN_COPY = {
+  individual:   { desc: 'Tek başına çalışan sürücüler için',   highlight: false },
+  professional: { desc: 'Büyüyen transfer firmaları için',      highlight: true  },
+  enterprise:   { desc: 'Büyük filolar için',                   highlight: false },
+};
+
+function baseFeatures(driverLimit) {
+  const team = driverLimit === 1 ? '1 kullanıcı' : `${driverLimit} sürücüye kadar ekip`;
+  return [team, 'Sınırsız uçuş takibi', 'WhatsApp + SMS bildirimi', 'Firma yönetim paneli'];
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [plans, setPlans] = useState(null);
+
+  useEffect(() => {
+    api.listPublicPlans()
+      .then(data => setPlans(data.map(p => ({
+        key:       p.key,
+        name:      p.label,
+        price:     `${p.price} ₺`,
+        period:    '/ay',
+        desc:      PLAN_COPY[p.key]?.desc || '',
+        features:  baseFeatures(p.driver_limit),
+        cta:       'Başla',
+        highlight: PLAN_COPY[p.key]?.highlight || false,
+      }))))
+      .catch(() => setPlans([]));
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -126,11 +127,22 @@ export default function LandingPage() {
       <section id="fiyatlar" className="bg-surface-bg py-16">
         <div className="max-w-5xl mx-auto px-6">
           <h2 className="text-2xl font-bold text-ink text-center mb-2">Fiyatlandırma</h2>
-          <p className="text-ink-muted text-center mb-10">Kredi kartı gerekmez. İstediğiniz zaman iptal.</p>
+          <p className="text-ink-muted text-center mb-10">İhtiyacınıza uygun planı seçin. Tek seferlik ödeme, otomatik yenileme yok.</p>
+          {!plans && (
+            <div className="grid grid-cols-3 gap-6">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="rounded-card p-6 border border-surface-border bg-white h-56 animate-pulse" />
+              ))}
+            </div>
+          )}
+          {plans?.length === 0 && (
+            <p className="text-center text-sm text-ink-muted">Fiyatlandırma şu an yüklenemedi, lütfen daha sonra tekrar deneyin.</p>
+          )}
+          {plans?.length > 0 && (
           <div className="grid grid-cols-3 gap-6">
-            {PLANS.map(plan => (
+            {plans.map(plan => (
               <div
-                key={plan.name}
+                key={plan.key}
                 className={`rounded-card p-6 border ${plan.highlight ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-surface-border'}`}
               >
                 <div className="mb-4">
@@ -164,6 +176,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 

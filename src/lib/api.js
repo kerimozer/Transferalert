@@ -58,4 +58,6 @@ export const api = {
 
   // Planlar (herhangi bir giriş yapmış kullanıcı görebilir)
   listPlans: () => req('GET', '/api/plans'),
+  // Herkese açık fiyatlandırma (landing sayfası, giriş gerektirmez)
+  listPublicPlans: () => req('GET', '/api/public/plans'),
 };
