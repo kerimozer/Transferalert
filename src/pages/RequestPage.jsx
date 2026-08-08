@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Calendar, Send } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -14,6 +14,7 @@ const EMPTY = { flight_number: '', scheduled_pickup: '', passenger_name: '', pas
 
 export default function RequestPage() {
   const { token } = useParams();
+  const navigate = useNavigate();
   const [company, setCompany] = useState(null);
   const [loadErr, setLoadErr] = useState('');
   const [loading, setLoading] = useState(true);
@@ -125,6 +126,13 @@ export default function RequestPage() {
             className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-3 text-sm font-semibold transition-colors">
             <Send size={15} /> {submitting ? 'Gönderiliyor...' : 'Transfer Talep Et'}
           </button>
+
+          <p className="text-xs text-ink-muted text-center">
+            Talebi göndererek yolcu bilgilerinin transfer koordinasyonu amacıyla işlenmesini kabul edersiniz.{' '}
+            <button type="button" onClick={() => navigate('/gizlilik')} className="text-brand-600 hover:underline">
+              Gizlilik Politikası
+            </button>
+          </p>
         </form>
 
         <p className="text-center text-xs text-ink-muted mt-4">TransferAlert ile güçlendirilmiştir</p>

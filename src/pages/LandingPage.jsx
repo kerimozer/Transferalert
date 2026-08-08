@@ -176,6 +176,9 @@ export default function LandingPage() {
           <span className="font-semibold text-ink-soft">TransferAlert</span>
         </div>
         <p>© 2026 TransferAlert. Tüm hakları saklıdır.</p>
+        <button onClick={() => navigate('/gizlilik')} className="mt-1 text-ink-muted hover:text-ink hover:underline">
+          Gizlilik Politikası ve KVKK Aydınlatma Metni
+        </button>
       </footer>
     </div>
   );

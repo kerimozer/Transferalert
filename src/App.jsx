@@ -17,6 +17,7 @@ const OrganizationPage  = lazy(() => import('./pages/OrganizationPage'));
 const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
 const TrackPage         = lazy(() => import('./pages/TrackPage'));
 const RequestPage       = lazy(() => import('./pages/RequestPage'));
+const PrivacyPage       = lazy(() => import('./pages/PrivacyPage'));
 
 const pageFallback = (
   <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/track/:token" element={<TrackPage />} />
           <Route path="/request/:token" element={<RequestPage />} />
+          <Route path="/gizlilik" element={<PrivacyPage />} />
           <Route path="/app/login" element={<LoginPage />} />
           <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index                element={<DashboardPage />} />
