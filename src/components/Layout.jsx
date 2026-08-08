@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Plane, LayoutDashboard, Bell, LogOut, User, BarChart2, Menu, X, Building2, ShieldCheck } from 'lucide-react';
+import { api } from '../lib/api';
 
 const NAV = [
   { to: '/app',               label: 'Dashboard',      icon: LayoutDashboard, end: true },
@@ -16,6 +17,15 @@ export default function Layout() {
   const { logout, isPlatformAdmin } = useAuth();
   const navigate   = useNavigate();
   const [open, setOpen] = useState(false);
+  const [trialDaysLeft, setTrialDaysLeft] = useState(null);
+
+  useEffect(() => {
+    api.getMyOrg().then(({ org }) => {
+      if (org?.plan === 'starter' && org.trial_ends_at) {
+        setTrialDaysLeft(Math.ceil((new Date(org.trial_ends_at) - Date.now()) / 86400000));
+      }
+    }).catch(() => {});
+  }, []);
 
   const nav = isPlatformAdmin
     ? [...NAV, { to: '/app/admin', label: 'Platform', icon: ShieldCheck }]
@@ -93,6 +103,20 @@ export default function Layout() {
 
       {/* İçerik */}
       <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
+        {trialDaysLeft !== null && (
+          <div className={`px-4 py-2 text-sm flex items-center justify-between gap-3 ${
+            trialDaysLeft > 0 ? 'bg-brand-50 text-brand-700' : 'bg-bad-50 text-bad-800'
+          }`}>
+            <span>
+              {trialDaysLeft > 0
+                ? `Deneme: ${trialDaysLeft} gün kaldı`
+                : 'Deneme süreniz doldu'}
+            </span>
+            <button onClick={() => navigate('/app/organization')} className="font-semibold hover:underline shrink-0">
+              Planı Yükselt →
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>
