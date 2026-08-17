@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle } from 'lucide-react';
+import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon } from 'lucide-react';
+
+// PostgREST `time` kolonunu "22:00:00" olarak döndürür; <input type="time"> "22:00" ister.
+const hhmm = (v) => (typeof v === 'string' ? v.slice(0, 5) : '');
 
 const ROLE_LABELS = { admin: 'Admin', dispatcher: 'Operasyon', driver: 'Sürücü' };
 const ROLE_ICONS  = { admin: Shield, dispatcher: Headset, driver: Truck };
@@ -27,12 +30,23 @@ export default function OrganizationPage() {
   const [error,  setError]  = useState('');
   const [upgrading, setUpgrading] = useState(null);
 
+  const [nw,       setNw]       = useState({ enabled: false, user_id: '', start: '22:00', end: '08:00' });
+  const [nwSaving, setNwSaving] = useState(false);
+  const [nwMsg,    setNwMsg]    = useState('');
+  const [nwError,  setNwError]  = useState('');
+
   async function load() {
     setLoading(true);
     try {
       const res = await api.getMyOrg();
       setOrg(res.org);
       setRole(res.role);
+      setNw({
+        enabled: !!res.org?.night_watch_enabled,
+        user_id: res.org?.night_watch_user_id || '',
+        start:   hhmm(res.org?.night_watch_start) || '22:00',
+        end:     hhmm(res.org?.night_watch_end)   || '08:00',
+      });
       setNotFound(false);
       const m = await api.listOrgMembers();
       setMembers(m || []);
@@ -46,6 +60,26 @@ export default function OrganizationPage() {
     load();
     api.listPlans().then(setPlans).catch(() => setPlans([]));
   }, []);
+
+  async function handleNightWatch(e) {
+    e.preventDefault();
+    setNwError(''); setNwMsg('');
+    setNwSaving(true);
+    try {
+      const saved = await api.setNightWatch({
+        enabled: nw.enabled,
+        user_id: nw.user_id || null,
+        start:   nw.start || null,
+        end:     nw.end || null,
+      });
+      setOrg(o => ({ ...o, ...saved }));
+      setNwMsg('Gece nöbeti ayarı kaydedildi.');
+    } catch (err) {
+      setNwError(err.message || 'Kaydedilemedi.');
+    } finally {
+      setNwSaving(false);
+    }
+  }
 
   async function handleCreate(e) {
     e.preventDefault();
@@ -239,6 +273,89 @@ export default function OrganizationPage() {
               ))}
           </div>
         </div>
+      )}
+
+      {/* Gece Nöbeti */}
+      {role === 'admin' && (
+        <form onSubmit={handleNightWatch} className="bg-white border border-surface-border rounded-card shadow-card p-5 mb-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
+              <Moon size={22} className="text-brand-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-ink">Gece Nöbeti</p>
+              <p className="text-sm text-ink-muted mt-0.5">
+                Bu saatler arasında uçuş ve yolcu uyarıları operasyon sorumlusu yerine nöbetçiye gider.
+                Saatler Türkiye saatiyle girilir.
+              </p>
+            </div>
+            <label className="inline-flex items-center gap-2 shrink-0 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={nw.enabled}
+                onChange={(e) => setNw({ ...nw, enabled: e.target.checked })}
+                className="w-4 h-4 rounded border-surface-borderstrong text-brand-600 focus:ring-2 focus:ring-brand-600/30"
+              />
+              <span className="text-sm font-semibold text-ink-soft">{nw.enabled ? 'Açık' : 'Kapalı'}</span>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+            <div>
+              <label htmlFor="nw-user" className="block text-sm font-semibold text-ink-soft mb-1.5">Nöbetçi</label>
+              <select
+                id="nw-user"
+                value={nw.user_id}
+                onChange={(e) => setNw({ ...nw, user_id: e.target.value })}
+                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+              >
+                <option value="">Seçiniz</option>
+                {members.filter(m => m.status === 'active' && m.user_id).map(m => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.profiles?.full_name || m.profiles?.phone || ROLE_LABELS[m.role] || 'Üye'}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="nw-start" className="block text-sm font-semibold text-ink-soft mb-1.5">Başlangıç</label>
+              <input
+                id="nw-start" type="time" value={nw.start}
+                onChange={(e) => setNw({ ...nw, start: e.target.value })}
+                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="nw-end" className="block text-sm font-semibold text-ink-soft mb-1.5">Bitiş</label>
+              <input
+                id="nw-end" type="time" value={nw.end}
+                onChange={(e) => setNw({ ...nw, end: e.target.value })}
+                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {nwError && (
+            <div className="mt-3 flex gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
+              <AlertCircle size={15} className="mt-0.5 shrink-0" />{nwError}
+            </div>
+          )}
+          {nwMsg && (
+            <div className="mt-3 flex gap-2 px-3 py-2.5 bg-ok-50 border border-ok-600/20 rounded-control text-sm text-ok-800">
+              <CheckCircle size={15} className="mt-0.5 shrink-0" />{nwMsg}
+            </div>
+          )}
+
+          <div className="flex justify-end mt-4">
+            <button
+              type="submit"
+              disabled={nwSaving}
+              className="bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold rounded-control px-5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+            >
+              {nwSaving ? 'Kaydediliyor...' : 'Kaydet'}
+            </button>
+          </div>
+        </form>
       )}
 
       {/* Üye Listesi */}
