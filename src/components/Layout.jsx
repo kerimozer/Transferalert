@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Plane, LayoutDashboard, Bell, LogOut, User, BarChart2, Menu, X, Building2, ShieldCheck } from 'lucide-react';
+import { Plane, LayoutDashboard, Bell, LogOut, User, BarChart2, Menu, X, Building2, ShieldCheck, Handshake } from 'lucide-react';
 import { api } from '../lib/api';
 
 const NAV = [
   { to: '/app',               label: 'Dashboard',      icon: LayoutDashboard, end: true },
   { to: '/app/reservations',  label: 'Uçuşlarım',      icon: Plane },
   { to: '/app/organization',  label: 'Firma Yönetimi', icon: Building2 },
+  { to: '/app/partners',      label: 'İş Ortakları',   icon: Handshake },
   { to: '/app/notifications', label: 'Bildirimler',    icon: Bell },
   { to: '/app/reports',       label: 'Raporlar',       icon: BarChart2 },
   { to: '/app/profile',       label: 'Profil',         icon: User },

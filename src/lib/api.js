@@ -47,6 +47,12 @@ export const api = {
   inviteMember:  (data) => req('POST',   '/api/organizations/invite', data),
   removeMember:  (id)   => req('DELETE', `/api/organizations/members/${id}`),
 
+  // İş ortakları (otel / acenta portalı)
+  listPartners:   ()          => req('GET',    '/api/partners'),
+  createPartner:  (name)      => req('POST',   '/api/partners', { name }),
+  updatePartner:  (id, data)  => req('PATCH',  `/api/partners/${id}`, data),
+  deletePartner:  (id)        => req('DELETE', `/api/partners/${id}`),
+
   // Ödeme (iyzico)
   createCheckout: (plan) => req('POST', '/api/billing/checkout', { plan }),
   createReservationCheckout: (reservation_id, amount) => req('POST', '/api/billing/checkout-reservation', { reservation_id, amount }),

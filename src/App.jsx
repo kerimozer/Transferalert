@@ -18,6 +18,8 @@ const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
 const TrackPage         = lazy(() => import('./pages/TrackPage'));
 const RequestPage       = lazy(() => import('./pages/RequestPage'));
 const PrivacyPage       = lazy(() => import('./pages/PrivacyPage'));
+const PartnerPortalPage = lazy(() => import('./pages/PartnerPortalPage'));
+const PartnersPage      = lazy(() => import('./pages/PartnersPage'));
 
 const pageFallback = (
   <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
@@ -55,12 +57,14 @@ export default function App() {
           <Route path="/track/:token" element={<TrackPage />} />
           <Route path="/request/:token" element={<RequestPage />} />
           <Route path="/gizlilik" element={<PrivacyPage />} />
+          <Route path="/portal/:token" element={<PartnerPortalPage />} />
           <Route path="/app/login" element={<LoginPage />} />
           <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index                element={<DashboardPage />} />
             <Route path="reservations"  element={<ReservationsPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="organization"  element={<OrganizationPage />} />
+            <Route path="partners"      element={<PartnersPage />} />
             <Route path="reports"       element={<ReportsPage />} />
             <Route path="profile"       element={<ProfilePage />} />
             <Route path="admin"         element={<PlatformAdminRoute><PlatformAdminPage /></PlatformAdminRoute>} />
