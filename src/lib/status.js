@@ -16,3 +16,13 @@ export const FLIGHT_BADGE = {
   scheduled: { label: 'Planlandı',     cls: 'bg-surface-alt text-ink-soft' },
   diverted:  { label: 'Yönlendirildi', cls: 'bg-warn-50 text-warn-800' },
 };
+
+// İş aşaması (reservations.job_status) → dispatcher panosundaki rozet.
+// Backend sözleşmesi: backend/src/config/constants.js JOB_STATUSES.
+// null = şoför henüz başlamadı; o durumda rozet gösterilmez.
+export const JOB_BADGE = {
+  en_route:   { label: 'Yolda',        cls: 'bg-brand-50 text-brand-700' },
+  at_airport: { label: 'Havalimanında', cls: 'bg-accent-50 text-accent-800' },
+  picked_up:  { label: 'Yolcu alındı', cls: 'bg-ok-50 text-ok-800' },
+  completed:  { label: 'Tamamlandı',   cls: 'bg-ok-50 text-ok-800' },
+};

@@ -1,11 +1,12 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
-import { RES_STATUS_BADGE } from '../lib/status';
+import { RES_STATUS_BADGE, JOB_BADGE } from '../lib/status';
 import { formatPickup } from '../lib/format';
 import { Button } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
+import AssignDriverModal from '../components/AssignDriverModal';
 
 // xlsx ağır — sadece modal açılınca yüklensin (ana bundle'ı şişirmesin)
 const BulkImportModal = lazy(() => import('../components/BulkImportModal'));
@@ -42,6 +43,7 @@ export default function ReservationsPage() {
   const [flightInfo, setFlightInfo]     = useState(null);
   const [searching, setSearching]       = useState(false);
   const [signFor, setSignFor]           = useState(null);
+  const [assignFor, setAssignFor]       = useState(null);
   const [payFor, setPayFor]             = useState(null);
   const [showBulk, setShowBulk]         = useState(false);
   const [linkCopied, setLinkCopied]     = useState(false);
@@ -278,6 +280,7 @@ export default function ReservationsPage() {
         </div>
       )}
 
+      {assignFor && <AssignDriverModal reservation={assignFor} onClose={() => setAssignFor(null)} onAssigned={load} />}
       {signFor && <WelcomeSignModal reservation={signFor} onClose={() => setSignFor(null)} />}
       {payFor && <PaymentLinkModal reservation={payFor} onClose={() => setPayFor(null)} onPaid={load} />}
 
@@ -286,7 +289,7 @@ export default function ReservationsPage() {
         <div key={label} className="mb-6">
           <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-3">{label} ({flights.length})</h2>
           <div className="space-y-3">
-            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} onShowPay={setPayFor} />)}
+            {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} onShowPay={setPayFor} onAssign={setAssignFor} />)}
           </div>
         </div>
       ))}
@@ -337,7 +340,7 @@ function groupByDate(reservations) {
   return groups;
 }
 
-function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) {
+function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, isPast }) {
   const [copied, setCopied] = useState(false);
   const [driverCopied, setDriverCopied] = useState(false);
   const [driverBusy, setDriverBusy] = useState(false);
@@ -404,6 +407,34 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
           {r.pnr   && <span className="font-mono bg-surface-alt px-1.5 py-0.5 rounded">PNR: {r.pnr}</span>}
           {r.notes && <span className="text-ink-muted">{r.notes}</span>}
         </div>
+
+        {/* Kim sürüyor ve iş nerede — dispatcher'ın panoda görmesi gereken iki
+            şey buydu; ikisi de görünmüyordu. Şoför yoksa sessiz kalmak yerine
+            açıkça söylenir: atanmamış bir iş operasyonda bir boşluktur. */}
+        {!isPast && (
+          <div className="flex items-center gap-2 flex-wrap mt-1.5">
+            {/* "Atanmış mı" ölçütü ad DEĞİL atamanın kendisidir: profilinde adı
+                olmayan bir üyeye atandığında kart yanlışlıkla "atanmadı" derdi. */}
+            {r.driver_name ? (
+              <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
+                <UserCheck size={11} /> {r.driver_name}
+              </span>
+            ) : r.assigned_driver_id ? (
+              <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
+                <UserCheck size={11} /> Şoför atandı (adı girilmemiş)
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-xs font-semibold text-warn-800">
+                <AlertTriangle size={11} /> Şoför atanmadı
+              </span>
+            )}
+            {r.job_status && JOB_BADGE[r.job_status] && (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${JOB_BADGE[r.job_status].cls}`}>
+                {JOB_BADGE[r.job_status].label}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sağ */}
@@ -412,6 +443,14 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
         {r.share_token && (
           <button onClick={handleShare} aria-label="Takip linkini kopyala" title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-control transition-colors ${copied ? 'text-ok-600 bg-ok-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
             {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+          </button>
+        )}
+        {!isPast && onAssign && (
+          <button onClick={() => onAssign(r)}
+            aria-label="Şoför ata"
+            title={r.assigned_driver_id ? 'Atanan şoförü değiştir' : 'Kadrolu şoför ata'}
+            className={`p-1.5 rounded-control transition-colors ${r.assigned_driver_id ? 'text-brand-600 bg-brand-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
+            <UserCheck size={14} />
           </button>
         )}
         {!isPast && (
