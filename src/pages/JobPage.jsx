@@ -90,7 +90,10 @@ export default function JobPage() {
         return;
       }
       if (!res.ok) { setFlash(body.error || 'Kaydedilemedi, tekrar deneyin.'); return; }
-      setJob(body);
+      // BİRLEŞTİR, değiştirme: durum ucu yalnız iş kartını döner — firma adı ve
+      // firma telefonu yalnız GET'te gelir. Nesneyi tümüyle değiştirmek, şoför
+      // butona bastığı anda "Firmayı Ara"yı ve başlığı ekrandan siliyordu.
+      setJob((prev) => ({ ...prev, ...body }));
       setFlash(`"${ACTION_LABEL[next]}" kaydedildi.`);
     } catch {
       setFlash('Bağlantı kurulamadı, tekrar deneyin.');
