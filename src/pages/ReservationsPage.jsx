@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { RES_STATUS_BADGE } from '../lib/status';
 import { formatPickup } from '../lib/format';
 import { Button } from '../components/ui';
-import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox } from 'lucide-react';
+import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
 
@@ -339,6 +339,8 @@ function groupByDate(reservations) {
 
 function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) {
   const [copied, setCopied] = useState(false);
+  const [driverCopied, setDriverCopied] = useState(false);
+  const [driverBusy, setDriverBusy] = useState(false);
   const ls   = r.latest_status;
   const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
   const rs   = RES_STATUS[r.status] || RES_STATUS.active;
@@ -349,6 +351,23 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  // Taşeron şoför linki: uygulama kurmayacak şoföre SMS/WhatsApp ile gönderilir.
+  // Her çağrı YENİ token üretir — yani yanlış numaraya giden bir linki iptal
+  // etmenin yolu butona tekrar basmaktır.
+  async function handleDriverLink() {
+    setDriverBusy(true);
+    try {
+      const { driver_token } = await api.createDriverLink(r.id);
+      await navigator.clipboard.writeText(`${window.location.origin}/job/${driver_token}`);
+      setDriverCopied(true);
+      setTimeout(() => setDriverCopied(false), 2500);
+    } catch {
+      alert('Şoför linki oluşturulamadı. Tekrar deneyin.');
+    } finally {
+      setDriverBusy(false);
+    }
   }
 
   const pickup = new Date(r.scheduled_pickup);
@@ -393,6 +412,14 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, isPast }) 
         {r.share_token && (
           <button onClick={handleShare} aria-label="Takip linkini kopyala" title={copied ? 'Kopyalandı' : 'Takip linkini kopyala'} className={`p-1.5 rounded-control transition-colors ${copied ? 'text-ok-600 bg-ok-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
             {copied ? <CheckCircle size={14} /> : <Share2 size={14} />}
+          </button>
+        )}
+        {!isPast && (
+          <button onClick={handleDriverLink} disabled={driverBusy}
+            aria-label="Şoför iş linki oluştur ve kopyala"
+            title={driverCopied ? 'Link kopyalandı — şoföre gönderin' : 'Şoför iş linki oluştur (taşeron şoför için)'}
+            className={`p-1.5 rounded-control transition-colors disabled:opacity-50 ${driverCopied ? 'text-ok-600 bg-ok-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
+            {driverCopied ? <CheckCircle size={14} /> : <Car size={14} />}
           </button>
         )}
         {!isPast && onShowSign && (
