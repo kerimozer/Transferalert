@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon } from 'lucide-react';
+import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil } from 'lucide-react';
 
 // PostgREST `time` kolonunu "22:00:00" olarak döndürür; <input type="time"> "22:00" ister.
 const hhmm = (v) => (typeof v === 'string' ? v.slice(0, 5) : '');
@@ -29,6 +29,15 @@ export default function OrganizationPage() {
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
   const [upgrading, setUpgrading] = useState(null);
+
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft,   setNameDraft]   = useState('');
+  const [nameSaving,  setNameSaving]  = useState(false);
+  // AYRI hata state'i: ortak `error` yalnız "Plan Yükseltme" bloğunda render
+  // ediliyor ve o blok yükseltilecek plan yoksa (enterprise admin, ya da
+  // plans listesi çekilemediyse) HİÇ çizilmiyor — yeniden adlandırma hatası
+  // ekranda görünmeden kaybolurdu.
+  const [nameError,   setNameError]   = useState('');
 
   const [nw,       setNw]       = useState({ enabled: false, user_id: '', start: '22:00', end: '08:00' });
   const [nwSaving, setNwSaving] = useState(false);
@@ -78,6 +87,21 @@ export default function OrganizationPage() {
       setNwError(err.message || 'Kaydedilemedi.');
     } finally {
       setNwSaving(false);
+    }
+  }
+
+  async function handleRename(e) {
+    e.preventDefault();
+    setNameError('');
+    setNameSaving(true);
+    try {
+      const saved = await api.renameOrg(nameDraft.trim());
+      setOrg((o) => ({ ...o, name: saved.name }));
+      setEditingName(false);
+    } catch (err) {
+      setNameError(err.message || 'Firma adı değiştirilemedi.');
+    } finally {
+      setNameSaving(false);
     }
   }
 
@@ -237,8 +261,47 @@ export default function OrganizationPage() {
           <Building2 size={22} className="text-brand-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-ink">{org.name}</p>
-          <p className="text-sm text-ink-muted">{plansByKey[org.plan]?.label || org.plan} plan · {activeCount}/{limit} kişi</p>
+          {/* Yeniden adlandırma: bir kullanıcı tek firmaya bağlı olduğu için
+              (uniq_organizations_owner) yanlış isimle kuran biri onu başka
+              türlü düzeltemez — silip yeniden kuramaz. */}
+          {editingName ? (
+            <form onSubmit={handleRename} className="flex items-center gap-2">
+              <input
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                className="flex-1 min-w-0 border border-surface-borderstrong rounded-control px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                maxLength={100}
+                required autoFocus
+              />
+              <button type="submit" disabled={nameSaving}
+                className="shrink-0 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-control px-3 py-1.5 text-xs font-semibold">
+                {nameSaving ? '...' : 'Kaydet'}
+              </button>
+              <button type="button" onClick={() => { setEditingName(false); setNameError(''); }}
+                className="shrink-0 text-ink-muted hover:text-ink px-1.5" aria-label="Vazgeç">
+                <X size={16} />
+              </button>
+            </form>
+          ) : (
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="font-semibold text-ink truncate">{org.name}</p>
+              {role === 'admin' && (
+                <button
+                  onClick={() => { setNameDraft(org.name); setEditingName(true); setNameError(''); }}
+                  title="Firma adını düzenle" aria-label="Firma adını düzenle"
+                  className="shrink-0 p-1 text-ink-muted hover:text-brand-600 hover:bg-brand-50 rounded-control transition-colors">
+                  <Pencil size={13} />
+                </button>
+              )}
+            </div>
+          )}
+          {nameError ? (
+            <p className="flex items-center gap-1.5 text-sm text-bad-800 mt-1">
+              <AlertCircle size={13} className="shrink-0" />{nameError}
+            </p>
+          ) : (
+            <p className="text-sm text-ink-muted">{plansByKey[org.plan]?.label || org.plan} plan · {activeCount}/{limit} kişi</p>
+          )}
         </div>
         <span className="text-xs font-semibold px-3 py-1.5 bg-brand-50 text-brand-700 rounded-full shrink-0">
           {ROLE_LABELS[role] || role}

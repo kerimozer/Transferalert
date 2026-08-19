@@ -46,6 +46,7 @@ export const api = {
   // Firma (Organization)
   getMyOrg:      ()     => req('GET',    '/api/organizations/my'),
   createOrg:     (data) => req('POST',   '/api/organizations', data),
+  renameOrg:     (name) => req('PATCH',  '/api/organizations', { name }),
   listOrgMembers: ()    => req('GET',    '/api/organizations/members'),
   inviteMember:  (data) => req('POST',   '/api/organizations/invite', data),
   removeMember:  (id)   => req('DELETE', `/api/organizations/members/${id}`),
