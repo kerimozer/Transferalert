@@ -21,6 +21,7 @@ const PrivacyPage       = lazy(() => import('./pages/PrivacyPage'));
 const PartnerPortalPage = lazy(() => import('./pages/PartnerPortalPage'));
 const PartnersPage      = lazy(() => import('./pages/PartnersPage'));
 const JobPage           = lazy(() => import('./pages/JobPage'));
+const InvitePage        = lazy(() => import('./pages/InvitePage'));
 
 const pageFallback = (
   <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
@@ -61,6 +62,8 @@ export default function App() {
           <Route path="/portal/:token" element={<PartnerPortalPage />} />
           {/* Taşeron şoförün girişsiz iş kartı — SMS/WhatsApp ile gelen link */}
           <Route path="/job/:token" element={<JobPage />} />
+          {/* Ekip daveti — WhatsApp/SMS ile paylaşılan https link */}
+          <Route path="/davet/:token" element={<InvitePage />} />
           <Route path="/app/login" element={<LoginPage />} />
           <Route path="/app" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route index                element={<DashboardPage />} />

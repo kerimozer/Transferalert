@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
 import { Plane } from 'lucide-react';
@@ -14,6 +14,14 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Giriş sonrası dönülecek yer. Davet linkinden gelen kişi giriş yapıp
+  // panele düşerse davetini kaybeder ve ne yapacağını bilemez.
+  // GÜVENLİK: yalnız uygulama içi yollar; "//evil.com" gibi protokolsüz
+  // mutlak adresler açık yönlendirme (open redirect) olurdu.
+  const nextParam = searchParams.get('next') || '';
+  const safeNext = /^\/[^/]/.test(nextParam) ? nextParam : '/app';
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -23,12 +31,12 @@ export default function LoginPage() {
     if (mode === 'login') {
       const { error } = await login(email.trim(), password);
       if (error) setError('E-posta veya şifre hatalı.');
-      else navigate('/app');
+      else navigate(safeNext);
     } else {
       if (!phone.trim()) { setError('Telefon numarası zorunlu (bildirimler bu numaraya gider).'); setLoading(false); return; }
       const { error } = await register(email.trim(), password, name.trim(), phone.trim());
       if (error) setError(error.message || 'Kayıt başarısız.');
-      else navigate('/app');
+      else navigate(safeNext);
     }
     setLoading(false);
   }

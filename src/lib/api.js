@@ -49,6 +49,7 @@ export const api = {
   listOrgMembers: ()    => req('GET',    '/api/organizations/members'),
   inviteMember:  (data) => req('POST',   '/api/organizations/invite', data),
   removeMember:  (id)   => req('DELETE', `/api/organizations/members/${id}`),
+  joinOrg:       (token) => req('POST',  `/api/organizations/join/${token}`),
   setNightWatch: (data) => req('PATCH',  '/api/organizations/night-watch', data),
 
   // İş ortakları (otel / acenta portalı)
