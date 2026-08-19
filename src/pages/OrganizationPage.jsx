@@ -22,7 +22,7 @@ export default function OrganizationPage() {
   const [createForm, setCreateForm] = useState({ name: '', plan: 'starter' });
 
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ phone: '', email: '', role: 'driver' });
+  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', email: '', role: 'driver' });
   const [inviteLink, setInviteLink] = useState('');
   const [copied,     setCopied]     = useState(false);
 
@@ -103,7 +103,7 @@ export default function OrganizationPage() {
     try {
       const res = await api.inviteMember(inviteForm);
       setInviteLink(res.invite_link || '');
-      setInviteForm({ phone: '', email: '', role: 'driver' });
+      setInviteForm({ name: '', phone: '', email: '', role: 'driver' });
       load();
     } catch (err) {
       setError(err.message);
@@ -312,7 +312,7 @@ export default function OrganizationPage() {
                 <option value="">Seçiniz</option>
                 {members.filter(m => m.status === 'active' && m.user_id).map(m => (
                   <option key={m.user_id} value={m.user_id}>
-                    {m.profiles?.full_name || m.profiles?.phone || ROLE_LABELS[m.role] || 'Üye'}
+                    {m.profiles?.full_name || m.invited_name || m.profiles?.phone || ROLE_LABELS[m.role] || 'Üye'}
                   </option>
                 ))}
               </select>
@@ -368,7 +368,7 @@ export default function OrganizationPage() {
         <div className="space-y-3">
           {members.map(m => {
             const RoleIcon = ROLE_ICONS[m.role] || Truck;
-            const displayName = m.profiles?.full_name || m.invited_phone || m.invited_email || 'Davet bekleniyor';
+            const displayName = m.profiles?.full_name || m.invited_name || m.invited_phone || m.invited_email || 'Davet bekleniyor';
             const displayPhone = m.profiles?.phone || m.invited_phone;
             return (
               <div key={m.id} className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-4">
@@ -428,6 +428,19 @@ export default function OrganizationPage() {
               </div>
             ) : (
               <form onSubmit={handleInvite} className="px-6 py-5 space-y-4">
+                {/* Ad, hesabı OLMAYAN şoförün tek kimlik kaynağı: panoda ve
+                    yolcuya giden bilgide bu görünür. Hesap açarsa profildeki
+                    ad devralır. */}
+                <div>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Ad Soyad <span className="text-bad-600">*</span></label>
+                  <input
+                    value={inviteForm.name}
+                    onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Ali Kaya"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    required autoFocus
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink-soft mb-1">Telefon <span className="text-bad-600">*</span></label>
                   <input
@@ -436,7 +449,7 @@ export default function OrganizationPage() {
                     placeholder="0532 000 00 00"
                     type="tel"
                     className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
-                    required autoFocus
+                    required
                   />
                 </div>
                 <div>

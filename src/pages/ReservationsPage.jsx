@@ -419,7 +419,7 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
               <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
                 <UserCheck size={11} /> {r.driver_name}
               </span>
-            ) : r.assigned_driver_id ? (
+            ) : r.assigned_member_id ? (
               <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
                 <UserCheck size={11} /> Şoför atandı (adı girilmemiş)
               </span>
@@ -448,8 +448,8 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
         {!isPast && onAssign && (
           <button onClick={() => onAssign(r)}
             aria-label="Şoför ata"
-            title={r.assigned_driver_id ? 'Atanan şoförü değiştir' : 'Kadrolu şoför ata'}
-            className={`p-1.5 rounded-control transition-colors ${r.assigned_driver_id ? 'text-brand-600 bg-brand-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
+            title={r.assigned_member_id ? 'Atanan şoförü değiştir' : 'Kadrolu şoför ata'}
+            className={`p-1.5 rounded-control transition-colors ${r.assigned_member_id ? 'text-brand-600 bg-brand-50' : 'text-ink-muted hover:text-brand-600 hover:bg-brand-50'}`}>
             <UserCheck size={14} />
           </button>
         )}

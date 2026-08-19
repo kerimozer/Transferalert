@@ -1,8 +1,9 @@
 // Dispatcher'ın bir transferi kadrolu şoföre atadığı yer.
 //
-// KAPSAM NOTU: burada yalnız HESABI OLAN ekip üyeleri listelenir — atanan kişi
-// uygulamadan işini görsün ve durumu ilerletsin diye. Uygulama kurmayacak
-// taşeron şoför için ayrı bir yol var: rezervasyon kartındaki "şoför linki".
+// KAPSAM: hesabı OLAN da OLMAYAN da listelenir. Şoförün kimliği üyelik
+// satırıdır, hesap değil — hesap yalnız push bildirimi ve mobil uygulama
+// ekleyen bir yükseltmedir. Hesapsız şoför işi kartındaki 'şoför linki' ile
+// görür ve durumu oradan ilerletir.
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { X, UserCheck, AlertCircle, Shield, Headset, Truck } from 'lucide-react';
@@ -22,18 +23,17 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
 
   useEffect(() => {
     api.listOrgMembers()
-      // Yalnız hesabı olan aktif üyeler atanabilir: bekleyen davetin user_id'si
-      // yoktur, backend de üyelik doğrulamasında onu reddeder.
-      .then((all) => setMembers((all || []).filter((m) => m.status === 'active' && m.user_id)))
+      // Bekleyen (hesapsız) üyeler de atanabilir — mesele tam olarak bu.
+      .then((all) => setMembers((all || []).filter((m) => m.status === 'active' || m.status === 'pending')))
       .catch(() => setNoOrg(true))
       .finally(() => setLoading(false));
   }, []);
 
-  async function assign(userId) {
-    setSaving(userId || 'clear');
+  async function assign(memberId) {
+    setSaving(memberId || 'clear');
     setError('');
     try {
-      await api.updateReservation(reservation.id, { assigned_driver_id: userId });
+      await api.updateReservation(reservation.id, { assigned_member_id: memberId });
       onAssigned();
       onClose();
     } catch (err) {
@@ -45,7 +45,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
 
   // Sürücüler üstte: dispatcher'ın aradığı kişi %90 onlardan biri.
   const sorted = [...members].sort((a, b) => (a.role === 'driver' ? -1 : 1) - (b.role === 'driver' ? -1 : 1));
-  const current = reservation.assigned_driver_id;
+  const current = reservation.assigned_member_id;
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-center justify-center p-4 z-50">
@@ -85,11 +85,11 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
 
           {sorted.map((m) => {
             const Icon = ROLE_ICON[m.role] || Truck;
-            const isCurrent = current === m.user_id;
+            const isCurrent = current === m.id;
             return (
               <button
-                key={m.user_id}
-                onClick={() => assign(m.user_id)}
+                key={m.id}
+                onClick={() => assign(m.id)}
                 disabled={!!saving}
                 className={`w-full flex items-center gap-3 p-3 rounded-control text-left transition-colors disabled:opacity-60 ${
                   isCurrent ? 'bg-brand-50' : 'hover:bg-surface-alt'
@@ -99,8 +99,11 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
                   <Icon size={16} className="text-ink-soft" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-ink truncate">{m.profiles?.full_name || m.profiles?.phone || 'İsimsiz üye'}</p>
-                  <p className="text-xs text-ink-muted">{ROLE_LABEL[m.role] || m.role}</p>
+                  <p className="font-semibold text-ink truncate">{m.profiles?.full_name || m.invited_name || m.invited_phone || 'İsimsiz üye'}</p>
+                  <p className="text-xs text-ink-muted">
+                    {ROLE_LABEL[m.role] || m.role}
+                    {!m.user_id && <span className="text-warn-800"> · uygulama yok, link gönderin</span>}
+                  </p>
                 </div>
                 {isCurrent && <UserCheck size={16} className="text-brand-600 shrink-0" />}
               </button>
