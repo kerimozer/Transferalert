@@ -8,7 +8,7 @@
 //
 // Çözüm https bir sayfa: her mesajlaşma uygulamasında tıklanır, uygulama kurulu
 // olmasa da açılır, katılma işlemini burada bitirir.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
@@ -32,6 +32,7 @@ export default function InvitePage() {
   const [error, setError]     = useState('');
   const [joining, setJoining] = useState(false);
   const [joined, setJoined]   = useState(false);
+  const autoTried = useRef(false);
 
   useEffect(() => {
     fetch(`${API}/api/public/invite/${token}`)
@@ -57,6 +58,24 @@ export default function InvitePage() {
       setJoining(false);
     }
   }
+
+  // Girişli kullanıcı için ek bir "kabul et" tıklaması istemiyoruz: linke
+  // tıklamak zaten niyet beyanıdır. Yetkisiz katılmayı engelleyen şey buton
+  // değil, sunucudaki telefon eşleşme kapısı — o yerinde duruyor.
+  // autoTried: React iki kez render ederse çift POST atılmasın.
+  useEffect(() => {
+    if (!user || !invite || joined || autoTried.current) return;
+    autoTried.current = true;
+    accept();
+  }, [user, invite, joined]);
+
+  // Katılma bitince firma yüzündeki kullanıcı panele kendiliğinden geçsin.
+  // Şoför için hedef panel DEĞİL mobil uygulama — onu yönlendirmiyoruz.
+  useEffect(() => {
+    if (!joined || invite?.role === 'driver') return;
+    const timer = setTimeout(() => navigate('/app'), 1800);
+    return () => clearTimeout(timer);
+  }, [joined, invite, navigate]);
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg text-ink-muted text-sm">Yükleniyor...</div>
@@ -142,23 +161,32 @@ export default function InvitePage() {
       )}
 
       {user ? (
-        <button
-          onClick={accept}
-          disabled={joining}
-          className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold rounded-control py-3 transition-colors"
-        >
-          {joining ? 'Katılınıyor...' : 'Daveti kabul et'}
-        </button>
+        // Otomatik katılıyoruz; hata çıkarsa yukarıdaki kutuda görünür ve
+        // kullanıcı tekrar deneyebilsin diye buton yeniden belirir.
+        error ? (
+          <button
+            onClick={accept}
+            disabled={joining}
+            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold rounded-control py-3 transition-colors"
+          >
+            {joining ? 'Katılınıyor...' : 'Tekrar dene'}
+          </button>
+        ) : (
+          <p className="text-sm text-ink-muted text-center py-3">Ekibe ekleniyorsunuz...</p>
+        )
       ) : (
         <>
+          {/* mode=register: davetten gelen kişinin hesabı GENELDE YOKTUR
+              (yeni şoför). Giriş modunda açmak, kayıt bağlantısını aramaya
+              zorluyordu — akışın en çok takılan yeri burasıydı. */}
           <button
-            onClick={() => navigate(`/app/login?next=${encodeURIComponent(`/davet/${token}`)}`)}
+            onClick={() => navigate(`/app/login?mode=register&next=${encodeURIComponent(`/davet/${token}`)}`)}
             className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3 transition-colors mb-2"
           >
-            Giriş yap veya kayıt ol
+            Devam et
           </button>
           <p className="text-xs text-ink-muted text-center">
-            Hesabınızı oluşturduktan sonra bu sayfaya geri dönersiniz.
+            Hesabınızı oluşturun; ekibe otomatik eklenirsiniz.
           </p>
         </>
       )}

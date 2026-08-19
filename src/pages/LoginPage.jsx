@@ -5,7 +5,12 @@ import { api } from '../lib/api';
 import { Plane } from 'lucide-react';
 
 export default function LoginPage() {
-  const [mode,     setMode]     = useState('login'); // 'login' | 'register'
+  const [searchParams] = useSearchParams();
+
+  // Davetten gelen kişinin hesabı genelde YOKTUR (yeni şoför). Giriş modunda
+  // açmak onu kayıt bağlantısını aramaya zorluyordu — davet akışının en çok
+  // takıldığı yer burasıydı.
+  const [mode,     setMode]     = useState(searchParams.get('mode') === 'register' ? 'register' : 'login');
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [name,     setName]     = useState('');
@@ -14,8 +19,6 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
   // Giriş sonrası dönülecek yer. Davet linkinden gelen kişi giriş yapıp
   // panele düşerse davetini kaybeder ve ne yapacağını bilemez.
   // GÜVENLİK: yalnız uygulama içi yollar; "//evil.com" gibi protokolsüz
