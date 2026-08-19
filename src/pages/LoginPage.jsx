@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [phone,    setPhone]    = useState('');
   const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
+  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
   // Giriş sonrası dönülecek yer. Davet linkinden gelen kişi giriş yapıp
@@ -37,8 +38,13 @@ export default function LoginPage() {
       else navigate(safeNext);
     } else {
       if (!phone.trim()) { setError('Telefon numarası zorunlu (bildirimler bu numaraya gider).'); setLoading(false); return; }
-      const { error } = await register(email.trim(), password, name.trim(), phone.trim());
+      const { data, error } = await register(email.trim(), password, name.trim(), phone.trim());
       if (error) setError(error.message || 'Kayıt başarısız.');
+      // Supabase'de e-posta onayı AÇIKSA signUp oturum DÖNMEZ. Bunu ele almazsak
+      // kullanıcı geldiği yere geri gönderilir, orada hâlâ "giriş yapılmamış"
+      // görünür ve aynı ekrana düşer — kısır döngü. Davetten gelen şoför tam
+      // burada kayboluyordu.
+      else if (!data?.session) setAwaitingConfirm(true);
       else navigate(safeNext);
     }
     setLoading(false);
@@ -55,6 +61,22 @@ export default function LoginPage() {
           <span className="text-xl font-bold text-ink">TransferAlert</span>
         </div>
 
+        {awaitingConfirm ? (
+          <>
+            <h1 className="text-lg font-semibold text-ink mb-2">E-postanızı onaylayın</h1>
+            <p className="text-sm text-ink-soft mb-5">
+              <strong>{email}</strong> adresine bir onay bağlantısı gönderdik. Bağlantıya
+              tıkladıktan sonra buraya dönüp giriş yapın — davetiniz sizi bekliyor.
+            </p>
+            <button
+              onClick={() => { setAwaitingConfirm(false); setMode('login'); setPassword(''); }}
+              className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
+            >
+              Onayladım, giriş yap
+            </button>
+          </>
+        ) : (
+        <>
         <h1 className="text-lg font-semibold text-ink mb-1">
           {mode === 'login' ? 'Giriş Yap' : 'Hesap Oluştur'}
         </h1>
@@ -154,6 +176,8 @@ export default function LoginPage() {
             </>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );
