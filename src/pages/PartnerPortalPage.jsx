@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink } from 'lucide-react';
+import { localInputToIso } from '../lib/format';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -70,7 +71,7 @@ export default function PartnerPortalPage() {
       const res = await fetch(`${API}/api/public/partner/${token}/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, scheduled_pickup: localInputToIso(form.scheduled_pickup) }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Talep gönderilemedi');

@@ -150,6 +150,13 @@ export default function JobPage() {
           )}
 
           <Row icon={Clock} label="Alış Saati">{formatPickup(job.scheduled_pickup)}</Row>
+          {/* İki alan BİRBİRİNDEN BAĞIMSIZ ve ikisi de opsiyonel: saati
+              adresin guard'ı içine yuvalamak, adres boşken saati görünmez
+              yapıyordu. "Planlanan" — "tahmini" (ETA) üçüncü bir kavram. */}
+          {job.dropoff_point && <Row icon={MapPin} label="Varış">{job.dropoff_point}</Row>}
+          {job.scheduled_dropoff && (
+            <Row icon={Clock} label="Planlanan Varış">{formatPickup(job.scheduled_dropoff)}</Row>
+          )}
           <Row icon={User} label="Yolcu">{job.passenger_name}</Row>
           {job.vehicle_plate && <Row icon={Car} label="Araç">{job.vehicle_plate}</Row>}
           {job.notes && <Row icon={StickyNote} label="Not">{job.notes}</Row>}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Calendar, Send } from 'lucide-react';
+import { localInputToIso } from '../lib/format';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -10,7 +11,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', source: '', notes: '' };
+const EMPTY = { flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', dropoff_point: '', source: '', notes: '' };
 
 export default function RequestPage() {
   const { token } = useParams();
@@ -38,7 +39,9 @@ export default function RequestPage() {
       const res = await fetch(`${API}/api/public/request/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        // datetime-local ham gönderilirse sunucu kendi dilimiyle yorumlar
+        // ve saat kayar (bkz. localInputToIso).
+        body: JSON.stringify({ ...form, scheduled_pickup: localInputToIso(form.scheduled_pickup) }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Talep gönderilemedi');
@@ -115,6 +118,14 @@ export default function RequestPage() {
           <Field label="Yolcu Telefonu">
             <input value={form.passenger_phone} onChange={e => setForm(f => ({ ...f, passenger_phone: e.target.value }))}
               placeholder="+90 5XX XXX XX XX" className={inputCls} />
+          </Field>
+
+          {/* Varışı SORAN taraf zaten biliyor (çoğu zaman kendi tesisi).
+              Sormanın maliyeti sıfır, sonradan bulmanınki yüksek — üstelik
+              şoförün kartında ve ileride U-ETDS bildiriminde gerekiyor. */}
+          <Field label="Varış Noktası">
+            <input value={form.dropoff_point} onChange={e => setForm(f => ({ ...f, dropoff_point: e.target.value }))}
+              placeholder="Otel adı / adres" maxLength={200} className={inputCls} />
           </Field>
 
           <Field label="Not">

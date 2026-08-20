@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, JOB_BADGE } from '../lib/status';
-import { formatPickup } from '../lib/format';
+import { formatPickup, localInputToIso } from '../lib/format';
 import { Button } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
@@ -18,7 +18,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', pnr: '', scheduled_pickup: '', notes: '' };
+const EMPTY = { flight_number: '', pnr: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
 
 const FLIGHT_STATUS = {
   landed:    { label: 'İndi',          icon: CheckCircle,   cls: 'text-ok-600 bg-ok-50 border-ok-600/20' },
@@ -78,7 +78,11 @@ export default function ReservationsPage() {
       await api.createReservation({
         flight_number:    form.flight_number,
         pnr:              form.pnr || null,
-        scheduled_pickup: form.scheduled_pickup,
+        // İKİSİ DE aynı dönüşümden geçmeli: biri ham biri ISO gidince
+        // sunucu ikisini farklı dilimde yorumluyor ve sıra kuralı patlıyordu.
+        scheduled_pickup:  localInputToIso(form.scheduled_pickup),
+        dropoff_point:     form.dropoff_point || null,
+        scheduled_dropoff: localInputToIso(form.scheduled_dropoff),
         notes:            form.notes,
       });
       setForm(EMPTY);
@@ -255,6 +259,31 @@ export default function ReservationsPage() {
                   onChange={e => setForm(f => ({ ...f, pnr: e.target.value.toUpperCase().replace(/\s/g, '') }))}
                   placeholder="ABC123"
                   className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                />
+              </div>
+
+              {/* Varış — U-ETDS'te zorunlu alan, ama şimdiden şoför kartında
+                  ve planlamada işe yarıyor. İkisi de opsiyonel bırakıldı ki
+                  hızlı ekleme akışı yavaşlamasın. */}
+              <div>
+                <label className="block text-sm font-semibold text-ink-soft mb-1">Varış Noktası <span className="text-ink-muted font-normal">(opsiyonel)</span></label>
+                <input
+                  value={form.dropoff_point}
+                  onChange={e => setForm(f => ({ ...f, dropoff_point: e.target.value }))}
+                  placeholder="Rixos Downtown, Konyaaltı"
+                  maxLength={200}
+                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-ink-soft mb-1">Tahmini Varış <span className="text-ink-muted font-normal">(opsiyonel)</span></label>
+                <input
+                  type="datetime-local"
+                  value={form.scheduled_dropoff}
+                  onChange={e => setForm(f => ({ ...f, scheduled_dropoff: e.target.value }))}
+                  min={form.scheduled_pickup || nowLocal()}
+                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
 
