@@ -100,7 +100,17 @@ export default function ReservationsPage() {
 
   async function handleDelete(id) {
     if (!confirm('Bu uçuşu takip listesinden kaldırmak istiyor musunuz?')) return;
-    await api.deleteReservation(id);
+    // Silme ucu artık dokunduğu satırı doğruluyor: kayıt başka bir sekmede
+    // (ya da başka bir kullanıcı tarafından) çoktan silinmişse 404 gelir.
+    // Yakalanmazsa liste hiç tazelenmez ve ekranda HİÇBİR ŞEY olmaz — kullanıcı
+    // butona basıp basmadığını bilemez. Her hâlükârda tazele: 404 de olsa
+    // kaydın gitmiş olması istenen sonuçtur.
+    try {
+      await api.deleteReservation(id);
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    }
     load();
   }
 
