@@ -18,7 +18,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', pnr: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
+const EMPTY = { flight_number: '', pnr: '', passenger_name: '', passenger_phone: '', meeting_point: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
 
 const FLIGHT_STATUS = {
   landed:    { label: 'İndi',          icon: CheckCircle,   cls: 'text-ok-600 bg-ok-50 border-ok-600/20' },
@@ -78,6 +78,11 @@ export default function ReservationsPage() {
       await api.createReservation({
         flight_number:    form.flight_number,
         pnr:              form.pnr || null,
+        // Liste artık yolcu adını başlık yapıyor; alan gönderilmezse backend
+        // onu uçuş numarasıyla doldurur ve her kart 'girilmemiş' görünür.
+        passenger_name:   form.passenger_name || null,
+        passenger_phone:  form.passenger_phone || null,
+        meeting_point:    form.meeting_point || null,
         // İKİSİ DE aynı dönüşümden geçmeli: biri ham biri ISO gidince
         // sunucu ikisini farklı dilimde yorumluyor ve sıra kuralı patlıyordu.
         scheduled_pickup:  localInputToIso(form.scheduled_pickup),
@@ -156,15 +161,15 @@ export default function ReservationsPage() {
     <div className="p-8 max-w-3xl">
       <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Uçuş Takibi</h1>
-          <p className="text-sm text-ink-muted mt-0.5">Gelecekteki uçuşları önceden ekleyin. Yaklaştığında otomatik bildirim alırsınız.</p>
+          <h1 className="text-2xl font-bold text-ink">Transferlerim</h1>
+          <p className="text-sm text-ink-muted mt-0.5">Transferleri önceden ekleyin; uçuş yaklaşınca ve inince otomatik bildirim alırsınız.</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="secondary" onClick={copyBookingLink} icon={linkCopied ? Check : Link2} title="Otel/acentalarınızın transfer talep edebileceği link">
             {linkCopied ? 'Kopyalandı' : 'Talep Linki'}
           </Button>
           <Button variant="secondary" onClick={() => setShowBulk(true)} icon={FileSpreadsheet}>Toplu İçe Aktar</Button>
-          <Button onClick={openForm} icon={Plus}>Uçuş Ekle</Button>
+          <Button onClick={openForm} icon={Plus}>Transfer Ekle</Button>
         </div>
       </div>
 
@@ -240,6 +245,42 @@ export default function ReservationsPage() {
                     <span><strong>{flightInfo.airline}</strong> · {flightInfo.departure_airport} → {flightInfo.arrival_airport}</span>
                   </div>
                 )}
+              </div>
+
+              {/* YOLCU — listenin başlığı artık bu. Alan formda yoktu:
+                  webden eklenen her transfer "Yolcu adı girilmemiş" olarak
+                  görünüyordu, çünkü backend passenger_name'i uçuş numarasıyla
+                  dolduruyor. Mobil bu alanı zaten gönderiyordu; iki istemci
+                  ayrışmış durumdaydı. */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Yolcu Adı</label>
+                  <input
+                    value={form.passenger_name}
+                    onChange={e => setForm(f => ({ ...f, passenger_name: e.target.value }))}
+                    placeholder="Anna Schmidt"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Yolcu Telefonu</label>
+                  <input
+                    value={form.passenger_phone}
+                    onChange={e => setForm(f => ({ ...f, passenger_phone: e.target.value }))}
+                    placeholder="0532 111 22 33"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-ink-soft mb-1">Buluşma Noktası</label>
+                <input
+                  value={form.meeting_point}
+                  onChange={e => setForm(f => ({ ...f, meeting_point: e.target.value }))}
+                  placeholder="Dış Hatlar Çıkış · 4 numaralı kapı"
+                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                />
               </div>
 
               {/* Uçuş Tarihi & Saati */}
@@ -417,35 +458,64 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   const hoursLeft = (pickup - now) / (1000 * 60 * 60);
   const isClose = hoursLeft > 0 && hoursLeft <= 6;
 
+  // Şoförü olmayan AKTİF transfer operasyonda bir boşluktur ve poller'ın alarm
+  // ürettiği tek durum budur — kart seviyesinde ayrışsın ki dispatcher rozeti
+  // okumadan da görsün. Onay bekleyen (otel talebi) kayıt bu sayıma GİRMEZ:
+  // henüz kabul edilmemiş bir talepte şoför yokluğu eksiklik değildir.
+  const needsDriver = !isPast && r.status === 'active' && !r.assigned_member_id && !r.driver_name;
+  // Yolcu adı yoksa başlık uçuş numarasına düşer; o durumda alt satırda
+  // TEKRAR yazmak aynı bilgiyi iki kez göstermek olur.
+  const hasPassenger = !!r.passenger_name && r.passenger_name !== r.flight_number;
+
   return (
     <div className={`bg-white border rounded-card p-4 flex items-center gap-4 transition-all ${
-      isPast ? 'border-surface-border' : isClose ? 'border-brand-600/20 shadow-sm ring-1 ring-brand-600/20' : 'border-surface-border shadow-sm'
+      isPast ? 'border-surface-border'
+        : needsDriver ? 'border-bad-600 border-l-4 shadow-sm'
+        : isClose ? 'border-brand-600/20 shadow-sm ring-1 ring-brand-600/20'
+        : 'border-surface-border shadow-sm'
     }`}>
-      {/* İkon */}
-      <div className={`w-11 h-11 rounded-card flex items-center justify-center border shrink-0 ${fs?.cls || 'text-ink-muted bg-surface-bg border-surface-border'}`}>
-        <Icon size={20} />
+      {/* SAAT sütunu. Bu ekranın adı artık "Transferlerim": dispatcher'ın
+          taradığı şey uçuş numarası değil, KAÇTA ve KİM. Uçuş bilgisi bu
+          soruların cevabını destekler, başlığı olmaz. */}
+      <div className="w-14 shrink-0 text-center">
+        <div className="text-lg font-bold text-ink leading-tight">
+          {pickup.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+        </div>
+        <div className="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">
+          {pickup.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
+        </div>
+        {fs && (
+          <span className={`mt-1.5 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full border ${fs.cls}`}>
+            {fs.label}
+          </span>
+        )}
+        {isClose && !fs && (
+          <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warn-50 text-warn-800 border border-warn-600/20">
+            <Bell size={10} /> {Math.round(hoursLeft)}s
+          </span>
+        )}
       </div>
 
       {/* Bilgiler */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-          <span className="font-mono font-bold text-ink text-base">{r.flight_number}</span>
-          {fs && (
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${fs.cls}`}>
-              {fs.label}{ls?.arrival_delay > 0 && ` +${ls.arrival_delay}dk`}
-            </span>
-          )}
-          {isClose && !fs && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-warn-50 text-warn-800 border border-warn-600/20 flex items-center gap-1">
-              <Bell size={10} /> {Math.round(hoursLeft)}s kaldı
-            </span>
-          )}
+        <div className="font-semibold text-ink truncate">
+          {hasPassenger ? r.passenger_name : r.flight_number}
         </div>
-        <div className="flex items-center gap-2 flex-wrap text-xs text-ink-muted">
-          <span className="flex items-center gap-1"><Calendar size={11} />{formatPickup(pickup)}</span>
+        <div className="flex items-center gap-2 flex-wrap text-xs text-ink-muted mt-0.5">
+          {hasPassenger && <span className="flex items-center gap-1"><Icon size={11} />{r.flight_number}</span>}
+          {ls?.arrival_delay > 0 && <span className="font-semibold text-warn-800">+{ls.arrival_delay} dk rötar</span>}
           {r.pnr   && <span className="font-mono bg-surface-alt px-1.5 py-0.5 rounded">PNR: {r.pnr}</span>}
-          {r.notes && <span className="text-ink-muted">{r.notes}</span>}
         </div>
+        {/* Güzergâh: şoförün ilk sorusu, dispatcher'ın da doğrulaması gereken şey. */}
+        {(r.meeting_point || r.dropoff_point) && (
+          <div className="flex items-center gap-1 text-xs text-ink-soft mt-1 min-w-0">
+            <Calendar size={11} className="shrink-0 opacity-0" />
+            <span className="truncate">
+              {r.meeting_point || '—'}{r.dropoff_point ? ` → ${r.dropoff_point}` : ''}
+            </span>
+          </div>
+        )}
+        {r.notes && <div className="text-xs text-ink-muted truncate mt-0.5">{r.notes}</div>}
 
         {/* Kim sürüyor ve iş nerede — dispatcher'ın panoda görmesi gereken iki
             şey buydu; ikisi de görünmüyordu. Şoför yoksa sessiz kalmak yerine
@@ -462,8 +532,17 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
               <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
                 <UserCheck size={11} /> Şoför atandı (adı girilmemiş)
               </span>
+            ) : r.status === 'active' ? (
+              // Tek dokunuşla çözülebilen bir eksik: uyarıyı eylemin KENDİSİ
+              // yap, dispatcher'ı ayrıca bir ikon aramaya zorlama.
+              <button
+                onClick={() => onAssign && onAssign(r)}
+                className="flex items-center gap-1 text-xs font-semibold text-bad-800 bg-bad-50 hover:bg-bad-50/70 px-2 py-1 rounded-full transition-colors"
+              >
+                <AlertTriangle size={11} /> Şoför atanmadı — ata
+              </button>
             ) : (
-              <span className="flex items-center gap-1 text-xs font-semibold text-warn-800">
+              <span className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
                 <AlertTriangle size={11} /> Şoför atanmadı
               </span>
             )}

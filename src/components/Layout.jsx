@@ -6,7 +6,7 @@ import { api } from '../lib/api';
 
 const NAV = [
   { to: '/app',               label: 'Dashboard',      icon: LayoutDashboard, end: true },
-  { to: '/app/reservations',  label: 'Uçuşlarım',      icon: Plane },
+  { to: '/app/reservations',  label: 'Transferlerim',  icon: Plane },
   { to: '/app/organization',  label: 'Firma Yönetimi', icon: Building2 },
   { to: '/app/partners',      label: 'İş Ortakları',   icon: Handshake },
   { to: '/app/notifications', label: 'Bildirimler',    icon: Bell },

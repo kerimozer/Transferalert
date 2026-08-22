@@ -32,6 +32,10 @@ export const api = {
   submitRequest:     (token, d)  => req('POST',   `/api/public/request/${token}`, d),
   updateReservation: (id, data) => req('PATCH',  `/api/reservations/${id}`, data),
   deleteReservation: (id)       => req('DELETE', `/api/reservations/${id}`),
+  // Atama ekranının listesi: kim var + o günkü yükü + bu saatteki çakışması.
+  // Üye listesinden AYRI, çünkü yük ve çakışma ancak rezervasyona göre hesaplanır.
+  driverOptions: (id)           => req('GET', `/api/reservations/${id}/driver-options`),
+
   // Taşeron şoför iş kartı linki — tekrar çağrılırsa YENİ token üretir (eskisi ölür).
   createDriverLink:  (id)       => req('POST',   `/api/reservations/${id}/driver-link`),
   revokeDriverLink:  (id)       => req('DELETE', `/api/reservations/${id}/driver-link`),
