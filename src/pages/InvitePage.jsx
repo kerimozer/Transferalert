@@ -113,15 +113,63 @@ export default function InvitePage() {
             : 'Artık firmanın panelini kullanabilirsiniz.'}
         </p>
         {isDriver ? (
-          <div className="flex items-start gap-2.5 px-3.5 py-3 bg-brand-50 rounded-control text-sm text-brand-700">
-            <Smartphone size={16} className="mt-0.5 shrink-0" />
-            <span>Telefonunuzda TransferAlert uygulamasını açın — işleriniz orada görünür.</span>
-          </div>
+          <>
+            {/* Hesap açan şoför de panosuna dönebilmeli: pano linki hesap
+                açmakla ölmez. Yalnız "uygulamayı indirin" demek, tam da bu
+                akışın kurtarmaya çalıştığı zincire geri sokuyordu. */}
+            {invite.driver_link && (
+              <a href={invite.driver_link}
+                 className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3.5 transition-colors mb-3">
+                İşlerimi Göster
+              </a>
+            )}
+            <div className="flex items-start gap-2.5 px-3.5 py-3 bg-brand-50 rounded-control text-sm text-brand-700">
+              <Smartphone size={16} className="mt-0.5 shrink-0" />
+              <span>Anlık bildirim almak isterseniz TransferAlert uygulamasına bu hesapla girebilirsiniz.</span>
+            </div>
+          </>
         ) : (
           <button onClick={() => navigate('/app')} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3 transition-colors">
             Panele git
           </button>
         )}
+      </Shell>
+    );
+  }
+
+  // ŞOFÖR HESAP EKRANI GÖRMEZ. Daha önce buradan kayıt → uygulama indir →
+  // tekrar giriş zinciri başlıyordu; çoğu şoför ilk adımda düşüyordu. Artık
+  // linke tıklayan şoför doğrudan işlerine gider, hesap açmak isteğe bağlı
+  // bir yükseltme olarak sayfanın altında durur.
+  if (invite.role === 'driver' && invite.driver_link && !user) {
+    return (
+      <Shell>
+        <p className="text-sm text-ink-muted mb-1">{invite.company}</p>
+        <h1 className="text-xl font-bold text-ink mb-1">İşleriniz hazır</h1>
+        <p className="text-sm text-ink-soft mb-5">
+          Hesap açmanıza gerek yok. Aşağıdaki butona basın, size atanan transferleri
+          görün ve durumu oradan ilerletin.
+        </p>
+        <a
+          href={invite.driver_link}
+          className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3.5 transition-colors mb-3"
+        >
+          İşlerimi Göster
+        </a>
+        <p className="text-xs text-ink-muted text-center mb-5">
+          Açılan sayfayı telefonunuza kaydedin — link değişmez, yeni işleriniz orada belirir.
+        </p>
+        <div className="border-t border-surface-border pt-4">
+          <p className="text-xs text-ink-muted mb-2">
+            Uçuş bildirimlerini telefonunuza anlık almak isterseniz hesap da açabilirsiniz.
+          </p>
+          <button
+            onClick={() => navigate(`/app/login?mode=register&next=${encodeURIComponent(`/davet/${token}`)}`)}
+            className="w-full bg-white border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-2.5 text-sm hover:bg-surface-alt transition-colors"
+          >
+            Hesap oluştur
+          </button>
+        </div>
       </Shell>
     );
   }

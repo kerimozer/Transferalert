@@ -50,6 +50,15 @@ export const api = {
   listOrgMembers: ()    => req('GET',    '/api/organizations/members'),
   inviteMember:  (data) => req('POST',   '/api/organizations/invite', data),
   removeMember:  (id)   => req('DELETE', `/api/organizations/members/${id}`),
+  // Şoförün KALICI pano linki (üyeliğe bağlı) — yukarıdaki createDriverLink/
+  // revokeDriverLink ile KARIŞTIRMA: onlar tek bir REZERVASYONA ait taşeron
+  // linkidir. Adları benzediği için ayrı isim şart: aynı nesnede mükerrer
+  // anahtar JS'te hata değildir, sonuncusu öncekini SESSİZCE ezer.
+  //
+  // Varsa AYNI linki döner; yenilemek açık istek gerektirir (rotate) —
+  // şoförün telefonundaki kayıtlı link sessizce ölmemeli.
+  portalLink:       (id, rotate = false) => req('POST', `/api/organizations/members/${id}/portal-link`, { rotate }),
+  revokePortalLink: (id) => req('DELETE', `/api/organizations/members/${id}/portal-link`),
   joinOrg:       (token) => req('POST',  `/api/organizations/join/${token}`),
   setNightWatch: (data) => req('PATCH',  '/api/organizations/night-watch', data),
 

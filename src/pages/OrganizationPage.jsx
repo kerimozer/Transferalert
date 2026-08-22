@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil } from 'lucide-react';
+import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil, Send, RefreshCw, XCircle } from 'lucide-react';
 
 // PostgREST `time` kolonunu "22:00:00" olarak döndürür; <input type="time"> "22:00" ister.
 const hhmm = (v) => (typeof v === 'string' ? v.slice(0, 5) : '');
@@ -24,7 +24,8 @@ export default function OrganizationPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteForm, setInviteForm] = useState({ name: '', phone: '', email: '', role: 'driver' });
   const [inviteLink, setInviteLink] = useState('');
-  const [copied,     setCopied]     = useState(false);
+  const [driverLink, setDriverLink] = useState('');
+  const [copied,     setCopied]     = useState('');
 
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
@@ -126,6 +127,10 @@ export default function OrganizationPage() {
     setSaving(true);
     try {
       const res = await api.inviteMember(inviteForm);
+      // Şoförde ASIL link pano linkidir; hesap linki yalnız push isteyenler
+      // için bir yükseltme. İkisini eşit göstermek, şoförü yine hesap açma
+      // zincirine sokan eski akışa geri döndürür.
+      setDriverLink(res.driver_link || '');
       setInviteLink(res.invite_link || '');
       setInviteForm({ name: '', phone: '', email: '', role: 'driver' });
       load();
@@ -136,21 +141,79 @@ export default function OrganizationPage() {
     }
   }
 
+  async function handleCreateDriverLink(id) {
+    setError('');
+    try {
+      await api.portalLink(id);
+      load();
+    } catch (err) {
+      setError(err.message || 'Şoför linki oluşturulamadı.');
+    }
+  }
+
+  // SIZAN LİNKİ GERİ ALMANIN YOLU. Token'ın süresi yok ve şifre istemiyor;
+  // iptal/yenileme arayüzde olmazsa "linki yenileyebilirsiniz" güvencesi
+  // yalnız kâğıt üstünde kalır — telefonunu kaybeden şoförde admin'in tek
+  // çaresi üyeyi silmek olurdu (bu da geçmiş atamaları koparır).
+  async function handleRotateDriverLink(id) {
+    if (!confirm('Yeni link üretilsin mi? Şoförün elindeki eski link ANINDA çalışmayı bırakır.')) return;
+    setError('');
+    try {
+      await api.portalLink(id, true);
+      load();
+    } catch (err) {
+      setError(err.message || 'Şoför linki yenilenemedi.');
+    }
+  }
+
+  async function handleRevokeDriverLink(id) {
+    if (!confirm('Link iptal edilsin mi? Şoför işlerini göremez hale gelir.')) return;
+    setError('');
+    try {
+      await api.revokePortalLink(id);
+      load();
+    } catch (err) {
+      setError(err.message || 'Şoför linki iptal edilemedi.');
+    }
+  }
+
   async function handleRemove(id) {
     if (!confirm('Bu üyeyi firmadan çıkarmak istiyor musunuz?')) return;
     await api.removeMember(id);
     load();
   }
 
-  function copyLink() {
-    navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // `key` hangi butonun "Kopyalandı" diyeceğini ayırır: tek boolean'la sayfadaki
+  // TÜM kopyala butonları aynı anda onay gösteriyordu.
+  function copyLink(text, key = 'invite') {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(''), 2000);
+  }
+
+  // Şoföre linki göndermenin en kısa yolu. Numarası olmayan üyede buton
+  // gösterilmez — boş bir wa.me linki WhatsApp'ta hata sayfası açar.
+  function waLink(phone, text) {
+    const raw = String(phone || '').trim();
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return null;
+
+    // wa.me ülke kodlu numara ister. Türkiye varsayılan ama TEK biçim değil:
+    // yabancı şoför/ortak numarası (+49..., 0049...) körü körüne 90 eklenirse
+    // "904915..." gibi ölü bir link üretiliyordu.
+    let intl;
+    if (raw.startsWith('+')) intl = digits;              // +90..., +49... → olduğu gibi
+    else if (digits.startsWith('00')) intl = digits.slice(2); // 0090..., 0049... → 00 at
+    else if (digits.startsWith('0')) intl = `90${digits.slice(1)}`; // 0532... → yerel TR
+    else if (digits.length <= 10) intl = `90${digits}`;   // 532... → yerel TR (kodsuz)
+    else intl = digits;                                   // zaten ülke kodlu görünüyor
+    return `https://wa.me/${intl}?text=${encodeURIComponent(text)}`;
   }
 
   function closeInviteModal() {
     setShowInvite(false);
     setInviteLink('');
+    setDriverLink('');
     setError('');
   }
 
@@ -433,25 +496,76 @@ export default function OrganizationPage() {
             const RoleIcon = ROLE_ICONS[m.role] || Truck;
             const displayName = m.profiles?.full_name || m.invited_name || m.invited_phone || m.invited_email || 'Davet bekleniyor';
             const displayPhone = m.profiles?.phone || m.invited_phone;
+            const wa = m.driver_link
+              ? waLink(displayPhone, `Merhaba${m.invited_name ? ' ' + m.invited_name : ''}, transferleriniz bu linkte: ${m.driver_link}`)
+              : null;
             return (
-              <div key={m.id} className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-4">
-                <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
-                  <RoleIcon size={18} className="text-brand-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-ink">{displayName}</p>
-                  <div className="flex items-center gap-3 text-sm text-ink-muted">
-                    {displayPhone && <span className="flex items-center gap-1"><Phone size={11} /> {displayPhone}</span>}
-                    {m.status === 'pending' && <span className="flex items-center gap-1 text-warn-600"><Clock size={11} /> Beklemede</span>}
+              <div key={m.id} className="bg-white border border-surface-border rounded-card p-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
+                    <RoleIcon size={18} className="text-brand-600" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-ink">{displayName}</p>
+                    <div className="flex items-center gap-3 text-sm text-ink-muted">
+                      {displayPhone && <span className="flex items-center gap-1"><Phone size={11} /> {displayPhone}</span>}
+                      {/* Şoförde "Beklemede" ARTIK EKSİKLİK DEĞİL: hesap açmamış
+                          olması işini yapmasına engel değil, linkiyle çalışır. */}
+                      {m.status === 'pending' && !m.driver_link && <span className="flex items-center gap-1 text-warn-600"><Clock size={11} /> Beklemede</span>}
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 bg-surface-alt text-ink-soft rounded-full shrink-0">
+                    {ROLE_LABELS[m.role] || m.role}
+                  </span>
+                  {role === 'admin' && (
+                    <button onClick={() => handleRemove(m.id)} className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control transition-colors shrink-0">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
-                <span className="text-xs font-semibold px-2.5 py-1 bg-surface-alt text-ink-soft rounded-full shrink-0">
-                  {ROLE_LABELS[m.role] || m.role}
-                </span>
-                {role === 'admin' && (
-                  <button onClick={() => handleRemove(m.id)} className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control transition-colors shrink-0">
-                    <Trash2 size={14} />
-                  </button>
+
+                {/* Şoförün çalışma linki. Davet anını kaçıran dispatcher'ın
+                    (ya da telefonunu değiştiren şoförün) linke ulaşabileceği
+                    tek yer burası — "link üret" diye ayrı bir adım yok. */}
+                {/* Migration öncesinden kalan şoförlerde link yok: dispatcher
+                    burada üretebilsin, yoksa o şoförler eski (hesap açma)
+                    akışına mahkûm kalır. */}
+                {!m.driver_link && m.role === 'driver' && (
+                  <div className="mt-3 pt-3 border-t border-surface-border">
+                    <button
+                      type="button"
+                      onClick={() => handleCreateDriverLink(m.id)}
+                      className="text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-100 transition-colors"
+                    >
+                      Şoför linki oluştur
+                    </button>
+                  </div>
+                )}
+
+                {m.driver_link && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-border">
+                    <input readOnly value={m.driver_link} className="flex-1 min-w-0 border border-surface-borderstrong rounded-card px-3 py-2 text-xs text-ink-muted bg-surface-bg" />
+                    <button type="button" onClick={() => copyLink(m.driver_link, m.id)} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-surface-alt text-ink-soft font-semibold rounded-control transition-colors">
+                      {copied === m.id ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
+                    </button>
+                    {wa && (
+                      <a href={wa} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-100 transition-colors">
+                        <Send size={12} /> Gönder
+                      </a>
+                    )}
+                    {role === 'admin' && (
+                      <>
+                        <button type="button" onClick={() => handleRotateDriverLink(m.id)} title="Linki yenile (eskisi ölür)"
+                                className="shrink-0 p-2 text-ink-muted hover:text-ink hover:bg-surface-alt rounded-control transition-colors">
+                          <RefreshCw size={13} />
+                        </button>
+                        <button type="button" onClick={() => handleRevokeDriverLink(m.id)} title="Linki iptal et"
+                                className="shrink-0 p-2 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control transition-colors">
+                          <XCircle size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
             );
@@ -477,14 +591,41 @@ export default function OrganizationPage() {
             {inviteLink ? (
               <div className="px-6 py-5 space-y-4">
                 <div className="flex gap-2 px-3 py-2.5 bg-ok-50 border border-ok-600/20 rounded-control text-sm text-ok-800">
-                  <CheckCircle size={15} className="mt-0.5 shrink-0" /> Davet oluşturuldu. Linki paylaşın:
+                  <CheckCircle size={15} className="mt-0.5 shrink-0" />
+                  {driverLink ? 'Şoför eklendi. Aşağıdaki linki gönderin:' : 'Davet oluşturuldu. Linki paylaşın:'}
                 </div>
-                <div className="flex items-center gap-2">
-                  <input readOnly value={inviteLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
-                  <button onClick={copyLink} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-surface-alt hover:bg-surface-alt text-ink-soft rounded-control transition-colors">
-                    {copied ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
-                  </button>
+
+                {/* ŞOFÖRÜN ASIL LİNKİ. Hesap açma linki aşağıda, ikincil. */}
+                {driverLink && (
+                  <div>
+                    <p className="text-xs font-semibold text-ink-soft mb-1.5">Şoför linki — hesap gerektirmez</p>
+                    <div className="flex items-center gap-2">
+                      <input readOnly value={driverLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+                      <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-control transition-colors">
+                        {copied === 'driver' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
+                      </button>
+                    </div>
+                    <p className="text-xs text-ink-muted mt-1.5">
+                      Şoför bu linke tıkladığında işlerini görür ve durumu ilerletir. Link kalıcıdır —
+                      yeni işleri de aynı linkte belirir.
+                    </p>
+                  </div>
+                )}
+
+                <div className={driverLink ? 'border-t border-surface-border pt-4' : ''}>
+                  {driverLink && (
+                    <p className="text-xs font-semibold text-ink-soft mb-1.5">
+                      Hesap açma linki — yalnız anlık bildirim isteyen şoför için
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <input readOnly value={inviteLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+                    <button type="button" onClick={() => copyLink(inviteLink, 'invite')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-surface-alt hover:bg-surface-alt text-ink-soft rounded-control transition-colors">
+                      {copied === 'invite' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
+                    </button>
+                  </div>
                 </div>
+
                 <button onClick={closeInviteModal} className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
                   Tamam
                 </button>

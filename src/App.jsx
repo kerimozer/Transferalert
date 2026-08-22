@@ -22,6 +22,7 @@ const PartnerPortalPage = lazy(() => import('./pages/PartnerPortalPage'));
 const PartnersPage      = lazy(() => import('./pages/PartnersPage'));
 const JobPage           = lazy(() => import('./pages/JobPage'));
 const InvitePage        = lazy(() => import('./pages/InvitePage'));
+const DriverPortalPage  = lazy(() => import('./pages/DriverPortalPage'));
 
 const pageFallback = (
   <div className="flex items-center justify-center h-screen text-ink-muted text-sm">
@@ -60,8 +61,11 @@ export default function App() {
           <Route path="/request/:token" element={<RequestPage />} />
           <Route path="/gizlilik" element={<PrivacyPage />} />
           <Route path="/portal/:token" element={<PartnerPortalPage />} />
-          {/* Taşeron şoförün girişsiz iş kartı — SMS/WhatsApp ile gelen link */}
+          {/* Taşeron şoförün girişsiz iş kartı — TEK işe özel, iş bitince ölür */}
           <Route path="/job/:token" element={<JobPage />} />
+          {/* Şoförün KALICI panosu — hesap/uygulama gerekmez, atanan her yeni
+              iş aynı linkte belirir. Şoförün asıl yolu budur. */}
+          <Route path="/sofor/:token" element={<DriverPortalPage />} />
           {/* Ekip daveti — WhatsApp/SMS ile paylaşılan https link */}
           <Route path="/davet/:token" element={<InvitePage />} />
           <Route path="/app/login" element={<LoginPage />} />
