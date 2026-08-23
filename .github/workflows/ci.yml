@@ -18,6 +18,12 @@ jobs:
 
       - run: npm ci
 
+      # Sözleşme kapısı: iş aşaması etiketleri backend JOB_STATUSES ile
+      # örtüşüyor mu? Backend deposu burada checkout EDİLMEDİĞİ için test
+      # beklenen listeye düşer ve web içindeki üç haritanın tutarlılığını
+      # doğrular; gerçek sözleşme kayması yerelde yakalanır.
+      - run: npm test
+
       # Build kapısı — production deploy'u Vercel yapar (push=deploy),
       # bu iş PR aşamasında "build kırık mı" erken uyarısı verir.
       # Değerler build'in geçmesi için yeterli placeholder'lardır; gerçek
