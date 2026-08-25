@@ -18,24 +18,12 @@ import {
   XCircle, CheckCircle2, Navigation, ChevronDown, ChevronUp, CalendarClock,
 } from 'lucide-react';
 import { transferLabel, isFlightTransfer } from '../lib/transfer';
+import { jobAction, jobState } from '../lib/status';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-// Şoförün basacağı butonun metni — sistem terimleri değil, şoförün dili.
-const ACTION_LABEL = {
-  en_route:   'Yola Çıktım',
-  at_airport: 'Havalimanına Geldim',
-  picked_up:  'Yolcuyu Aldım',
-  completed:  'Transferi Tamamladım',
-};
-
-const STATE_LABEL = {
-  en_route:   'Yolda',
-  at_airport: 'Havalimanında',
-  picked_up:  'Yolcu alındı',
-  completed:  'Tamamlandı',
-};
-
+// Aşama etiketleri ARTIK BURADA DEĞİL: lib/status.js tek kaynak (jobAction /
+// jobState). Üç dosyada üç kopya vardı; türe göre varyant dördüncüsü olurdu.
 const FLIGHT_LABEL = {
   landed:    'Uçak indi',
   active:    'Uçak havada',
@@ -88,7 +76,7 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
         {job.job_status && (
           <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${done ? 'bg-ok-50 text-ok-800' : 'bg-brand-50 text-brand-700'}`}>
             {done && <CheckCircle2 size={12} />}
-            {STATE_LABEL[job.job_status] || job.job_status}
+            {jobState(job.job_status, job)}
           </span>
         )}
         {open ? <ChevronUp size={18} className="text-ink-muted shrink-0" /> : <ChevronDown size={18} className="text-ink-muted shrink-0" />}
@@ -126,22 +114,44 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
             </div>
           )}
 
+          {/* TEK BİRİNCİL EYLEM — /job/:token kartıyla AYNI desen. Kalan tüm
+              aşamaları tam genişlikte buton yapmak dördü de aynı ağırlıkta
+              gösteriyordu ve "şimdi ne yapmalıyım" sorusunu cevapsız
+              bırakıyordu. Atlama hâlâ mümkün, ama çip olarak geri planda. */}
           {next.length > 0 ? (
-            <div className="flex flex-col gap-2 mt-3">
-              {next.map((s, i) => (
-                <button
-                  key={s}
-                  onClick={() => onAdvance(job, s)}
-                  disabled={!!saving}
-                  className={`w-full rounded-control py-4 font-semibold text-base transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
-                    i === 0
-                      ? 'bg-brand-600 hover:bg-brand-700 text-white'
-                      : 'bg-white border border-surface-borderstrong text-ink-soft hover:bg-surface-alt'
-                  }`}
-                >
-                  {saving === s ? 'Kaydediliyor...' : ACTION_LABEL[s] || s}
-                </button>
-              ))}
+            <div className="mt-3">
+              <button
+                onClick={() => onAdvance(job, next[0])}
+                disabled={!!saving}
+                className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-white transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              >
+                {saving === next[0] ? 'Kaydediliyor...' : jobAction(next[0], job)}
+              </button>
+
+              {next.length > 1 && (
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  <span className="text-xs text-ink-muted">Bir aşamayı atla:</span>
+                  {next.slice(1).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => onAdvance(job, s)}
+                      disabled={!!saving}
+                      className={`min-h-[44px] rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+                        s === 'completed'
+                          /* Nötr ama VURGULU: kalın kenarlık, zemin yok. Yeşil
+                             kullanılmıştı ama bu üründe yeşil "tamamlandı"
+                             demek — henüz bitmemiş bir işte tamamlanmış
+                             görünümlü çip, "ağır sonuç" değil "zaten olmuş"
+                             sinyali verir. Bu eylem geri alınamaz. */
+                          ? 'border-2 border-ink-soft text-ink hover:bg-surface-alt'
+                          : 'border-surface-borderstrong text-ink-soft hover:bg-surface-alt'
+                      }`}
+                    >
+                      {saving === s ? 'Kaydediliyor...' : jobState(s, job)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="bg-ok-50 border border-ok-600/20 rounded-control p-4 text-center mt-3">
@@ -254,7 +264,7 @@ export default function DriverPortalPage() {
         ...prev,
         jobs: (prev?.jobs || []).map((j) => (j.id === job.id ? body : j)),
       }));
-      setFlash({ id: job.id, text: `"${ACTION_LABEL[next]}" kaydedildi.` });
+      setFlash({ id: job.id, text: `"${jobAction(next, job)}" kaydedildi.` });
     } catch {
       setFlash({ id: job.id, text: 'Bağlantı kurulamadı, tekrar deneyin.' });
     } finally {

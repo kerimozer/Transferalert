@@ -1,6 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
-import { RES_STATUS_BADGE, JOB_BADGE } from '../lib/status';
+import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
 import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine } from '../lib/transfer';
 import TransferTypeToggle from '../components/TransferTypeToggle';
@@ -603,9 +603,11 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
                 <AlertTriangle size={11} /> Şoför atanmadı
               </span>
             )}
-            {r.job_status && JOB_BADGE[r.job_status] && (
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${JOB_BADGE[r.job_status].cls}`}>
-                {JOB_BADGE[r.job_status].label}
+            {/* Rozet rezervasyondan türetilir: uçuşsuz transferde
+                "Havalimanında" yanlış bilgidir, "Alış noktasında" denir. */}
+            {jobBadge(r) && (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${jobBadge(r).cls}`}>
+                {jobBadge(r).label}
               </span>
             )}
           </div>

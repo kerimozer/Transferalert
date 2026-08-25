@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
-import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, JOB_BADGE } from '../lib/status';
+import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, jobBadge } from '../lib/status';
 import { StatCard, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
 import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
 import AssignDriverModal from '../components/AssignDriverModal';
@@ -108,7 +108,9 @@ export default function DashboardPage() {
             {listed.map(r => {
               const status = STATUS_BADGE[r.status] || STATUS_BADGE.active;
               const flight = r.latest_status ? (FLIGHT_BADGE[r.latest_status.flight_status] || null) : null;
-              const job    = r.job_status ? JOB_BADGE[r.job_status] : null;
+              // `jobBadge` rezervasyonun KENDİSİNİ alır: uçuşsuz transferde
+              // "Havalimanında" rozeti yanlış bilgi verir, "Alış noktasında" der.
+              const job    = jobBadge(r);
               const pickup = new Date(r.scheduled_pickup);
               // Transferlerim listesiyle AYNI kural — ve kural ortak
               // dosyada (lib/transfer.js). Aynı transferin iki ekranda farklı

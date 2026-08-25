@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink } from 'lucide-react';
 import { localInputToIso } from '../lib/format';
 import { FLIGHT, cardTitle, showFlightLine, isFlightTransfer } from '../lib/transfer';
+import { jobView } from '../lib/status';
 import TransferTypeToggle from '../components/TransferTypeToggle';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -24,12 +25,10 @@ const STATUS_VIEW = {
   cancelled: { label: 'İptal',         cls: 'bg-bad-50 text-bad-800 border-bad-600/20' },
 };
 
-const JOB_VIEW = {
-  en_route:   'Şoför yolda',
-  at_airport: 'Şoför havalimanında',
-  picked_up:  'Yolcu alındı',
-  completed:  'Tamamlandı',
-};
+// Aşama etiketleri ARTIK BURADA DEĞİL: lib/status.js → jobView tek kaynak.
+// Bu harita DÖRDÜNCÜ kopyaydı ve uçuşsuz varyantı hiç almamıştı: otel→otel
+// transferinde şoför panosunda "Alış Noktasındayım" derken otel bu portalda
+// "Şoför havalimanında" görüyordu.
 
 export default function PartnerPortalPage() {
   const { token } = useParams();
@@ -213,7 +212,7 @@ export default function PartnerPortalPage() {
                       </p>
                       {(r.driver_name || r.job_status) && (
                         <p className="text-xs text-ink-soft mt-1">
-                          {r.job_status ? JOB_VIEW[r.job_status] : ''}
+                          {r.job_status ? jobView(r.job_status, r) : ''}
                           {r.driver_name ? `${r.job_status ? ' · ' : ''}${r.driver_name}` : ''}
                           {r.vehicle_plate ? ` (${r.vehicle_plate})` : ''}
                         </p>
