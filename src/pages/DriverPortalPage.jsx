@@ -17,6 +17,7 @@ import {
   Plane, MapPin, User, Phone, Clock, Car, StickyNote, Building2,
   XCircle, CheckCircle2, Navigation, ChevronDown, ChevronUp, CalendarClock,
 } from 'lucide-react';
+import { transferLabel, isFlightTransfer } from '../lib/transfer';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -72,9 +73,15 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
         className="w-full flex items-center gap-3 p-4 text-left focus:outline-none focus:ring-2 focus:ring-brand-600/30"
       >
         <div className="min-w-0 flex-1">
-          <p className="font-mono font-bold text-2xl text-ink leading-none">{job.flight_number}</p>
+          {/* `transferLabel`, `cardTitle` DEĞİL: bu ekran uçuş numarasını
+              başka hiçbir yerde basmıyor. cardTitle yolcu adını tercih ettiği
+              için TK1234 sayfadan tamamen kaybolurdu ve havalimanına giden
+              şoför hangi uçuşa bakacağını göremezdi. Uçuşsuzda yolcu adına
+              düşer, alt satır da onu tekrarlamaz. */}
+          <p className={`font-bold text-2xl text-ink leading-none ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
           <p className="text-sm text-ink-muted mt-1.5 truncate">
-            {formatPickup(job.scheduled_pickup)} · {job.passenger_name}
+            {formatPickup(job.scheduled_pickup)}
+            {isFlightTransfer(job) ? ` · ${job.passenger_name}` : ' · Uçuşsuz transfer'}
           </p>
           {flight && <p className="text-xs text-ink-muted mt-0.5">{FLIGHT_LABEL[flight] || flight}</p>}
         </div>

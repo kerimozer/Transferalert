@@ -2,6 +2,8 @@ import { useEffect, useState, lazy, Suspense } from 'react';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, JOB_BADGE } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
+import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine } from '../lib/transfer';
+import TransferTypeToggle from '../components/TransferTypeToggle';
 import { Button } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
@@ -18,7 +20,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', pnr: '', passenger_name: '', passenger_phone: '', meeting_point: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
+const EMPTY = { transfer_type: FLIGHT, flight_number: '', pnr: '', passenger_name: '', passenger_phone: '', meeting_point: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
 
 const FLIGHT_STATUS = {
   landed:    { label: 'İndi',          icon: CheckCircle,   cls: 'text-ok-600 bg-ok-50 border-ok-600/20' },
@@ -48,6 +50,12 @@ export default function ReservationsPage() {
   const [showBulk, setShowBulk]         = useState(false);
   const [linkCopied, setLinkCopied]     = useState(false);
 
+  // Formun yarısı buna bağlı (uçuş alanları, etiketler, zorunluluklar).
+  // Tek yerden türetiliyor ki alanlardan biri diğerinden farklı bir dala
+  // düşmesin — "uçuş numarası gizli ama hâlâ required" gibi bir durumda
+  // form sessizce gönderilemez hale gelir ve sebebi ekranda görünmez.
+  const isFlight = form.transfer_type === FLIGHT;
+
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
 
@@ -76,10 +84,16 @@ export default function ReservationsPage() {
     setSubmitting(true);
     try {
       await api.createReservation({
-        flight_number:    form.flight_number,
-        pnr:              form.pnr || null,
+        transfer_type:    form.transfer_type,
+        // Uçuşsuzda uçuş alanları HİÇ gönderilmez. Kullanıcı önce uçuşlu
+        // seçip numara yazıp sonra türü değiştirdiyse formda eski değer
+        // duruyor olabilir; backend zaten yok sayar ama burada da temizlemek
+        // "gönderdiğim şey kaydedildi mi" belirsizliğini ortadan kaldırır.
+        flight_number:    isFlight ? form.flight_number : null,
+        pnr:              isFlight ? (form.pnr || null) : null,
         // Liste artık yolcu adını başlık yapıyor; alan gönderilmezse backend
         // onu uçuş numarasıyla doldurur ve her kart 'girilmemiş' görünür.
+        // Uçuşsuzda ZORUNLU — kaydın tek etiketi odur.
         passenger_name:   form.passenger_name || null,
         passenger_phone:  form.passenger_phone || null,
         meeting_point:    form.meeting_point || null,
@@ -186,12 +200,15 @@ export default function ReservationsPage() {
               <div key={r.id} className="bg-white border border-warn-600/20 rounded-card p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono font-bold text-ink">{r.flight_number}</span>
+                    {/* Başlık aynı kuraldan geçer: uçuşsuz talepte
+                        flight_number NULL'dur ve başlık boş kalırdı. */}
+                    <span className={`font-bold text-ink ${showFlightLine(r) || !isFlightTransfer(r) ? '' : 'font-mono'}`}>{cardTitle(r)}</span>
                     {r.source && <span className="text-xs bg-warn-50 text-warn-800 px-2 py-0.5 rounded-full">{r.source}</span>}
                   </div>
                   <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-2 flex-wrap">
                     <span className="flex items-center gap-1"><Calendar size={11} />{formatPickup(r.scheduled_pickup)}</span>
-                    {r.passenger_name && r.passenger_name !== r.flight_number && <span>{r.passenger_name}</span>}
+                    {showFlightLine(r) && <span className="font-mono">{r.flight_number}</span>}
+                    {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz</span>}
                     {r.passenger_phone && <span>{r.passenger_phone}</span>}
                   </div>
                   {r.notes && <p className="text-xs text-ink-muted mt-0.5">{r.notes}</p>}
@@ -213,7 +230,7 @@ export default function ReservationsPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-card shadow-xl w-full max-w-sm">
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
-              <h2 className="font-semibold text-ink">Uçuş Takibe Al</h2>
+              <h2 className="font-semibold text-ink">{isFlight ? 'Uçuş Takibe Al' : 'Transfer Ekle'}</h2>
               <button onClick={() => setShowForm(false)} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
             </div>
 
@@ -224,28 +241,41 @@ export default function ReservationsPage() {
             )}
 
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-              {/* Uçuş Numarası */}
-              <div>
-                <label className="block text-sm font-semibold text-ink-soft mb-1">Uçuş Numarası <span className="text-bad-600">*</span></label>
-                <input
-                  value={form.flight_number}
-                  onChange={e => {
-                    const val = e.target.value.toUpperCase().replace(/\s/g, '');
-                    setForm(f => ({ ...f, flight_number: val }));
-                    handleFlightSearch(val);
-                  }}
-                  placeholder="TK123, PC456..."
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono font-semibold tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
-                  required autoFocus
-                />
-                {searching && <p className="text-xs text-ink-muted mt-1">Uçuş aranıyor...</p>}
-                {flightInfo && !searching && (
-                  <div className="mt-2 px-3 py-2 bg-ok-50 border border-ok-600/20 rounded-control text-xs text-ok-800 flex items-center gap-2">
-                    <CheckCircle size={13} className="text-ok-600 shrink-0" />
-                    <span><strong>{flightInfo.airline}</strong> · {flightInfo.departure_airport} → {flightInfo.arrival_airport}</span>
-                  </div>
-                )}
-              </div>
+              <TransferTypeToggle
+                value={form.transfer_type}
+                onChange={(t) => {
+                  setForm(f => ({ ...f, transfer_type: t }));
+                  // Tür değişince önceki türün uçuş önerisi ekranda kalmamalı:
+                  // uçuşsuza geçen kullanıcı "TK123 · IST → AYT" kutusunu
+                  // görmeye devam ederse kaydın hâlâ uçuşa bağlı olduğunu sanır.
+                  setFlightInfo(null);
+                }}
+              />
+
+              {/* Uçuş Numarası — YALNIZ uçuşlu transferde */}
+              {isFlight && (
+                <div>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">Uçuş Numarası <span className="text-bad-600">*</span></label>
+                  <input
+                    value={form.flight_number}
+                    onChange={e => {
+                      const val = e.target.value.toUpperCase().replace(/\s/g, '');
+                      setForm(f => ({ ...f, flight_number: val }));
+                      handleFlightSearch(val);
+                    }}
+                    placeholder="TK123, PC456..."
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono font-semibold tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    required autoFocus
+                  />
+                  {searching && <p className="text-xs text-ink-muted mt-1">Uçuş aranıyor...</p>}
+                  {flightInfo && !searching && (
+                    <div className="mt-2 px-3 py-2 bg-ok-50 border border-ok-600/20 rounded-control text-xs text-ok-800 flex items-center gap-2">
+                      <CheckCircle size={13} className="text-ok-600 shrink-0" />
+                      <span><strong>{flightInfo.airline}</strong> · {flightInfo.departure_airport} → {flightInfo.arrival_airport}</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* YOLCU — listenin başlığı artık bu. Alan formda yoktu:
                   webden eklenen her transfer "Yolcu adı girilmemiş" olarak
@@ -254,12 +284,20 @@ export default function ReservationsPage() {
                   ayrışmış durumdaydı. */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink-soft mb-1">Yolcu Adı</label>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">
+                    Yolcu Adı {!isFlight && <span className="text-bad-600">*</span>}
+                  </label>
                   <input
                     value={form.passenger_name}
                     onChange={e => setForm(f => ({ ...f, passenger_name: e.target.value }))}
                     placeholder="Anna Schmidt"
                     className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    // Uçuşsuzda kaydın TEK etiketi yolcu adıdır (uçuş numarası
+                    // yok). Boş bırakılırsa liste adsız bir satır gösterir ve
+                    // aramada bulunamaz — backend de 400 döner, kapıyı burada
+                    // da tutmak kullanıcıyı sunucuya gidip gelmekten kurtarır.
+                    required={!isFlight}
+                    autoFocus={!isFlight}
                   />
                 </div>
                 <div>
@@ -274,11 +312,11 @@ export default function ReservationsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-ink-soft mb-1">Buluşma Noktası</label>
+                <label className="block text-sm font-semibold text-ink-soft mb-1">{isFlight ? 'Buluşma Noktası' : 'Alış Noktası'}</label>
                 <input
                   value={form.meeting_point}
                   onChange={e => setForm(f => ({ ...f, meeting_point: e.target.value }))}
-                  placeholder="Dış Hatlar Çıkış · 4 numaralı kapı"
+                  placeholder={isFlight ? 'Dış Hatlar Çıkış · 4 numaralı kapı' : 'Hilton Bomonti · Lobi'}
                   className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
@@ -287,7 +325,7 @@ export default function ReservationsPage() {
               <div>
                 <label className="block text-sm font-semibold text-ink-soft mb-1">
                   <Calendar size={13} className="inline mr-1 text-brand-600" />
-                  Tahmini Varış Tarihi & Saati <span className="text-bad-600">*</span>
+                  {isFlight ? 'Tahmini Varış Tarihi & Saati' : 'Alış Tarihi & Saati'} <span className="text-bad-600">*</span>
                 </label>
                 <input
                   type="datetime-local"
@@ -297,21 +335,32 @@ export default function ReservationsPage() {
                   className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   required
                 />
+                {/* Vaat türe göre DEĞİŞİR. Uçuşsuz transferde uçuş takibi
+                    yoktur (sağlayıcıya sorulacak bir uçuş yok); eski metni
+                    olduğu gibi bırakmak "inince bildirim gelir" diye bir söz
+                    verirdi ve o söz hiç tutulmazdı. */}
                 <p className="text-xs text-ink-muted mt-1 flex items-center gap-1">
-                  <Bell size={11} /> Uçuştan 2 saat önce hatırlatma, inince/rötar olunca bildirim gönderilir.
+                  <Bell size={11} className="shrink-0" />
+                  {isFlight
+                    ? 'Uçuştan 2 saat önce hatırlatma, inince/rötar olunca bildirim gönderilir.'
+                    : 'Alıştan 2 saat önce hatırlatma gönderilir. Uçuş takibi yapılmaz.'}
                 </p>
               </div>
 
-              {/* PNR */}
-              <div>
-                <label className="block text-sm font-semibold text-ink-soft mb-1">PNR <span className="text-ink-muted font-normal">(opsiyonel)</span></label>
-                <input
-                  value={form.pnr}
-                  onChange={e => setForm(f => ({ ...f, pnr: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-                  placeholder="ABC123"
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
-                />
-              </div>
+              {/* PNR — havayolu rezervasyon kodudur, uçuşsuz transferde
+                  karşılığı yoktur. Gösterilseydi dispatcher doldurulacak bir
+                  alan sanıp arardı. */}
+              {isFlight && (
+                <div>
+                  <label className="block text-sm font-semibold text-ink-soft mb-1">PNR <span className="text-ink-muted font-normal">(opsiyonel)</span></label>
+                  <input
+                    value={form.pnr}
+                    onChange={e => setForm(f => ({ ...f, pnr: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                    placeholder="ABC123"
+                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  />
+                </div>
+              )}
 
               {/* Varış — U-ETDS'te zorunlu alan, ama şimdiden şoför kartında
                   ve planlamada işe yarıyor. İkisi de opsiyonel bırakıldı ki
@@ -464,8 +513,11 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   // henüz kabul edilmemiş bir talepte şoför yokluğu eksiklik değildir.
   const needsDriver = !isPast && r.status === 'active' && !r.assigned_member_id && !r.driver_name;
   // Yolcu adı yoksa başlık uçuş numarasına düşer; o durumda alt satırda
-  // TEKRAR yazmak aynı bilgiyi iki kez göstermek olur.
-  const hasPassenger = !!r.passenger_name && r.passenger_name !== r.flight_number;
+  // TEKRAR yazmak aynı bilgiyi iki kez göstermek olur. Uçuşsuz transferde
+  // uçuş satırı HİÇ basılmaz — kural lib/transfer.js'te, çünkü aynı karar
+  // Ana Sayfa listesinde de veriliyor ve ikisi ayrışırsa aynı transfer iki
+  // ekranda farklı görünür.
+  const showFlight = showFlightLine(r);
 
   return (
     <div className={`bg-white border rounded-card p-4 flex items-center gap-4 transition-all ${
@@ -499,10 +551,15 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
       {/* Bilgiler */}
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-ink truncate">
-          {hasPassenger ? r.passenger_name : r.flight_number}
+          {cardTitle(r)}
         </div>
         <div className="flex items-center gap-2 flex-wrap text-xs text-ink-muted mt-0.5">
-          {hasPassenger && <span className="flex items-center gap-1"><Icon size={11} />{r.flight_number}</span>}
+          {showFlight
+            ? <span className="flex items-center gap-1"><Icon size={11} />{r.flight_number}</span>
+            /* Uçuşsuz transferde uçuş satırının yerini türün kendisi alır:
+               boş bırakılırsa kart "eksik veri" gibi durur ve dispatcher
+               uçuş numarasının girilmediğini sanıp aramaya çıkar. */
+            : !isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz transfer</span>}
           {ls?.arrival_delay > 0 && <span className="font-semibold text-warn-800">+{ls.arrival_delay} dk rötar</span>}
           {r.pnr   && <span className="font-mono bg-surface-alt px-1.5 py-0.5 rounded">PNR: {r.pnr}</span>}
         </div>

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Calendar, Send } from 'lucide-react';
 import { localInputToIso } from '../lib/format';
+import { FLIGHT } from '../lib/transfer';
+import TransferTypeToggle from '../components/TransferTypeToggle';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -11,7 +13,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', dropoff_point: '', source: '', notes: '' };
+const EMPTY = { transfer_type: FLIGHT, flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', dropoff_point: '', source: '', notes: '' };
 
 export default function RequestPage() {
   const { token } = useParams();
@@ -23,6 +25,11 @@ export default function RequestPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]     = useState('');
   const [done, setDone]       = useState(false);
+
+  // Otel de uçuşsuz iş ister — şehir içi servis, otelden otele aktarma.
+  // Talep formu yalnız uçuş kabul ederken bu işler telefonla geliyordu,
+  // yani sistemin dışında kalıyordu.
+  const isFlight = form.transfer_type === FLIGHT;
 
   useEffect(() => {
     fetch(`${API}/api/public/request-info/${token}`)
@@ -41,7 +48,13 @@ export default function RequestPage() {
         headers: { 'Content-Type': 'application/json' },
         // datetime-local ham gönderilirse sunucu kendi dilimiyle yorumlar
         // ve saat kayar (bkz. localInputToIso).
-        body: JSON.stringify({ ...form, scheduled_pickup: localInputToIso(form.scheduled_pickup) }),
+        body: JSON.stringify({
+          ...form,
+          // Tür değiştirilmeden önce yazılmış uçuş numarası formda kalmış
+          // olabilir; uçuşsuz talepte gönderilmemeli.
+          flight_number: isFlight ? form.flight_number : null,
+          scheduled_pickup: localInputToIso(form.scheduled_pickup),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Talep gönderilemedi');
@@ -98,21 +111,30 @@ export default function RequestPage() {
               placeholder="Otel adınız" className={inputCls} />
           </Field>
 
-          <Field label="Uçuş Numarası" required>
-            <input value={form.flight_number}
-              onChange={e => setForm(f => ({ ...f, flight_number: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-              placeholder="TK123, PC456..." className={`${inputCls} font-mono font-semibold tracking-wider`} required />
-          </Field>
+          <TransferTypeToggle
+            value={form.transfer_type}
+            onChange={(t) => setForm(f => ({ ...f, transfer_type: t }))}
+          />
 
-          <Field label="Varış Tarihi & Saati" required>
+          {isFlight && (
+            <Field label="Uçuş Numarası" required>
+              <input value={form.flight_number}
+                onChange={e => setForm(f => ({ ...f, flight_number: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                placeholder="TK123, PC456..." className={`${inputCls} font-mono font-semibold tracking-wider`} required />
+            </Field>
+          )}
+
+          <Field label={isFlight ? 'Varış Tarihi & Saati' : 'Alış Tarihi & Saati'} required>
             <input type="datetime-local" value={form.scheduled_pickup}
               onChange={e => setForm(f => ({ ...f, scheduled_pickup: e.target.value }))}
               min={nowLocal()} className={inputCls} required />
           </Field>
 
-          <Field label="Yolcu Adı">
+          {/* Uçuşsuz talepte yolcu adı ZORUNLU: kaydın tek etiketi odur ve
+              firma "kimi alacağım" sorusunu başka hiçbir alandan yanıtlayamaz. */}
+          <Field label="Yolcu Adı" required={!isFlight}>
             <input value={form.passenger_name} onChange={e => setForm(f => ({ ...f, passenger_name: e.target.value }))}
-              placeholder="Ahmet Yılmaz" className={inputCls} />
+              placeholder="Ahmet Yılmaz" className={inputCls} required={!isFlight} />
           </Field>
 
           <Field label="Yolcu Telefonu">

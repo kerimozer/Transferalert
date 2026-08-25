@@ -131,7 +131,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
           <div className="min-w-0">
             <h2 className="font-semibold text-ink">Şoför ata</h2>
             <p className="text-xs text-ink-muted mt-0.5 truncate">
-              {reservation.passenger_name} · {reservation.flight_number} · {saat(reservation.scheduled_pickup)}
+              {[reservation.passenger_name, reservation.flight_number, saat(reservation.scheduled_pickup)].filter(Boolean).join(' · ')}
             </p>
           </div>
           <button onClick={onClose} aria-label="Kapat" className="p-1.5 text-ink-muted hover:text-ink rounded-control shrink-0">
@@ -189,7 +189,10 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
                     {d.conflict ? (
                       <p className="flex items-center gap-1.5 text-xs font-semibold text-warn-800 mt-1">
                         <AlertTriangle size={12} className="shrink-0" />
-                        Saat çakışıyor — {saat(d.conflict.scheduled_pickup)} {d.conflict.flight_number} transferi
+                        {/* `label` backend'den gelir ve uçuşsuz işte yolcu
+                            adına düşer; eski `flight_number` yedeği yalnız
+                            sunucu henüz güncellenmemişken devreye girer. */}
+                        Saat çakışıyor — {saat(d.conflict.scheduled_pickup)} {d.conflict.label || d.conflict.flight_number} transferi
                       </p>
                     ) : (
                       <p className="text-xs text-ink-muted mt-0.5">

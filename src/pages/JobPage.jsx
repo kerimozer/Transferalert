@@ -11,6 +11,7 @@ import {
   Plane, MapPin, User, Phone, Clock, Car, StickyNote,
   XCircle, CheckCircle2, Navigation, Share2, Building2,
 } from 'lucide-react';
+import { transferLabel, isFlightTransfer } from '../lib/transfer';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -130,8 +131,13 @@ export default function JobPage() {
         <div className="bg-white border border-surface-border rounded-card shadow-card p-5 mb-4">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <p className="font-mono font-bold text-3xl text-ink leading-none">{job.flight_number}</p>
+              {/* Şoförün gördüğü en büyük yazı. `transferLabel` — uçuş no
+                  ÖNCE: bu ekran numarayı başka hiçbir yerde basmıyor,
+                  cardTitle kullanılsa TK1234 tamamen kaybolurdu. Uçuşsuzda
+                  yolcu adına düşer ve uçuş durumu satırı hiç basılmaz. */}
+              <p className={`font-bold text-3xl text-ink leading-none ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
               {flight && <p className="text-sm text-ink-muted mt-1.5">{FLIGHT_LABEL[flight] || flight}</p>}
+              {!isFlightTransfer(job) && <p className="text-sm text-ink-muted mt-1.5 flex items-center gap-1"><Car size={14} />Uçuşsuz transfer</p>}
             </div>
             {job.job_status && (
               <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${done ? 'bg-ok-50 text-ok-800' : 'bg-brand-50 text-brand-700'}`}>

@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink } from 'lucide-react';
 import { localInputToIso } from '../lib/format';
+import { FLIGHT, cardTitle, showFlightLine, isFlightTransfer } from '../lib/transfer';
+import TransferTypeToggle from '../components/TransferTypeToggle';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -11,7 +13,7 @@ function nowLocal() {
   return d.toISOString().slice(0, 16);
 }
 
-const EMPTY = { flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', notes: '' };
+const EMPTY = { transfer_type: FLIGHT, flight_number: '', scheduled_pickup: '', passenger_name: '', passenger_phone: '', notes: '' };
 
 // Talep durumu → otelin anlayacağı dil. Firma içi terimler ("active") otele
 // bir şey ifade etmiyor; burada işin nerede olduğunu anlatan karşılıklar var.
@@ -71,7 +73,11 @@ export default function PartnerPortalPage() {
       const res = await fetch(`${API}/api/public/partner/${token}/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, scheduled_pickup: localInputToIso(form.scheduled_pickup) }),
+        body: JSON.stringify({
+          ...form,
+          flight_number: form.transfer_type === FLIGHT ? form.flight_number : null,
+          scheduled_pickup: localInputToIso(form.scheduled_pickup),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Talep gönderilemedi');
@@ -128,19 +134,26 @@ export default function PartnerPortalPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              <Field label="Uçuş Numarası" required>
-                <input value={form.flight_number}
-                  onChange={(e) => setForm((f) => ({ ...f, flight_number: e.target.value.toUpperCase().replace(/\s/g, '') }))}
-                  placeholder="TK123" className={`${inputCls} font-mono font-semibold tracking-wider`} required />
-              </Field>
-              <Field label="Varış Tarihi & Saati" required>
+              <TransferTypeToggle
+                value={form.transfer_type}
+                onChange={(t) => setForm((f) => ({ ...f, transfer_type: t }))}
+              />
+              {form.transfer_type === FLIGHT && (
+                <Field label="Uçuş Numarası" required>
+                  <input value={form.flight_number}
+                    onChange={(e) => setForm((f) => ({ ...f, flight_number: e.target.value.toUpperCase().replace(/\s/g, '') }))}
+                    placeholder="TK123" className={`${inputCls} font-mono font-semibold tracking-wider`} required />
+                </Field>
+              )}
+              <Field label={form.transfer_type === FLIGHT ? 'Varış Tarihi & Saati' : 'Alış Tarihi & Saati'} required>
                 <input type="datetime-local" value={form.scheduled_pickup}
                   onChange={(e) => setForm((f) => ({ ...f, scheduled_pickup: e.target.value }))}
                   min={nowLocal()} className={inputCls} required />
               </Field>
-              <Field label="Yolcu Adı">
+              {/* Uçuşsuz talepte kaydın tek etiketi yolcu adıdır. */}
+              <Field label="Yolcu Adı" required={form.transfer_type !== FLIGHT}>
                 <input value={form.passenger_name} onChange={(e) => setForm((f) => ({ ...f, passenger_name: e.target.value }))}
-                  placeholder="Ahmet Yılmaz" className={inputCls} />
+                  placeholder="Ahmet Yılmaz" className={inputCls} required={form.transfer_type !== FLIGHT} />
               </Field>
               <Field label="Yolcu Telefonu">
                 <input value={form.passenger_phone} onChange={(e) => setForm((f) => ({ ...f, passenger_phone: e.target.value }))}
@@ -188,13 +201,15 @@ export default function PartnerPortalPage() {
                   return (
                     <li key={r.id} className="border border-surface-border rounded-control p-3">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <span className="font-mono font-semibold text-sm text-ink">{r.flight_number}</span>
+                        <span className={`font-semibold text-sm text-ink ${isFlightTransfer(r) ? 'font-mono' : ''}`}>{cardTitle(r)}</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${sv.cls}`}>{sv.label}</span>
                       </div>
                       <p className="text-xs text-ink-muted">
                         {when.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}{' '}
                         {when.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                        {r.passenger_name && r.passenger_name !== r.flight_number ? ` · ${r.passenger_name}` : ''}
+                        {/* Başlık artık yolcu adı olabiliyor; aynı adı ikinci
+                            kez yazmak yerine uçuş numarasını göster. */}
+                        {showFlightLine(r) ? ` · ${r.flight_number}` : ''}
                       </p>
                       {(r.driver_name || r.job_status) && (
                         <p className="text-xs text-ink-soft mt-1">

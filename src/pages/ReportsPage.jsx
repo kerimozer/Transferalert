@@ -179,9 +179,13 @@ function getLast30Days(reservations) {
   return days;
 }
 
+// "En çok tekrar eden uçuşlar" — SORU UÇUŞLA İLGİLİ, dolayısıyla uçuşsuz
+// transferler bu tabloya girmez. Girselerdi hepsi tek bir `null` kovasında
+// toplanıp listenin başına oturur ve raporu okunamaz hale getirirdi.
 function getTopFlights(reservations) {
   const counts = {};
   for (const r of reservations) {
+    if (!r.flight_number) continue;
     counts[r.flight_number] = (counts[r.flight_number] || 0) + 1;
   }
   return Object.entries(counts)

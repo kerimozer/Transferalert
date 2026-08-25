@@ -55,11 +55,18 @@ function mapRow(raw) {
   const dateVal = parseDate(find('scheduled_pickup'));
   const flight = (find('flight_number') || '').toString().toUpperCase().replace(/\s+/g, '');
 
+  // UÇUŞ HÜCRESİ BOŞ = UÇUŞSUZ TRANSFER. Excel'de ayrı bir "tür" sütunu
+  // istemek firmaya dosyasını yeniden düzenletmek olurdu; boş bırakmak zaten
+  // doğal davranış. Karşılığında yolcu adı ZORUNLU hale gelir — aksi halde
+  // satırın hiçbir etiketi kalmaz ve listede adsız görünür.
+  const isP2P = !flight;
+
   const errors = [];
-  if (!flight) errors.push('Uçuş no');
+  if (isP2P && !name) errors.push('Uçuş no veya yolcu adı');
   if (!dateVal) errors.push('Tarih');
 
   return {
+    transfer_type:   isP2P ? 'point_to_point' : 'flight',
     flight_number:   flight,
     scheduled_pickup: dateVal,
     passenger_name:  name,
@@ -114,12 +121,23 @@ export default function BulkImportModal({ onClose, onDone }) {
   const validRows = rows.filter(r => r._errors.length === 0);
   const invalidCount = rows.length - validRows.length;
 
+  // "Boş uçuş hücresi = uçuşsuz transfer" kuralı TEK SATIRDA doğru, DOSYA
+  // GENELİNDE tehlikeli: `find()` yalnız HEADER_MAP'teki başlık varyantlarını
+  // tanır. Firmanın sütun adı "Uçuş Kodu" ya da "FLT" ise hiçbir satırda uçuş
+  // bulunamaz. ESKİDEN 300 satırın hepsi kırmızı yanardı ve kullanıcı başlığı
+  // düzeltirdi; ŞİMDİ hepsi geçerli görünüp uçuşsuz olarak içeri girer,
+  // hiçbiri takibe alınmaz ve hata HİÇBİR YERDE görünmez — rötar bildirimi
+  // gelmeyince günler sonra sahada fark edilir. Bu yüzden sessiz kalmıyoruz.
+  const flightless = rows.filter(r => r.transfer_type === 'point_to_point').length;
+  const allFlightless = rows.length > 0 && flightless === rows.length;
+
   async function handleImport() {
     if (!validRows.length) return;
     setImporting(true); setError('');
     try {
       const payload = validRows.map(r => ({
-        flight_number:   r.flight_number,
+        transfer_type:   r.transfer_type,
+        flight_number:   r.flight_number || null,
         scheduled_pickup: r.scheduled_pickup.toISOString(),
         passenger_name:  r.passenger_name || null,
         passenger_phone: r.passenger_phone || null,
@@ -186,10 +204,26 @@ export default function BulkImportModal({ onClose, onDone }) {
               {/* Adım 2: önizleme */}
               {rows.length > 0 && (
                 <>
+                  {allFlightless && (
+                    <div className="flex items-start gap-2 px-3 py-2.5 bg-warn-50 border border-warn-600/20 rounded-control text-sm text-warn-800 mb-3">
+                      <AlertCircle size={15} className="mt-0.5 shrink-0" />
+                      <span>
+                        <strong>Hiçbir satırda uçuş numarası bulunamadı.</strong> Tüm satırlar
+                        uçuşsuz transfer olarak eklenecek ve uçuş takibi yapılmayacak.
+                        Dosyanızda uçuş sütunu varsa başlığı tanınmamış olabilir —
+                        "Uçuş No" olarak değiştirip tekrar deneyin.
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 mb-2 text-sm">
                     <span className="font-semibold text-ink-soft">{rows.length} satır</span>
                     <span className="text-ok-600">{validRows.length} geçerli</span>
                     {invalidCount > 0 && <span className="text-bad-600">{invalidCount} hatalı</span>}
+                    {/* UYARI TONU, gri DEĞİL: bu satırlar uçuş takibini
+                        kaybediyor. Eskiden uçuş hücresi boş olan satır kırmızı
+                        yanardı; soluk gri bir sayaç o sinyali sessizce siler
+                        ve yarısı boş bırakılmış bir dosya fark edilmez. */}
+                    {flightless > 0 && !allFlightless && <span className="text-warn-800 font-semibold">{flightless} uçuşsuz</span>}
                   </div>
                   <div className="border border-surface-border rounded-card overflow-auto max-h-72">
                     <table className="w-full text-xs">
@@ -206,7 +240,11 @@ export default function BulkImportModal({ onClose, onDone }) {
                       <tbody>
                         {rows.slice(0, 100).map((r, i) => (
                           <tr key={i} className={r._errors.length ? 'bg-bad-50' : 'border-t border-surface-border'}>
-                            <td className="px-2 py-1.5 font-mono font-semibold">{r.flight_number || '—'}</td>
+                            {/* Boş uçuş hücresi ARTIK BİR HATA DEĞİL, bir
+                                seçim — '—' göstermek "eksik" izlenimi verirdi. */}
+                            <td className="px-2 py-1.5 font-mono font-semibold">
+                              {r.flight_number || <span className="font-sans font-normal text-ink-muted">Uçuşsuz</span>}
+                            </td>
                             <td className="px-2 py-1.5">{r.scheduled_pickup ? formatPickup(r.scheduled_pickup) : '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_name || '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_phone || '—'}</td>

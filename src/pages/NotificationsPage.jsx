@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
 import { Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
+import { cardTitle, showFlightLine } from '../lib/transfer';
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -39,12 +40,16 @@ export default function NotificationsPage() {
                 {/* İçerik */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    {/* Uçuşsuz transferde flight_number NULL — başlık boş
+                        kalıp bildirim kime aitmiş belli olmuyordu. */}
                     <span className="font-semibold text-sm text-ink">
-                      {n.reservations?.flight_number}
+                      {n.reservations ? cardTitle(n.reservations) : ''}
                     </span>
-                    <span className="text-xs text-ink-muted">
-                      {n.reservations?.passenger_name}
-                    </span>
+                    {showFlightLine(n.reservations) && (
+                      <span className="text-xs text-ink-muted font-mono">
+                        {n.reservations.flight_number}
+                      </span>
+                    )}
                     <Badge className="ml-auto" tone={n.status === 'sent' ? 'ok' : 'bad'} icon={n.status === 'sent' ? CheckCircle : XCircle}>
                       {n.status === 'sent' ? 'Gönderildi' : 'Başarısız'}
                     </Badge>

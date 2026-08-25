@@ -2,6 +2,7 @@ import { formatPickup } from '../lib/format';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { transferLabel, isFlightTransfer } from '../lib/transfer';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -56,7 +57,12 @@ export default function TrackPage() {
           <Icon size={26} />
         </div>
 
-        <p className="font-mono font-bold text-2xl text-ink mb-1">{data.flight_number}</p>
+        {/* Yolcunun gördüğü sayfa. Uçuşsuz transferde uçuş numarası yoktur;
+            başlık boş kalmasın diye ada düşer. `transferLabel` bilinçli:
+            yolcu bu sayfada KENDİ uçuşunu arar, kendi adını değil —
+            cardTitle numarayı gizleyip adı öne çıkarırdı (üstelik link
+            WhatsApp'ta iletilirse ad da beraberinde yayılır). */}
+        <p className={`font-bold text-2xl text-ink mb-1 ${isFlightTransfer(data) ? 'font-mono' : ''}`}>{transferLabel(data)}</p>
         <span className={`inline-block text-sm font-semibold px-3 py-1 rounded-full border mb-5 ${fs.cls}`}>
           {fs.label}{ls?.arrival_delay > 0 && ` — ${ls.arrival_delay} dk gecikme`}
         </span>

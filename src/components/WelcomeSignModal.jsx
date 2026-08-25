@@ -22,9 +22,15 @@ export default function WelcomeSignModal({ reservation, onClose }) {
           <p className="text-6xl font-black text-gray-900 leading-tight break-words">
             {reservation.passenger_name || reservation.notes || 'Yolcu'}
           </p>
-          <p className="mt-8 font-mono text-3xl font-bold text-gray-400 tracking-wider">
-            {reservation.flight_number}
-          </p>
+          {/* Uçuş numarası tabelada YARDIMCI bilgidir (yolcu kendi uçuşunu
+              teyit eder). Uçuşsuz transferde yoktur ve boş satır dev puntoda
+              bir boşluk olarak görünürdü — hiç basılmaz. Bu ekran bilinçli
+              olarak maksimum kontrastlıdır, "yumuşatma" uygulanmaz. */}
+          {reservation.flight_number && (
+            <p className="mt-8 font-mono text-3xl font-bold text-gray-400 tracking-wider">
+              {reservation.flight_number}
+            </p>
+          )}
         </div>
       </div>
     </div>

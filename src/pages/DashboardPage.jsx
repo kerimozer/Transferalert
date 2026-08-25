@@ -11,9 +11,10 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, JOB_BADGE } from '../lib/status';
 import { StatCard, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
-import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight, Search, X, AlertTriangle, UserCheck } from 'lucide-react';
+import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
 import AssignDriverModal from '../components/AssignDriverModal';
 import { matchesQuery } from '../lib/search';
+import { cardTitle, showFlightLine, isFlightTransfer } from '../lib/transfer';
 
 export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -109,9 +110,11 @@ export default function DashboardPage() {
               const flight = r.latest_status ? (FLIGHT_BADGE[r.latest_status.flight_status] || null) : null;
               const job    = r.job_status ? JOB_BADGE[r.job_status] : null;
               const pickup = new Date(r.scheduled_pickup);
-              // Transferlerim listesiyle AYNI kural: yolcu adı yoksa uçuş
-              // numarasına düş, şoförsüz AKTİF transferi işaretle.
-              const hasPassenger = !!r.passenger_name && r.passenger_name !== r.flight_number;
+              // Transferlerim listesiyle AYNI kural — ve kural ortak
+              // dosyada (lib/transfer.js). Aynı transferin iki ekranda farklı
+              // görünmesi (birinde uçuş satırı olup diğerinde olmaması)
+              // güveni bozar.
+              const showFlight = showFlightLine(r);
               const needsDriver = r.status === 'active' && !r.assigned_member_id && !r.driver_name;
 
               return (
@@ -127,10 +130,11 @@ export default function DashboardPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-ink truncate">
-                      {hasPassenger ? r.passenger_name : r.flight_number}
+                      {cardTitle(r)}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-ink-muted mt-0.5 truncate">
-                      {hasPassenger && <span className="font-mono">{r.flight_number}</span>}
+                      {showFlight && <span className="font-mono">{r.flight_number}</span>}
+                      {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz</span>}
                       {r.latest_status?.arrival_delay > 0 && (
                         <span className="font-semibold text-warn-800">+{r.latest_status.arrival_delay} dk</span>
                       )}
