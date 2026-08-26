@@ -11,9 +11,13 @@ const TONES = {
   neutral: 'bg-surface-alt text-ink-soft',
 };
 
-export default function Badge({ tone = 'neutral', cls, icon: Icon, className = '', children }) {
+// `...rest`: erişilebilirlik nitelikleri (role, aria-live, aria-label) geçsin.
+// Olmadan sessizce yutuluyorlardı — rozet bir sayaç olarak kullanıldığında
+// ekran okuyucuya bağlamsız bir rakam olarak düşer.
+export default function Badge({ tone = 'neutral', cls, icon: Icon, className = '', children, ...rest }) {
   return (
     <span
+      {...rest}
       className={[
         'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap',
         cls || TONES[tone] || TONES.neutral,

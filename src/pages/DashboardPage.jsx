@@ -62,12 +62,16 @@ export default function DashboardPage() {
       <p className="text-sm text-ink-muted mb-6">Transferlerinizi buradan arayın ve takip edin.</p>
 
       <div className="relative mb-6">
-        <Search size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none" />
+        {/* Aktifken büyüteç marka rengine döner: "ekran seni dinliyor"
+            sinyali, kullanıcının BAKTIĞI yerde verilir. */}
+        <Search size={17} className={`absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none ${q ? 'text-brand-600' : 'text-ink-muted'}`} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Transfer ara — yolcu, uçuş no, PNR, şoför"
-          className="w-full border border-surface-borderstrong rounded-card pl-11 pr-11 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+          className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-white border focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+            q ? 'border-brand-600' : 'border-surface-borderstrong'
+          }`}
         />
         {query && (
           <button onClick={() => setQuery('')} aria-label="Aramayı temizle"
@@ -77,21 +81,51 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Aktif Transfer"  value={active}               icon={Plane}         tone="brand" />
-        <StatCard label="Tamamlanan"      value={completed}            icon={CheckCircle}   tone="ok" />
-        <StatCard label="İptal"           value={cancelled}            icon={XCircle}       tone="bad" />
-        <StatCard label="Toplam Bildirim" value={notifications.length} icon={MessageSquare} tone="accent" />
-      </div>
+      {/* ARAMA BİR MOD, bir filtre değil — mobille aynı karar (bkz.
+          DashboardScreen). İstatistikler hesabın ÖZETİDİR, aramanın cevabı
+          değil: arama kutusu ile sonuç arasında durup cevabı aşağı itiyorlar.
+          Dar ekranda ızgara iki satıra kırılıyor ve sonuç katlamanın altında
+          kalıyor; kullanıcı yukarıda yazıp aşağıda bir şey görmeyince
+          "arama tepki vermiyor" diyor. Bu tam olarak mobilde yaşandı. */}
+      {!q && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard label="Aktif Transfer"  value={active}               icon={Plane}         tone="brand" />
+          <StatCard label="Tamamlanan"      value={completed}            icon={CheckCircle}   tone="ok" />
+          <StatCard label="İptal"           value={cancelled}            icon={XCircle}       tone="bad" />
+          <StatCard label="Toplam Bildirim" value={notifications.length} icon={MessageSquare} tone="accent" />
+        </div>
+      )}
 
       <Card padding="none">
         <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
           <h2 className="font-semibold text-ink text-sm">
-            {q ? `Arama sonuçları (${listedAll.length > listed.length ? `${listed.length}/${listedAll.length}` : listed.length})` : 'Yaklaşan Transferler'}
+            {q ? 'Arama sonuçları' : 'Yaklaşan Transferler'}
           </h2>
-          <Link to="/app/reservations" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
-            Tümü <ArrowRight size={12} aria-hidden="true" />
-          </Link>
+          {/* Sayı ROZETTE: arama sırasında ekrandaki ilk cevap odur, parantez
+              içi düz metin olarak göze çarpmıyordu. Sıfır sonuç bir HATA
+              değil bir cevaptır — kırmızı değil, nötr yüzey. */}
+          {q ? (
+            // Rozet ELLE yazılmaz: aynı kartın altındaki durum rozetleri
+            // Badge'den geliyor, elle yazılan kopya bir ton ve bir ağırlık
+            // sapıyordu. `role=status` + `aria-live`: sayı ekrandaki ilk
+            // cevap, başlıktan koparıldığı için ekran okuyucuya çıplak "3"
+            // olarak düşüyordu.
+            <Badge
+              tone={listedAll.length === 0 ? 'neutral' : 'brand'}
+              className="min-w-[28px] justify-center"
+              role="status"
+              aria-live="polite"
+              aria-label={`${listedAll.length} sonuç`}
+            >
+              {listedAll.length > listed.length ? `${listed.length}/${listedAll.length}` : listedAll.length}
+            </Badge>
+          ) : (
+            // "Tümü" arama sırasında sorguyu DÜŞÜREN bir yol — gizlenir ki
+            // ekranda tek anlamlı ileri adım kalsın.
+            <Link to="/app/reservations" className="flex items-center gap-1 text-xs text-brand-600 hover:underline">
+              Tümü <ArrowRight size={12} aria-hidden="true" />
+            </Link>
+          )}
         </div>
 
         {listed.length === 0 ? (
