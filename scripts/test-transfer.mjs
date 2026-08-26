@@ -13,7 +13,7 @@
 // (2) KART KURALI: aynı transferin Ana Sayfa'da ve Transferlerim'de farklı
 //     görünmesi güveni bozar. Başlık/uçuş satırı kararı lib/transfer.js'te
 //     tek yerde; burası o kararın beklenen davranışını çiviler.
-import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine } from '../src/lib/transfer.js';
+import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine, looksLikeFlightNumber } from '../src/lib/transfer.js';
 
 let passed = 0, failed = 0;
 const check = (name, cond, extra = '') => {
@@ -53,6 +53,17 @@ check('uçuşlu + yolcu adı var → basılır', showFlightLine({ flight_number:
 check('başlık zaten uçuş no ise basılmaz', !showFlightLine({ flight_number: 'TK900', passenger_name: 'TK900' }));
 check('uçuşsuzda basılmaz', !showFlightLine({ transfer_type: POINT_TO_POINT, flight_number: null, passenger_name: 'Ali' }));
 check('kayıt yoksa çökmüyor', !showFlightLine(null) && cardTitle(null) === 'Transfer');
+
+console.log('\n[5] Uçuş numarası sezgisi (boş aramada canlı sorgu önerisi)');
+// Ana Sayfa araması YALNIZ kayıtlı transferleri tarar. Sonuç boşken canlı
+// sorguyu ÖNERMEK için kullanılır. Yanlış negatif kullanıcıyı yine çıkmazda
+// bırakır; yanlış pozitif ise yolcu adının altına "uçuş ara" butonu basar.
+for (const q of ['TK1234', 'tk1234', 'PC4567', 'TK1', 'W61', 'TK 1234', 'TK123A']) {
+  check(`"${q}" uçuş numarası sayılıyor`, looksLikeFlightNumber(q));
+}
+for (const q of ['Anna Schmidt', 'Ibrahim', '1234', 'Hilton Bomonti', '', null, undefined]) {
+  check(`"${q}" uçuş numarası SAYILMIYOR`, !looksLikeFlightNumber(q));
+}
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

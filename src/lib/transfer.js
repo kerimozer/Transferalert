@@ -39,3 +39,19 @@ export function cardTitle(r) {
 export function showFlightLine(r) {
   return isFlightTransfer(r) && cardTitle(r) !== r.flight_number;
 }
+
+// Yazılan sorgu bir UÇUŞ NUMARASINA benziyor mu?
+//
+// NEDEN VAR: Ana Sayfa'daki arama YALNIZ kayıtlı transferleri filtreler.
+// Kullanıcı oraya kayıtlı olmayan bir uçuş numarası yazınca boş liste
+// görüyor ve "arama çalışmıyor" sanıyordu — oysa canlı uçuş sorgusu ayrı bir
+// iştir ve o ekrana geçiş yolu boş sonuç ekranında hiç sunulmuyordu.
+// Bu yardımcı, "sonuç yok" durumunda canlı aramayı ÖNERMEK için kullanılır.
+//
+// Kural backend'in `utils/sanitize.js` → `flightNumber()` kapısından DAHA GEVŞEK
+// olmalı: burada amaç doğrulamak değil, niyeti tahmin etmek. "TK1" de "PC4567"
+// de öneriyi hak eder; kabul kararını backend verir.
+export function looksLikeFlightNumber(q) {
+  const s = String(q ?? '').toUpperCase().replace(/\s+/g, '');
+  return /^[A-Z]{1,3}\d{1,4}[A-Z]?$/.test(s);
+}

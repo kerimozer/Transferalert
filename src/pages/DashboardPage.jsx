@@ -14,7 +14,7 @@ import { StatCard, Card, Badge, EmptyState, LoadingBlock } from '../components/u
 import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
 import AssignDriverModal from '../components/AssignDriverModal';
 import { matchesQuery } from '../lib/search';
-import { cardTitle, showFlightLine, isFlightTransfer } from '../lib/transfer';
+import { cardTitle, showFlightLine, isFlightTransfer, looksLikeFlightNumber } from '../lib/transfer';
 
 export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -97,11 +97,28 @@ export default function DashboardPage() {
         {listed.length === 0 ? (
           <EmptyState
             icon={q ? Search : Plane}
-            title={q ? 'Eşleşen transfer yok' : 'Yaklaşan transfer yok'}
+            title={q ? 'Kayıtlı transferlerinizde eşleşme yok' : 'Yaklaşan transfer yok'}
             description={q
-              ? 'Yolcu adı, uçuş numarası, PNR veya şoför adıyla arayabilirsiniz.'
+              ? 'Yolcu adı, uçuş numarası, PNR, şoför adı veya adresle arayabilirsiniz. Bu arama YALNIZ kayıtlı transferlerinizi tarar.'
               : 'İlk transferi ekleyin — uçuş yaklaştığında durum güncellemeleri otomatik gelir.'}
-            action={!q && <Link to="/app/reservations" className="text-sm font-semibold text-brand-600 hover:underline">Transfer Ekle →</Link>}
+            /* ÇIKMAZI KAPAT: kullanıcı buraya bir uçuş numarası yazıp boş liste
+               görünce "arama çalışmıyor" sanıyordu — oysa canlı uçuş sorgusu
+               ayrı bir iş ve bu sayfada ona giden HİÇBİR yol yoktu. Numara gibi
+               görünen sorguda Transferlerim'in ekleme formunu o numarayla açar;
+               form açılışta canlı sorguyu kendisi çalıştırır. */
+            action={
+              q
+                ? (looksLikeFlightNumber(q) && (
+                    <Link
+                      to={`/app/reservations?flight=${encodeURIComponent(q.toUpperCase().replace(/\s+/g, ''))}`}
+                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control px-5 py-2.5 transition-colors"
+                    >
+                      <Plane size={16} aria-hidden="true" />
+                      {q.toUpperCase().replace(/\s+/g, '')} uçuşunu canlı ara
+                    </Link>
+                  ))
+                : <Link to="/app/reservations" className="text-sm font-semibold text-brand-600 hover:underline">Transfer Ekle →</Link>
+            }
           />
         ) : (
           <div className="divide-y divide-surface-border">

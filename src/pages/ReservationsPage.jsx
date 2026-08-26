@@ -1,4 +1,5 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
@@ -43,12 +44,16 @@ export default function ReservationsPage() {
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
   const [flightInfo, setFlightInfo]     = useState(null);
+  // Canlı sorgu sonuç vermedi mi? `flightInfo === null` YETMEZ: "henüz
+  // aranmadı" ile "arandı, bulunamadı" aynı değere düşüyordu.
+  const [flightMiss, setFlightMiss]     = useState(false);
   const [searching, setSearching]       = useState(false);
   const [signFor, setSignFor]           = useState(null);
   const [assignFor, setAssignFor]       = useState(null);
   const [payFor, setPayFor]             = useState(null);
   const [showBulk, setShowBulk]         = useState(false);
   const [linkCopied, setLinkCopied]     = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Formun yarısı buna bağlı (uçuş alanları, etiketler, zorunluluklar).
   // Tek yerden türetiliyor ki alanlardan biri diğerinden farklı bir dala
@@ -59,9 +64,48 @@ export default function ReservationsPage() {
   const load = () => api.listReservations().then(d => setReservations(d || []));
   useEffect(() => { load(); }, []);
 
-  async function handleFlightSearch(number) {
-    if (number.length < 4) { setFlightInfo(null); return; }
+  // Ana Sayfa'daki "TK1234 uçuşunu canlı ara" bağlantısından gelindiyse formu
+  // O NUMARAYLA aç ve canlı sorguyu hemen çalıştır.
+  //
+  // NEDEN: Ana Sayfa araması yalnız KAYITLI transferleri tarar; kayıtlı olmayan
+  // bir uçuş numarası yazan kullanıcı boş liste görüp "arama çalışmıyor"
+  // sanıyordu ve o sayfada canlı sorguya giden hiçbir yol yoktu. Numarayı
+  // ikinci kez yazdırmak, açtığımız yolu yeniden çıkmaz yapardı.
+  useEffect(() => {
+    const flight = searchParams.get('flight');
+    if (!flight) return;
+    const val = flight.toUpperCase().replace(/\s+/g, '');
+    setForm({ ...EMPTY, flight_number: val });
+    setShowForm(true);
+    setError('');
+    handleFlightSearch(val, { force: true });
+    // Adres çubuğunu ROUTER ÜZERİNDEN temizle: sayfa yenilenince form tekrar
+    // açılmasın. `window.history.replaceState({}, ...)` kullanılmıştı ama o,
+    // react-router'ın geçmiş girdisindeki `{usr, key, idx}` durumunu siliyor
+    // ve geri/ileri düğmesi ile `navigate(-1)` yanlış yere gidebiliyordu.
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // `force`: kullanıcı YAZARKEN değil, açıkça "bu uçuşu ara" dediğinde çağrılır.
+  //
+  // İKİ FARKLI SORU, iki farklı eşik — ve bu bilinçli:
+  //   • yazarken (force yok): "her tuş vuruşunda sağlayıcıya gitmeli miyim?"
+  //     Hayır — 4 karakter altı elenir, yoksa "TK1234" yazan biri dört ayrı
+  //     sorgu tetikler ve ücretsiz kota (ayda ~1700 birim) boşa yanar.
+  //   • parametreyle gelindiğinde (force): "kullanıcı bu numarayı ARAMAMI
+  //     İSTEDİ mi?" Evet — tek bir istek, tuş vuruşu değil.
+  // Eşiği ortak yapmak ilk bakışta temiz görünüyor ama YANLIŞ olurdu: uzunluk
+  // kapısı kota içindir, `looksLikeFlightNumber` niyet tahminidir.
+  //
+  // KAPI OLMADAN NE OLUYORDU: Ana Sayfa "TK1 uçuşunu canlı ara" butonu basıyor
+  // (3 karakter kabul ediliyor, backend de kabul ediyor), kullanıcı basıyor,
+  // form açılıyor ve HİÇBİR İSTEK GİTMİYOR — şikâyet bir ekran ileri taşınmış
+  // oluyordu.
+  async function handleFlightSearch(number, { force = false } = {}) {
+    if (!force && number.length < 4) { setFlightInfo(null); setFlightMiss(false); return; }
     setSearching(true);
+    setFlightMiss(false);
     try {
       const data = await api.searchFlight(number);
       setFlightInfo(data);
@@ -72,7 +116,12 @@ export default function ReservationsPage() {
         setForm(f => ({ ...f, scheduled_pickup: d.toISOString().slice(0, 16) }));
       }
     } catch {
+      // BULUNAMADI GERİ BİLDİRİMİ ŞART. Önceden hata sessizce yutuluyordu ve
+      // ekranda hiçbir iz kalmıyordu: kullanıcı "canlı ara"ya basıp boş form
+      // görüyor, "yine tepki vermedi" diyordu. Mobil bunu zaten doğru yapıyor
+      // (SearchScreen → notFoundTitle); iki istemci ayrışmıştı.
       setFlightInfo(null);
+      setFlightMiss(true);
     } finally {
       setSearching(false);
     }
@@ -115,7 +164,7 @@ export default function ReservationsPage() {
     }
   }
 
-  const openForm = () => { setShowForm(true); setError(''); setForm(EMPTY); setFlightInfo(null); };
+  const openForm = () => { setShowForm(true); setError(''); setForm(EMPTY); setFlightInfo(null); setFlightMiss(false); };
 
   async function handleDelete(id) {
     if (!confirm('Bu uçuşu takip listesinden kaldırmak istiyor musunuz?')) return;
@@ -245,6 +294,7 @@ export default function ReservationsPage() {
                 value={form.transfer_type}
                 onChange={(t) => {
                   setForm(f => ({ ...f, transfer_type: t }));
+                  setFlightMiss(false);
                   // Tür değişince önceki türün uçuş önerisi ekranda kalmamalı:
                   // uçuşsuza geçen kullanıcı "TK123 · IST → AYT" kutusunu
                   // görmeye devam ederse kaydın hâlâ uçuşa bağlı olduğunu sanır.
@@ -272,6 +322,17 @@ export default function ReservationsPage() {
                     <div className="mt-2 px-3 py-2 bg-ok-50 border border-ok-600/20 rounded-control text-xs text-ok-800 flex items-center gap-2">
                       <CheckCircle size={13} className="text-ok-600 shrink-0" />
                       <span><strong>{flightInfo.airline}</strong> · {flightInfo.departure_airport} → {flightInfo.arrival_airport}</span>
+                    </div>
+                  )}
+                  {/* BULUNAMADI DA BİR CEVAPTIR. Sessiz kalmak, kullanıcının
+                      "tepki vermiyor" dediği şeyin ta kendisi: sorgu koştu,
+                      sonuç yok ve ekranda hiçbir iz kalmıyordu. Ölümcül değil —
+                      uçuş bilgisi opsiyonel, kayıt elle girilerek açılabilir;
+                      bunu da söylüyoruz ki kullanıcı takılıp kalmasın. */}
+                  {flightMiss && !searching && (
+                    <div className="mt-2 px-3 py-2 bg-warn-50 border border-warn-600/20 rounded-control text-xs text-warn-800 flex items-start gap-2">
+                      <AlertCircle size={13} className="shrink-0 mt-0.5" />
+                      <span>Bu numarayla canlı uçuş bulunamadı. Numarayı kontrol edin ya da bilgileri elle girip kaydedin — takip, uçuş yayına girince kendiliğinden başlar.</span>
                     </div>
                   )}
                 </div>
