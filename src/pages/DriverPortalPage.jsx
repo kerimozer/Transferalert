@@ -69,7 +69,7 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
           <p className={`font-bold text-2xl text-ink leading-none ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
           <p className="text-sm text-ink-muted mt-1.5 truncate">
             {formatPickup(job.scheduled_pickup)}
-            {isFlightTransfer(job) ? ` · ${job.passenger_name}` : ' · Uçuşsuz transfer'}
+            {isFlightTransfer(job) ? ` · ${job.passenger_name}` : ' · Transfer'}
           </p>
           {flight && <p className="text-xs text-ink-muted mt-0.5">{FLIGHT_LABEL[flight] || flight}</p>}
         </div>

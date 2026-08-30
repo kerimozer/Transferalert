@@ -11,9 +11,12 @@
 import { Plane, Car } from 'lucide-react';
 import { FLIGHT, POINT_TO_POINT } from '../lib/transfer';
 
+// Etiketler kaydı YOKLUĞUYLA tanımlamaz: eski çift "Uçuşlu / Uçuşsuz" idi ve
+// ikincisi "bu bir eksik" gibi okunuyordu. Firmanın kendi kelimeleri kullanılır
+// (bkz. lib/transfer.js → typeKey).
 const OPTIONS = [
-  { key: FLIGHT,         label: 'Uçuşlu',  hint: 'Havalimanı karşılama',   Icon: Plane },
-  { key: POINT_TO_POINT, label: 'Uçuşsuz', hint: 'Otel, şehir içi, servis', Icon: Car },
+  { key: FLIGHT,         label: 'Havalimanı', hint: 'Uçuş takipli karşılama',  Icon: Plane },
+  { key: POINT_TO_POINT, label: 'Transfer',   hint: 'Otel, şehir içi, servis', Icon: Car },
 ];
 
 export default function TransferTypeToggle({ value, onChange, label = 'Transfer Türü' }) {

@@ -257,7 +257,7 @@ export default function ReservationsPage() {
                   <div className="text-xs text-ink-muted mt-0.5 flex items-center gap-2 flex-wrap">
                     <span className="flex items-center gap-1"><Calendar size={11} />{formatPickup(r.scheduled_pickup)}</span>
                     {showFlightLine(r) && <span className="font-mono">{r.flight_number}</span>}
-                    {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz</span>}
+                    {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Transfer</span>}
                     {r.passenger_phone && <span>{r.passenger_phone}</span>}
                   </div>
                   {r.notes && <p className="text-xs text-ink-muted mt-0.5">{r.notes}</p>}
@@ -620,7 +620,7 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
             /* Uçuşsuz transferde uçuş satırının yerini türün kendisi alır:
                boş bırakılırsa kart "eksik veri" gibi durur ve dispatcher
                uçuş numarasının girilmediğini sanıp aramaya çıkar. */
-            : !isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz transfer</span>}
+            : !isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Transfer</span>}
           {ls?.arrival_delay > 0 && <span className="font-semibold text-warn-800">+{ls.arrival_delay} dk rötar</span>}
           {r.pnr   && <span className="font-mono bg-surface-alt px-1.5 py-0.5 rounded">PNR: {r.pnr}</span>}
         </div>

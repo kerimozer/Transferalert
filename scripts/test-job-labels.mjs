@@ -122,6 +122,9 @@ function objectBlocks(code) {
 }
 function definesStageMap(src) {
   if (src.includes('stage-map-ok')) return false;
+  // `stage-i18n-ok`: aşama etiketlerinin ÇEVİRİSİNİ tutan dosya. Muafiyet
+  // bedava değil — [5] kontrolü her aşamanın her dilde bulunduğunu doğrular.
+  if (src.includes('stage-i18n-ok')) return false;
   // Yorumları ve dizeleri ayıkla — açıklama metinlerindeki aşama adları
   // "harita" sanılmasın.
   const code = src
@@ -189,6 +192,69 @@ check('jobAction / jobState / jobView / jobBadge dışa veriliyor',
 check('uçuşsuz kararı lib/transfer.js\'ten geliyor',
   /import \{[^}]*isFlightTransfer[^}]*\} from '\.\/transfer'/.test(statusSrc),
   'status.js kendi tür kontrolünü yazmamalı');
+
+// [5] YOLCU SAYFASININ ÇEVİRİLERİ — aşama × dil kapsaması.
+//
+// `lib/trackI18n.js` aşama etiketlerini BEŞ DİLDE taşır (yolcu Türk olmak
+// zorunda değil). Türkçesi JOB_LABELS'tan TÜRETİLİR, ama diğer dört dil elle
+// yazılmış gerçek veridir — yani beşinci bir aşama eklendiğinde `status.js`
+// güncellenir, orası sessizce eksik kalır ve Alman yolcu ham anahtar görür
+// ("at_dropoff" gibi). [3]'teki "yerel harita" kapısı bu dosyayı `stage-i18n-ok`
+// ile muaf tuttuğu için koruma BURADA duruyor; muafiyet bedava değil.
+console.log('\n[5] Yolcu sayfası çevirileri her aşamayı kapsıyor');
+const trackSrc = readFileSync(join(root, 'src', 'lib', 'trackI18n.js'), 'utf8');
+check('trackI18n Türkçeyi JOB_LABELS\'tan türetiyor',
+  /import \{[^}]*JOB_LABELS[^}]*\} from '\.\/status'/.test(trackSrc) && /STAGE\.tr\s*=/.test(trackSrc),
+  'Türkçe elle yazılırsa aşama listesi değişince sessizce ayrışır');
+// HANGİ HARİTAYA baktığımız önemli. İlk sürüm dilin adıyla başlayan HER satırı
+// aynı torbaya atıyordu (STAGE, FLIGHT ve UI birlikte) — bir aşama etiketi
+// yanlışlıkla UI sözlüğüne yazılsa kapı yine yeşil kalırdı.
+function mapBlock(src, mapName) {
+  const i = src.indexOf(`const ${mapName} = {`);
+  if (i === -1) return '';
+  let depth = 0;
+  for (let j = src.indexOf('{', i); j < src.length; j++) {
+    if (src[j] === '{') depth++;
+    else if (src[j] === '}' && --depth === 0) return src.slice(i, j + 1);
+  }
+  return '';
+}
+function langLine(block, lang) {
+  const m = block.match(new RegExp(`\\n\\s*${lang}:\\s*\\{[\\s\\S]*?\\},`));
+  return m ? m[0] : '';
+}
+
+const TRACK_LANGS = ['en', 'de', 'ru', 'ar'];
+const stageBlock = mapBlock(trackSrc, 'STAGE');
+check('STAGE haritası bulundu', stageBlock.length > 0);
+for (const lang of TRACK_LANGS) {
+  const line = langLine(stageBlock, lang);
+  const missing = backendStatuses.filter((s) => !new RegExp(`\\b${s}\\s*:`).test(line));
+  check(`${lang} tüm aşamaları taşıyor`, line.length > 0 && missing.length === 0,
+    line ? `eksik: ${missing.join(', ')}` : `${lang} bloğu STAGE haritasında yok`);
+  check(`${lang} uçuşsuz varyantını taşıyor`, /at_airport_p2p\s*:/.test(line),
+    'uçuşsuz transferde yolcuya "havalimanında" denmemeli');
+}
+
+// UI SÖZLÜĞÜNÜN KAPSAMASI DA ÖLÇÜLÜR. `tUi` bulunamayan anahtarda sessizce
+// Türkçeye düşüyor — eksik çeviri çökmez, uyarı vermez; Rus yolcu kartın
+// ortasında Türkçe bir kelime görür.
+const uiBlock = mapBlock(trackSrc, 'UI');
+const trKeys = [...(langLine(uiBlock, 'tr').matchAll(/(\w+)\s*:/g))].map((m) => m[1]).filter((k) => k !== 'tr');
+check('UI sözlüğünde Türkçe anahtarlar bulundu', trKeys.length >= 8, `${trKeys.length} anahtar`);
+for (const lang of TRACK_LANGS) {
+  const line = langLine(uiBlock, lang);
+  const missing = trKeys.filter((k) => !new RegExp(`\\b${k}\\s*:`).test(line));
+  check(`${lang} UI metinlerinin tamamını taşıyor`, missing.length === 0, `eksik: ${missing.join(', ')}`);
+}
+
+// TrackPage aşama SIRASINI elle yazmamalı: elle yazılan dizi hiçbir kapıya
+// görünmüyordu ([3] obje literallerine bakar, diziye kör) ve 5. aşama
+// eklendiğinde yolcu sayfası şoför yoldayken "henüz yola çıkmadı" basardı.
+const trackPageSrc = readFileSync(join(root, 'src', 'pages', 'TrackPage.jsx'), 'utf8');
+check('TrackPage aşama sırasını JOB_LABELS\'tan türetiyor',
+  /const STAGES\s*=\s*Object\.keys\(JOB_LABELS\)/.test(trackPageSrc),
+  'elle yazılan dizi aşama eklenince sessizce eksik kalır');
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

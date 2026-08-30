@@ -187,7 +187,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-ink-muted mt-0.5 truncate">
                       {showFlight && <span className="font-mono">{r.flight_number}</span>}
-                      {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Uçuşsuz</span>}
+                      {!isFlightTransfer(r) && <span className="flex items-center gap-1"><Car size={11} />Transfer</span>}
                       {r.latest_status?.arrival_delay > 0 && (
                         <span className="font-semibold text-warn-800">+{r.latest_status.arrival_delay} dk</span>
                       )}

@@ -40,6 +40,29 @@ export function showFlightLine(r) {
   return isFlightTransfer(r) && cardTitle(r) !== r.flight_number;
 }
 
+// Kartın durum şeridinde görünecek TÜR ANAHTARI.
+//
+// "Uçuşsuz transfer" etiketi 2026-08-28'de kaldırıldı: kaydı YOKLUĞUYLA
+// tanımlıyordu ve kullanıcı haklı olarak yadırgadı. Üç hâl var ve hiçbiri
+// olumsuzlama değil:
+//   · uçuş var + canlı veri geldi → uçuş durumu basılır (Havada/İndi/Rötarlı),
+//     bu fonksiyon devreye GİRMEZ; karar ekranda latest_status ile verilir
+//   · uçuş var, canlı veri yok     → 'airport'  → "Havalimanı"
+//   · uçuş yok                     → 'transfer' → "Transfer"
+//
+// "Havalimanı" seçildi çünkü firmanın zaten kullandığı kelime ("havalimanı
+// transferi" / "şehir içi transfer"); "uçuşlu" uydurma bir sıfat, parantezli
+// etiket de rozette sonradan eklenmiş durur.
+//
+// DİKKAT: bu YALNIZ görünen etikettir. Veritabanındaki transfer_type kolonu
+// ve backend sözleşmesi ('flight' | 'point_to_point') DEĞİŞMEZ.
+export const TYPE_AIRPORT = 'airport';
+export const TYPE_TRANSFER = 'transfer';
+
+export function typeKey(r) {
+  return isFlightTransfer(r) ? TYPE_AIRPORT : TYPE_TRANSFER;
+}
+
 // Yazılan sorgu bir UÇUŞ NUMARASINA benziyor mu?
 //
 // NEDEN VAR: Ana Sayfa'daki arama YALNIZ kayıtlı transferleri filtreler.

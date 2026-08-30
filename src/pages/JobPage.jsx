@@ -125,7 +125,7 @@ export default function JobPage() {
                   yolcu adına düşer ve uçuş durumu satırı hiç basılmaz. */}
               <p className={`font-bold text-3xl text-ink leading-none ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
               {flight && <p className="text-sm text-ink-muted mt-1.5">{FLIGHT_LABEL[flight] || flight}</p>}
-              {!isFlightTransfer(job) && <p className="text-sm text-ink-muted mt-1.5 flex items-center gap-1"><Car size={14} />Uçuşsuz transfer</p>}
+              {!isFlightTransfer(job) && <p className="text-sm text-ink-muted mt-1.5 flex items-center gap-1"><Car size={14} />Transfer</p>}
             </div>
             {job.job_status && (
               <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${done ? 'bg-ok-50 text-ok-800' : 'bg-brand-50 text-brand-700'}`}>

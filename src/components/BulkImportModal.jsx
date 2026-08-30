@@ -243,7 +243,7 @@ export default function BulkImportModal({ onClose, onDone }) {
                             {/* Boş uçuş hücresi ARTIK BİR HATA DEĞİL, bir
                                 seçim — '—' göstermek "eksik" izlenimi verirdi. */}
                             <td className="px-2 py-1.5 font-mono font-semibold">
-                              {r.flight_number || <span className="font-sans font-normal text-ink-muted">Uçuşsuz</span>}
+                              {r.flight_number || <span className="font-sans font-normal text-ink-muted">Transfer</span>}
                             </td>
                             <td className="px-2 py-1.5">{r.scheduled_pickup ? formatPickup(r.scheduled_pickup) : '—'}</td>
                             <td className="px-2 py-1.5">{r.passenger_name || '—'}</td>
