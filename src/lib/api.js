@@ -54,6 +54,8 @@ export const api = {
   listOrgMembers: ()    => req('GET',    '/api/organizations/members'),
   inviteMember:  (data) => req('POST',   '/api/organizations/invite', data),
   removeMember:  (id)   => req('DELETE', `/api/organizations/members/${id}`),
+  // Şoförün kayıtlı aracı — atama anında rezervasyona kopyalanır.
+  setMemberPlate: (id, vehicle_plate) => req('PATCH', `/api/organizations/members/${id}`, { vehicle_plate }),
   // Şoförün KALICI pano linki (üyeliğe bağlı) — yukarıdaki createDriverLink/
   // revokeDriverLink ile KARIŞTIRMA: onlar tek bir REZERVASYONA ait taşeron
   // linkidir. Adları benzediği için ayrı isim şart: aynı nesnede mükerrer

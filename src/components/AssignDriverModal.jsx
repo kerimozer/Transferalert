@@ -12,7 +12,7 @@
 // havalimanında bekleyen yolcudur.
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { X, UserCheck, AlertCircle, AlertTriangle, Shield, Headset, Truck, Send } from 'lucide-react';
+import { X, UserCheck, AlertCircle, AlertTriangle, Shield, Headset, Truck, Send, Car } from 'lucide-react';
 
 const ROLE_LABEL = { admin: 'Yönetici', dispatcher: 'Operasyon', driver: 'Sürücü' };
 const ROLE_ICON  = { admin: Shield, dispatcher: Headset, driver: Truck };
@@ -198,6 +198,16 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
                       <p className="text-xs text-ink-muted mt-0.5">
                         {d.phone ? `${d.phone} · ` : ''}
                         {d.today_count > 0 ? `o gün ${d.today_count} transfer` : 'o gün boş'}
+                      </p>
+                    )}
+                    {/* Kayıtlı araç atama ANINDA işe kopyalanır. Burada
+                        gösterilmezse dispatcher hangi plakanın yazılacağını
+                        ancak atadıktan sonra görür — yani kaydı ikinci kez
+                        açıp düzeltmesi gerekir. */}
+                    {d.vehicle_plate && (
+                      <p className="flex items-center gap-1.5 text-xs text-ink-soft mt-0.5">
+                        <Car size={12} className="shrink-0" aria-hidden="true" />
+                        <span className="font-semibold tabular-nums">{d.vehicle_plate}</span>
                       </p>
                     )}
                   </div>

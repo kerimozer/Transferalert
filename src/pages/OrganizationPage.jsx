@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil, Send, RefreshCw, XCircle } from 'lucide-react';
+import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil, Send, RefreshCw, XCircle, Car } from 'lucide-react';
 
 // PostgREST `time` kolonunu "22:00:00" olarak döndürür; <input type="time"> "22:00" ister.
 const hhmm = (v) => (typeof v === 'string' ? v.slice(0, 5) : '');
@@ -22,10 +22,11 @@ export default function OrganizationPage() {
   const [createForm, setCreateForm] = useState({ name: '', plan: 'starter' });
 
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', email: '', role: 'driver' });
+  const [inviteForm, setInviteForm] = useState({ name: '', phone: '', email: '', role: 'driver', vehicle_plate: '' });
   const [inviteLink, setInviteLink] = useState('');
   const [driverLink, setDriverLink] = useState('');
   const [copied,     setCopied]     = useState('');
+  const [plateSaved, setPlateSaved] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [error,  setError]  = useState('');
@@ -132,7 +133,9 @@ export default function OrganizationPage() {
       // zincirine sokan eski akışa geri döndürür.
       setDriverLink(res.driver_link || '');
       setInviteLink(res.invite_link || '');
-      setInviteForm({ name: '', phone: '', email: '', role: 'driver' });
+      // Plaka da sıfırlanır: kalırsa bir sonraki şoför ÖNCEKİNİN aracıyla
+      // davet edilir ve bunu kimse fark etmez.
+      setInviteForm({ name: '', phone: '', email: '', role: 'driver', vehicle_plate: '' });
       load();
     } catch (err) {
       setError(err.message);
@@ -174,6 +177,24 @@ export default function OrganizationPage() {
       load();
     } catch (err) {
       setError(err.message || 'Şoför linki iptal edilemedi.');
+    }
+  }
+
+  // Plaka alandan çıkınca kaydedilir (ayrı bir "Kaydet" butonu, tek alanlık
+  // bir düzenleme için fazla ağır). DEĞİŞMEDİYSE istek atılmaz: her odak
+  // kaybında sunucuya gitmek, hiçbir şey değiştirmeyen PATCH'ler üretir.
+  async function handlePlate(id, value, previous) {
+    const next = value.trim().toLocaleUpperCase('tr');
+    if (next === String(previous || '')) return;
+    setError('');
+    try {
+      await api.setMemberPlate(id, next);
+      setPlateSaved(id);
+      setTimeout(() => setPlateSaved(''), 2000);
+      load();
+    } catch (err) {
+      // Sessiz kalma: kullanıcı yazdı, alandan çıktı ve kaydedildiğini sanıyor.
+      setError(err.message || 'Plaka kaydedilemedi.');
     }
   }
 
@@ -524,6 +545,29 @@ export default function OrganizationPage() {
                   )}
                 </div>
 
+                {/* KAYITLI ARAÇ. Sonradan düzenlenebilmesi ŞART: özellik davet
+                    anında eklendi ama ekipler zaten kurulu ve araçlar değişiyor.
+                    Yalnız davette sorulsaydı mevcut şoförlerin hiçbiri için
+                    çalışmaz, yani en çok işe yarayacağı yerde kapalı kalırdı. */}
+                {m.role === 'driver' && role !== 'driver' && (
+                  <div className="mt-3 pt-3 border-t border-surface-border flex items-center gap-2">
+                    <Car size={14} className="text-ink-muted shrink-0" aria-hidden="true" />
+                    <label htmlFor={`plate-${m.id}`} className="text-xs font-semibold text-ink-soft shrink-0">Plaka</label>
+                    <input
+                      id={`plate-${m.id}`}
+                      defaultValue={m.vehicle_plate || ''}
+                      onBlur={(e) => handlePlate(m.id, e.target.value, m.vehicle_plate)}
+                      placeholder="07 ABC 123"
+                      className="flex-1 min-w-0 border border-surface-borderstrong rounded-control px-3 py-1.5 text-xs tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    />
+                    {plateSaved === m.id && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-ok-800 shrink-0">
+                        <CheckCircle size={12} aria-hidden="true" /> Kaydedildi
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {/* Şoförün çalışma linki. Davet anını kaçıran dispatcher'ın
                     (ya da telefonunu değiştiren şoförün) linke ulaşabileceği
                     tek yer burası — "link üret" diye ayrı bir adım yok. */}
@@ -677,6 +721,25 @@ export default function OrganizationPage() {
                     <option value="dispatcher">Operasyon</option>
                   </select>
                 </div>
+                {/* Plaka YALNIZ şoförde sorulur: operasyon çalışanı araç
+                    sürmüyor, alanı ona göstermek formu gereksiz uzatır.
+                    Buraya girilen plaka, o şoför bir transfere atandığında
+                    kendiliğinden işe yazılır — aynı yedi karakteri her
+                    transferde yeniden yazmak gerekmez. */}
+                {inviteForm.role === 'driver' && (
+                  <div>
+                    <label className="block text-sm font-semibold text-ink-soft mb-1">
+                      Plaka <span className="text-ink-muted font-normal">(opsiyonel)</span>
+                    </label>
+                    <input
+                      value={inviteForm.vehicle_plate}
+                      onChange={e => setInviteForm(f => ({ ...f, vehicle_plate: e.target.value.toLocaleUpperCase('tr') }))}
+                      placeholder="07 ABC 123"
+                      className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    />
+                    <p className="text-xs text-ink-muted mt-1">Transfere atandığında otomatik yazılır; o iş için değiştirilebilir.</p>
+                  </div>
+                )}
                 <p className="text-xs text-ink-muted">Davet linki oluşturulacak, WhatsApp ile gönderebilirsiniz. Üye mobil uygulamadan katılır.</p>
                 <div className="flex gap-3">
                   <button type="button" onClick={closeInviteModal} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
