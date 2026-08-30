@@ -184,7 +184,7 @@ export default function OrganizationPage() {
   // bir düzenleme için fazla ağır). DEĞİŞMEDİYSE istek atılmaz: her odak
   // kaybında sunucuya gitmek, hiçbir şey değiştirmeyen PATCH'ler üretir.
   async function handlePlate(id, value, previous) {
-    const next = value.trim().toLocaleUpperCase('tr');
+    const next = value.trim().toUpperCase();
     if (next === String(previous || '')) return;
     setError('');
     try {
@@ -733,7 +733,7 @@ export default function OrganizationPage() {
                     </label>
                     <input
                       value={inviteForm.vehicle_plate}
-                      onChange={e => setInviteForm(f => ({ ...f, vehicle_plate: e.target.value.toLocaleUpperCase('tr') }))}
+                      onChange={e => setInviteForm(f => ({ ...f, vehicle_plate: e.target.value.toUpperCase() }))}
                       placeholder="07 ABC 123"
                       className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     />
