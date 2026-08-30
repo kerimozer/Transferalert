@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
-import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine } from '../lib/transfer';
+import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine, typeKey, TYPE_AIRPORT, TYPE_TRANSFER } from '../lib/transfer';
 import TransferTypeToggle from '../components/TransferTypeToggle';
 import { Button } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
@@ -530,6 +530,21 @@ function groupByDate(reservations) {
   return groups;
 }
 
+// Yolcu adından baş harfler — mobil TransferCard ile AYNI kural.
+function initials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '–';
+  const first = parts[0][0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toLocaleUpperCase('tr');
+}
+
+// Şeridin tonu, canlı uçuş durumu yokken TÜRE göre belirlenir.
+const STRIP_TONE = {
+  [TYPE_AIRPORT]: 'text-ink-soft bg-surface-neutral',
+  [TYPE_TRANSFER]: 'text-ink-soft bg-surface-alt',
+};
+
 function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, isPast }) {
   const [copied, setCopied] = useState(false);
   const [driverCopied, setDriverCopied] = useState(false);
@@ -538,6 +553,13 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
   const rs   = RES_STATUS[r.status] || RES_STATUS.active;
   const Icon = fs?.icon || Clock;
+
+  // ŞERİT: canlı uçuş verisi varsa DURUMU, yoksa TÜRÜ söyler. Tür kararı
+  // lib/transfer.js'ten gelir — ikinci bir cevap üretmiyoruz.
+  const tk = typeKey(r);
+  const StripIcon = fs ? Clock : (tk === TYPE_AIRPORT ? Plane : Car);
+  const stripCls = fs ? fs.cls : (STRIP_TONE[tk] || STRIP_TONE[TYPE_TRANSFER]);
+  const stripLabel = fs ? fs.label : (tk === TYPE_AIRPORT ? 'Havalimanı' : 'Transfer');
 
   function handleShare() {
     const link = `${window.location.origin}/track/${r.share_token}`;
@@ -581,37 +603,49 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   const showFlight = showFlightLine(r);
 
   return (
-    <div className={`bg-white border rounded-card p-4 flex items-center gap-4 transition-all ${
+    <div className={`bg-white border rounded-card overflow-hidden transition-all ${
       isPast ? 'border-surface-border'
-        : needsDriver ? 'border-bad-600 border-l-4 shadow-sm'
-        : isClose ? 'border-brand-600/20 shadow-sm ring-1 ring-brand-600/20'
-        : 'border-surface-border shadow-sm'
+        : needsDriver ? 'border-bad-600 shadow-card'
+        : isClose ? 'border-brand-600/40 shadow-card'
+        : 'border-surface-border shadow-card'
     }`}>
-      {/* SAAT sütunu. Bu ekranın adı artık "Transferlerim": dispatcher'ın
-          taradığı şey uçuş numarası değil, KAÇTA ve KİM. Uçuş bilgisi bu
-          soruların cevabını destekler, başlığı olmaz. */}
-      <div className="w-14 shrink-0 text-center">
-        <div className="text-lg font-bold text-ink leading-tight">
-          {pickup.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-        </div>
-        <div className="text-[11px] font-semibold text-ink-muted uppercase tracking-wide">
-          {pickup.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
-        </div>
-        {fs && (
-          <span className={`mt-1.5 inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full border ${fs.cls}`}>
-            {fs.label}
-          </span>
+      {/* DURUM ŞERİDİ — "Kart C" anatomisi (design/yon-secimi/KARAR.md), mobil
+          TransferCard ile aynı. Canlı uçuş verisi varsa DURUMU söyler
+          (Havada/İndi/Rötarlı), yoksa TÜRÜ (Havalimanı/Transfer).
+          Saat ve tarih artık sabit genişlikli bir sol sütunda değil: mobilde
+          o sütun "13:00"ü ikiye bölüyordu, iki platform aynı kuralı taşısın. */}
+      <div className={`flex items-center gap-2 px-4 py-2 ${stripCls}`}>
+        {fs
+          ? <span className="w-[7px] h-[7px] rounded-full bg-current shrink-0" aria-hidden="true" />
+          : <StripIcon size={13} className="shrink-0" aria-hidden="true" />}
+        <span className="text-xs font-bold truncate">{stripLabel}</span>
+        {ls?.arrival_delay > 0 && (
+          <span className="text-xs font-medium text-warn-800 whitespace-nowrap">+{ls.arrival_delay} dk rötar</span>
         )}
         {isClose && !fs && (
-          <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-warn-50 text-warn-800 border border-warn-600/20">
-            <Bell size={10} /> {Math.round(hoursLeft)}s
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-warn-800 whitespace-nowrap">
+            <Bell size={11} aria-hidden="true" /> {Math.round(hoursLeft)}s
           </span>
         )}
+        <span className="grow" />
+        <span className="text-xs font-semibold tabular-nums opacity-70 whitespace-nowrap shrink-0">
+          {pickup.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
+        </span>
+        <span className="text-sm font-bold tabular-nums whitespace-nowrap shrink-0">
+          {pickup.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+        </span>
       </div>
 
-      {/* Bilgiler */}
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-ink truncate">
+      <div className="flex items-center gap-3 px-4 py-3">
+        {/* Baş harf rozeti — mobil kartla aynı. Bilgi taşımaz, satıra insani
+            bir çapa verir ve boş bir avatar kutusundan iyidir. */}
+        <div className="w-9 h-9 rounded-full bg-surface-alt flex items-center justify-center shrink-0">
+          <span className="text-xs font-bold text-ink-soft">{initials(cardTitle(r))}</span>
+        </div>
+
+        {/* Bilgiler */}
+        <div className="flex-1 min-w-0">
+        <div className="font-bold text-ink truncate">
           {cardTitle(r)}
         </div>
         <div className="flex items-center gap-2 flex-wrap text-xs text-ink-muted mt-0.5">
@@ -635,44 +669,6 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
         )}
         {r.notes && <div className="text-xs text-ink-muted truncate mt-0.5">{r.notes}</div>}
 
-        {/* Kim sürüyor ve iş nerede — dispatcher'ın panoda görmesi gereken iki
-            şey buydu; ikisi de görünmüyordu. Şoför yoksa sessiz kalmak yerine
-            açıkça söylenir: atanmamış bir iş operasyonda bir boşluktur. */}
-        {!isPast && (
-          <div className="flex items-center gap-2 flex-wrap mt-1.5">
-            {/* "Atanmış mı" ölçütü ad DEĞİL atamanın kendisidir: profilinde adı
-                olmayan bir üyeye atandığında kart yanlışlıkla "atanmadı" derdi. */}
-            {r.driver_name ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
-                <UserCheck size={11} /> {r.driver_name}
-              </span>
-            ) : r.assigned_member_id ? (
-              <span className="flex items-center gap-1 text-xs font-semibold text-ink-soft">
-                <UserCheck size={11} /> Şoför atandı (adı girilmemiş)
-              </span>
-            ) : r.status === 'active' ? (
-              // Tek dokunuşla çözülebilen bir eksik: uyarıyı eylemin KENDİSİ
-              // yap, dispatcher'ı ayrıca bir ikon aramaya zorlama.
-              <button
-                onClick={() => onAssign && onAssign(r)}
-                className="flex items-center gap-1 text-xs font-semibold text-bad-800 bg-bad-50 hover:bg-bad-50/70 px-2 py-1 rounded-full transition-colors"
-              >
-                <AlertTriangle size={11} /> Şoför atanmadı — ata
-              </button>
-            ) : (
-              <span className="flex items-center gap-1 text-xs font-semibold text-ink-muted">
-                <AlertTriangle size={11} /> Şoför atanmadı
-              </span>
-            )}
-            {/* Rozet rezervasyondan türetilir: uçuşsuz transferde
-                "Havalimanında" yanlış bilgidir, "Alış noktasında" denir. */}
-            {jobBadge(r) && (
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${jobBadge(r).cls}`}>
-                {jobBadge(r).label}
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Sağ */}
@@ -724,6 +720,41 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
           <Trash2 size={14} />
         </button>
       </div>
+      </div>
+
+      {/* TEK EYLEM SATIRI — Kart C. Kim sürüyor ve iş nerede: dispatcher'ın
+          panoda görmesi gereken iki şey. Şoför YOKSA satır uyarı zeminlidir ve
+          tıklanabilir; varsa nötr. Eskiden ikisi de aynı ağırlıktaydı ve
+          operasyonun tek gerçek alarmı gövdenin içinde kaybolan bir çip gibi
+          duruyordu. */}
+      {!isPast && (
+        needsDriver ? (
+          <button
+            onClick={() => onAssign && onAssign(r)}
+            className="w-full flex items-center gap-2 px-4 min-h-[44px] bg-bad-50 border-t border-bad-600/20 text-left hover:bg-bad-50/70 transition-colors"
+          >
+            <AlertTriangle size={14} className="text-bad-800 shrink-0" aria-hidden="true" />
+            <span className="text-sm font-semibold text-bad-800 grow">Şoför atanmadı</span>
+            <span className="text-sm font-bold text-bad-800 underline shrink-0">Ata</span>
+          </button>
+        ) : (r.driver_name || r.assigned_member_id || jobBadge(r)) ? (
+          <div className="flex items-center gap-2 px-4 min-h-[44px] border-t border-surface-alt">
+            <UserCheck size={14} className="text-ink-soft shrink-0" aria-hidden="true" />
+            {/* "Atanmış mı" ölçütü ad DEĞİL atamanın kendisidir: profilinde adı
+                olmayan bir üyeye atandığında kart yanlışlıkla "atanmadı" derdi. */}
+            <span className="text-sm font-semibold text-ink truncate">
+              {r.driver_name || (r.assigned_member_id ? 'Şoför atandı (adı girilmemiş)' : 'Şoför atanmadı')}
+            </span>
+            {/* Rozet rezervasyondan türetilir: uçuşsuz transferde
+                "Havalimanında" yanlış bilgidir, "Alış noktasında" denir. */}
+            {jobBadge(r) && (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${jobBadge(r).cls}`}>
+                {jobBadge(r).label}
+              </span>
+            )}
+          </div>
+        ) : null
+      )}
     </div>
   );
 }
