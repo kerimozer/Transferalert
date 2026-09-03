@@ -10,11 +10,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, jobBadge } from '../lib/status';
-import { StatCard, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
-import { Plane, CheckCircle, XCircle, MessageSquare, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
+import { StatRow, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
+import { Plane, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
 import AssignDriverModal from '../components/AssignDriverModal';
 import { matchesQuery } from '../lib/search';
-import { cardTitle, showFlightLine, isFlightTransfer, looksLikeFlightNumber } from '../lib/transfer';
+import { cardTitle, showFlightLine, isFlightTransfer, looksLikeFlightNumber, needsDriver as isDriverless } from '../lib/transfer';
 
 export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -22,6 +22,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery]     = useState('');
   const [assignFor, setAssignFor] = useState(null);
+  // Şoförsüz uyarı şeridinin "Göster"i — listeyi şoförsüz işlere daraltır.
+  // Şeridin kendisi bir ÇIKMAZ olmasın diye var: "1 transferde şoför yok"
+  // deyip kullanıcıyı sekiz kayıtlık listede o birini aramaya bırakmak,
+  // uyarıyı bilgiden çok gürültüye çevirir.
+  const [driverlessOnly, setDriverlessOnly] = useState(false);
 
   const load = () => Promise.all([api.listReservations(), api.listNotifications()])
     .then(([r, n]) => { setReservations(r || []); setNotifications(n || []); });
@@ -31,24 +36,46 @@ export default function DashboardPage() {
   const active    = reservations.filter(r => r.status === 'active').length;
   const completed = reservations.filter(r => r.status === 'completed').length;
   const cancelled = reservations.filter(r => r.status === 'cancelled').length;
+  // GÖNDERİLEN, toplam DEĞİL — mobille (DashboardScreen) birebir aynı ölçüt.
+  // Burada `notifications.length` yazılıydı ve aynı hesapta iki platform
+  // farklı sayı gösteriyordu: canlıda 46 bildirimin 46'sı da 'failed', yani
+  // web "46 bildirim gitti" derken gerçekte hiçbiri gitmemişti. Başarısızı
+  // sayan bir sayı, tam da bakılma sebebini (gitti mi?) yanlış cevaplar.
+  // Kapı: scripts/test-stats.mjs (mobilde de aynısı var).
+  const sentCount = notifications.filter(n => n.status === 'sent').length;
 
   // Eşleştirme SAF fonksiyonda (lib/search.js) ve mobille AYNI: Türkçe I/İ ve
   // ş/ğ/ü/ö/ç katlaması olmadan 'Ibrahim' sorgusu 'İbrahim'i bulmuyordu.
   const q = query.trim();
+
+  const upcoming = useMemo(() => reservations
+    // ALT SINIR: poller pickup+12s'e kadar kaydı 'active' bırakıyor.
+    // Sınır olmadan sabah bitmiş ama kapatılmamış işler listenin başını
+    // kaplıyor ve öğleden sonraki gerçek işler hiç görünmüyordu.
+    .filter(r => r.status === 'active' && new Date(r.scheduled_pickup) > Date.now() - 3 * 3600 * 1000)
+    .sort((a, b) => new Date(a.scheduled_pickup) - new Date(b.scheduled_pickup)), [reservations]);
+
+  // Şerit KOŞULLU: şoförsüz iş yoksa hiç basılmaz.
+  const driverlessCount = upcoming.filter(isDriverless).length;
+
+  // TÜRETİLMİŞ, saklanmış değil: arama başlayınca daraltma kendiliğinden düşer
+  // (şerit de o an ekrandan çekiliyor — görünür sebebi olmayan bir filtre
+  // listeyi "eksik" gösterir) ve son şoför atandığında sayı sıfıra inip
+  // daraltma kapanır, yoksa kullanıcı boş bir listeyle baş başa kalırdı.
+  const showDriverlessOnly = !q && driverlessOnly && driverlessCount > 0;
+
+  // Ve BAYRAĞIN KENDİSİ de temizlenmeli, yalnız türetilmiş değer değil: aksi
+  // hâlde dispatcher daraltır, son şoförü atar, liste normale döner ama bayrak
+  // true kalır — sonraki şoförsüz kayıt geldiğinde liste kendiliğinden daralır.
+  useEffect(() => { if (driverlessCount === 0) setDriverlessOnly(false); }, [driverlessCount]);
+
   const listedAll = useMemo(() => {
-    if (!q) {
-      return reservations
-        // ALT SINIR: poller pickup+12s'e kadar kaydı 'active' bırakıyor.
-        // Sınır olmadan sabah bitmiş ama kapatılmamış işler listenin başını
-        // kaplıyor ve öğleden sonraki gerçek işler hiç görünmüyordu.
-        .filter(r => r.status === 'active' && new Date(r.scheduled_pickup) > Date.now() - 3 * 3600 * 1000)
-        .sort((a, b) => new Date(a.scheduled_pickup) - new Date(b.scheduled_pickup));
-    }
+    if (!q) return showDriverlessOnly ? upcoming.filter(isDriverless) : upcoming;
     // Arama varken GEÇMİŞ de taranır: "geçen haftaki Petrov" da bir soru.
     return reservations
       .filter(r => matchesQuery(r, q))
       .sort((a, b) => new Date(b.scheduled_pickup) - new Date(a.scheduled_pickup));
-  }, [reservations, q]);
+  }, [reservations, q, upcoming, showDriverlessOnly]);
 
   // Sayaç KIRPMADAN ÖNCEKİ uzunluğu bilmeli: "(30)" gösterip 200 sonucu
   // gizlemek, dispatcher'a aradığı kaydın olmadığını düşündürür.
@@ -88,23 +115,67 @@ export default function DashboardPage() {
           kalıyor; kullanıcı yukarıda yazıp aşağıda bir şey görmeyince
           "arama tepki vermiyor" diyor. Bu tam olarak mobilde yaşandı. */}
       {!q && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Aktif Transfer"  value={active}               icon={Plane}         tone="brand" />
-          <StatCard label="Tamamlanan"      value={completed}            icon={CheckCircle}   tone="ok" />
-          <StatCard label="İptal"           value={cancelled}            icon={XCircle}       tone="bad" />
-          <StatCard label="Toplam Bildirim" value={notifications.length} icon={MessageSquare} tone="accent" />
+        <div className="mb-6 space-y-3">
+          {/* Etiketler TEK KELİME. "Aktif Transfer" ve "Toplam Bildirim" 375px
+              ekranda 77px'lik hücreye sığmayıp "Aktif Transf…" diye kırpılıyordu
+              — kırpılmış bir etiket, sayının neyi saydığını söylemeyi bırakır.
+              Tasarım artboard'u da bu kısa hâli kullanıyor.
+
+              "Bildirim" DEĞİL "Gönderilen": sayı yalnız status='sent' satırları
+              sayıyor, "Bildirim" ise toplamı sayıyormuş gibi okunuyordu — etiket
+              ölçütü söylemediği için iki platformun ayrıştığı da fark edilmedi.
+              ÖLÇÜLDÜ (Manrope 600, 11px, TTF advance): "Gönderilen" 58.1px —
+              hücreye sığar ve hâlihazırda basılan "Tamamlanan"dan (67.5px)
+              dardır. Sığmayan alternatifler: "Toplam Bildirim" 80.3px,
+              "Gönderilen Bildirim" daha da uzun. */}
+          <StatRow items={[
+            { label: 'Aktif',      value: active,    to: '/app/reservations', tone: 'brand' },
+            { label: 'Tamamlanan', value: completed, to: '/app/reservations' },
+            { label: 'İptal',      value: cancelled, to: '/app/reservations' },
+            { label: 'Gönderilen', value: sentCount, to: '/app/notifications' },
+          ]} />
+
+          {/* KOŞULLU şerit: şoförsüz iş varsa çıkar, yoksa hiç basılmaz.
+              Sayılar durum bildirir, şerit EYLEM ister — her zaman duran bir
+              şerit ikisini de sayıya çevirir ve göz onu okumayı bırakır.
+              Mobille aynı karar (DashboardScreen). */}
+          {driverlessCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setDriverlessOnly(v => !v)}
+              className="w-full flex items-center gap-2.5 min-h-[44px] px-3.5 py-2.5 text-left bg-bad-50 border border-surface-dangerborder rounded-control hover:bg-bad-50/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-bad-600/40"
+              aria-pressed={showDriverlessOnly}
+            >
+              <AlertTriangle size={16} className="text-bad-800 shrink-0" aria-hidden="true" />
+              <span className="flex-1 text-sm font-semibold text-bad-800">
+                {driverlessCount} transferde şoför yok
+              </span>
+              {/* "Tümü" DEĞİL: kartın sağ üstünde zaten bir "Tümü →" var ve o
+                  Transferlerim'e gidiyor. Aynı kelime iki farklı şey yaparsa
+                  daraltmayı kapatmak isteyen dispatcher ekrandan çıkar.
+                  Uzun da olamaz — mobilde ölçüldü: sabit genişlikli eylem
+                  sıkışmanın tamamını mesaja yıkıyor. Metin iki platformda aynı. */}
+              <span className="text-sm font-bold text-bad-800 underline shrink-0">
+                {showDriverlessOnly ? 'Vazgeç' : 'Göster'}
+              </span>
+            </button>
+          )}
         </div>
       )}
 
       <Card padding="none">
         <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between">
           <h2 className="font-semibold text-ink text-sm">
-            {q ? 'Arama sonuçları' : 'Yaklaşan Transferler'}
+            {q ? 'Arama sonuçları' : showDriverlessOnly ? 'Şoförsüz Transferler' : 'Yaklaşan Transferler'}
           </h2>
           {/* Sayı ROZETTE: arama sırasında ekrandaki ilk cevap odur, parantez
               içi düz metin olarak göze çarpmıyordu. Sıfır sonuç bir HATA
               değil bir cevaptır — kırmızı değil, nötr yüzey. */}
-          {q ? (
+          {/* DARALTMA MODUNDA DA BASILIR: liste 8 kartla sınırlı, şerit ise
+              "12 transferde şoför yok" diyor. Aradaki farkı söyleyen bir şey
+              olmadan dispatcher 8'ini atayıp listenin boşaldığını görünce
+              "hepsini hallettim" sanar — oysa şerit hâlâ 4 diyecektir. */}
+          {q || showDriverlessOnly ? (
             // Rozet ELLE yazılmaz: aynı kartın altındaki durum rozetleri
             // Badge'den geliyor, elle yazılan kopya bir ton ve bir ağırlık
             // sapıyordu. `role=status` + `aria-live`: sayı ekrandaki ilk
@@ -115,7 +186,7 @@ export default function DashboardPage() {
               className="min-w-[28px] justify-center"
               role="status"
               aria-live="polite"
-              aria-label={`${listedAll.length} sonuç`}
+              aria-label={`${listedAll.length} ${q ? 'sonuç' : 'şoförsüz transfer'}`}
             >
               {listedAll.length > listed.length ? `${listed.length}/${listedAll.length}` : listedAll.length}
             </Badge>
@@ -168,7 +239,7 @@ export default function DashboardPage() {
               // görünmesi (birinde uçuş satırı olup diğerinde olmaması)
               // güveni bozar.
               const showFlight = showFlightLine(r);
-              const needsDriver = r.status === 'active' && !r.assigned_member_id && !r.driver_name;
+              const needsDriver = isDriverless(r);
 
               return (
                 <div key={r.id} className={`px-5 py-3.5 flex items-center gap-4 ${needsDriver ? 'border-l-4 border-bad-600' : ''}`}>

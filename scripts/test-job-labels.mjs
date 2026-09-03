@@ -256,5 +256,35 @@ check('TrackPage aşama sırasını JOB_LABELS\'tan türetiyor',
   /const STAGES\s*=\s*Object\.keys\(JOB_LABELS\)/.test(trackPageSrc),
   'elle yazılan dizi aşama eklenince sessizce eksik kalır');
 
+// ── UÇUŞ DURUMU ETİKETLERİ — İKİ PLATFORM AYNI OLMALI ─────────────────────
+//
+// NEDEN VAR: durum şeridi üç web sayfasında + üç mobil ekranda ayrı ayrı
+// yazılmıştı ve wording ayrışmıştı. Şerit ortak bileşene alındıktan SONRA bile
+// bir tanesi elde kalmıştı: mobil `diverted` için "Yönlendi" derken web
+// "Yönlendirildi" diyordu — aynı uçuş, dispatcher'ın telefonunda ve web
+// panelinde farklı kelime. Hiçbir kapı bakmıyordu.
+//
+// Mobil ve web AYRI DEPOLAR, CI'da yan yana duramazlar: kanonik liste
+// `test-transfer.mjs` deseniyle HER İKİ kapıda da SABİT yazılı. Bir etiketi
+// değiştirirken ÜÇÜNÜ birden güncelle (iki kapı + ilgili kaynak).
+//
+// Kaynak: web   `lib/status.js`        → FLIGHT_BADGE
+//         mobil `i18n/translations.js` → flights.status
+const KANONIK_UCUS_DURUMU = {
+  landed:    'İndi',
+  cancelled: 'İptal',
+  active:    'Havada',
+  scheduled: 'Planlandı',
+  diverted:  'Yönlendirildi',
+};
+
+console.log('\n[6] Uçuş durumu etiketleri (web ↔ mobil)');
+const flightBadgeSrc = readFileSync(join(here, '..', 'src', 'lib', 'status.js'), 'utf8');
+for (const [key, beklenen] of Object.entries(KANONIK_UCUS_DURUMU)) {
+  const re = new RegExp(`${key}:\\s*\\{[^}]*label:\\s*'${beklenen.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'`);
+  check(`${key} → "${beklenen}"`, re.test(flightBadgeSrc),
+    'web FLIGHT_BADGE mobil çeviriyle ayrışmış (i18n/translations.js → flights.status)');
+}
+
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

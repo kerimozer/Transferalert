@@ -5,7 +5,7 @@ Tasarım sisteminin (petrol + kehribar + stone; bkz. `.claude/skills/tasarimci`)
 (6 farklı el yazımı primary buton, 3 farklı radius) panzehiri bu klasördür.
 
 ```jsx
-import { Button, IconButton, Badge, Card, StatCard, Field, Input, EmptyState, LoadingBlock, Modal } from '../components/ui';
+import { Button, IconButton, Badge, Card, StatRow, Field, Input, EmptyState, LoadingBlock, Modal } from '../components/ui';
 ```
 
 ## Bileşen API'leri
@@ -16,7 +16,7 @@ import { Button, IconButton, Badge, Card, StatCard, Field, Input, EmptyState, Lo
 | `IconButton` | `label` (ZORUNLU, a11y) · `icon` · `tone` muted·danger·brand | Satır içi sil/paylaş/kopyala; label hem aria-label hem title |
 | `Badge` | `tone` brand·ok·warn·bad·neutral **veya** `cls` (lib/status haritasından) · `icon` | Renk anlam taşır; `lib/status.js` haritalarıyla birlikte kullan |
 | `Card` | `padding` none·sm·md | Liste kartlarında `none` + satırlar kendi padding'i |
-| `StatCard` | `label` · `value` · `icon` · `tone` | Sayı HER ZAMAN mürekkep; renk ikonda |
+| `StatRow` | `items` `[{label, value, to, tone?}]` | Dört sayı TEK bölünmüş satırda (~76px); ikon yok, `to` zorunlu. `StatCard` ızgarasının yerini aldı — ekranın yarısını yiyip asıl listeyi katlamanın altına itiyordu |
 | `Field` | `label` · `required` · `error` · `hint` · `input` (Input props) veya render-prop | id/aria-describedby/aria-invalid otomatik; hata aria-live anons edilir |
 | `EmptyState` | `icon` · `title` · `description` · `action` · `size` sm·md | Davet eder, özür dilemez; `sm` kart içi tek satır |
 | `LoadingBlock` | `label` | role=status; sayfa/bölüm yüklemesi |

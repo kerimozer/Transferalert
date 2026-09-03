@@ -78,3 +78,34 @@ export function looksLikeFlightNumber(q) {
   const s = String(q ?? '').toUpperCase().replace(/\s+/g, '');
   return /^[A-Z]{1,3}\d{1,4}[A-Z]?$/.test(s);
 }
+
+// Bir transfer ŞOFÖR BEKLİYOR mu?
+//
+// TEK KAYNAK OLMAK ZORUNDA: bu koşul dört yerde kopyalanmıştı (Ana Sayfa
+// uyarı şeridi, kartın kırmızı kenarlığı + "Şoför ata" düğmesi, Transferlerim
+// listesi). Kopyalar ayrışırsa şerit "1 transferde şoför yok" derken listedeki
+// hiçbir kartta uyarı olmayan bir hâl doğar ve dispatcher hangisine
+// inanacağını bilemez.
+//
+// ATANMA = ÜYELİK SATIRI (migration 025). `driver_name` ise taşeron/elle
+// yazılan şoförü kapsar: adı yazılmış bir iş atanmamış sayılmaz.
+export function needsDriver(r) {
+  return r?.status === 'active' && !r?.assigned_member_id && !r?.driver_name;
+}
+
+// Yolcu adından baş harfler — kart gövdesine insani bir çapa verir.
+//
+// İKİ KOPYAYDI (mobil TransferCard + web FlightCard) ve Kart C'ye geçen her
+// yeni ekran üçüncüsünü üretecekti.
+//
+// `toLocaleUpperCase('tr')` BURADA DOĞRU ve plakadaki kuralın TERSİDİR:
+// bu bir insan adı, "İbrahim" → "İ" olmalı (düz toUpperCase 'i'yi 'I' yapar).
+// Plakada ise tam tersi geçerli — Türk plakasında yalnız A-Z var ve tr yereli
+// oraya geçersiz karakter yazar. İkisini birbirine benzetip "düzeltme".
+export function initials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '–';
+  const first = parts[0][0] || '';
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  return (first + last).toLocaleUpperCase('tr');
+}

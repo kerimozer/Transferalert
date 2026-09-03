@@ -10,6 +10,29 @@ export const RES_STATUS_BADGE = {
   cancelled: { label: 'İptal',      cls: 'bg-bad-50 text-bad-800' },
 };
 
+// DURUM ŞERİDİ — kartın üstündeki tam genişlik bandı. `FLIGHT_BADGE`ten AYRI
+// ve bu bilinçli: o bir ROZET reçetesi (küçük çip, soft zemin) ve Ana Sayfa
+// listesinde öyle kullanılıyor. Şerit büyük ve yalnız başına duruyor.
+//
+// NEDEN DOLU RENK: soft tonlar rozet boyutunda çalışıyor ama tam genişlikte
+// yan yana referans kalmadığı için hepsi tek bir açık banda çöküyordu —
+// ÖLÇÜLDÜ: "Planlandı" ile "Transfer" ΔE 0.0 (birebir aynı piksel),
+// "Havada" ile "İndi" 4.1. Dolu palette en yakın çift 7.8.
+//
+// ETİKET BURADA TEKRARLANMAZ: `FLIGHT_BADGE`ten okunur. İki harita iki farklı
+// ŞEYİ (çip rengi / şerit rengi) tutar, aynı METNİ değil — metin çoğaltılsaydı
+// bu turda temizlediğimiz "İndi" ↔ "Uçak indi" ayrışması geri gelirdi.
+//
+// `scheduled` BİLEREK dolu değil: canlı veri var ama olay yok, sakin kalmalı.
+// Beyaz metin kontrastları: Havada 7.50 · İndi 5.98 · İptal 6.28 · Yönlendi 5.68.
+export const FLIGHT_STRIP = {
+  landed:    'bg-ok-600 text-white',
+  cancelled: 'bg-bad-600 text-white',
+  active:    'bg-brand-600 text-white',
+  scheduled: 'bg-surface-quiet text-ink-soft',
+  diverted:  'bg-warn-600 text-white',
+};
+
 export const FLIGHT_BADGE = {
   landed:    { label: 'İndi',          cls: 'bg-ok-50 text-ok-800' },
   cancelled: { label: 'İptal',         cls: 'bg-bad-50 text-bad-800' },

@@ -11,28 +11,25 @@ import {
   Plane, MapPin, User, Phone, Clock, Car, StickyNote,
   XCircle, CheckCircle2, Navigation, Share2, Building2,
 } from 'lucide-react';
-import { transferLabel, isFlightTransfer } from '../lib/transfer';
+import { transferLabel, isFlightTransfer, initials } from '../lib/transfer';
 import { jobAction, jobState } from '../lib/status';
+import { StatusStrip } from '../components/ui';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Aşama etiketleri ARTIK BURADA DEĞİL: lib/status.js tek kaynak (jobAction /
 // jobState). Bu dosyada kendi kopyası vardı ve türe göre varyant eklemek onu
 // dördüncü bir kopyaya çevirirdi.
-const FLIGHT_LABEL = {
-  landed:    'Uçak indi',
-  active:    'Uçak havada',
-  scheduled: 'Uçuş planlandı',
-  cancelled: 'Uçuş iptal',
-  diverted:  'Uçuş yönlendirildi',
-};
+// Uçuş durumu etiketleri de aynı yolu izledi: bu dosyada "Uçak indi" yazan
+// ayrı bir harita vardı, Transferlerim'de aynı duruma "İndi" deniyordu.
+// Artık `StatusStrip` üzerinden lib/status.js → FLIGHT_BADGE'den geliyor.
 
 function Row({ icon: Icon, label, children }) {
   return (
     <div className="flex gap-3 py-3.5 border-b border-surface-border last:border-0">
       <Icon size={18} className="text-ink-muted shrink-0 mt-0.5" />
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-0.5">{label}</p>
+        <p className="text-xs font-semibold text-ink-muted mb-0.5">{label}</p>
         <div className="text-ink break-words">{children}</div>
       </div>
     </div>
@@ -105,7 +102,6 @@ export default function JobPage() {
   );
 
   const done = job.status === 'completed';
-  const flight = job.latest_status?.flight_status;
 
   return (
     <div className="min-h-screen bg-surface-bg">
@@ -116,20 +112,33 @@ export default function JobPage() {
           <span className="font-bold text-ink">{job.company}</span>
         </div>
 
-        <div className="bg-white border border-surface-border rounded-card shadow-card p-5 mb-4">
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <div>
+        <div className="bg-white border border-surface-border rounded-card shadow-card overflow-hidden mb-4">
+          {/* DURUM ŞERİDİ — "Kart C" anatomisi, şoför panosu ve Transferlerim
+              ile ORTAK bileşen. Bu sayfa tek işe özel olduğu için tarih önemsiz
+              görünebilir; değil: taşeron şoför linki bir gün önceden gönderilir
+              ve saatin hangi güne ait olduğu ekranda başka hiçbir yerde yazmaz. */}
+          <StatusStrip r={job} />
+
+          <div className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            {/* Baş harf rozeti — diğer iki kartla aynı kaynak (lib/transfer.js). */}
+            <div className="w-10 h-10 rounded-full bg-surface-alt flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-ink-soft">{initials(job.passenger_name)}</span>
+            </div>
+            <div className="min-w-0 flex-1">
               {/* Şoförün gördüğü en büyük yazı. `transferLabel` — uçuş no
                   ÖNCE: bu ekran numarayı başka hiçbir yerde basmıyor,
                   cardTitle kullanılsa TK1234 tamamen kaybolurdu. Uçuşsuzda
-                  yolcu adına düşer ve uçuş durumu satırı hiç basılmaz. */}
-              <p className={`font-bold text-3xl text-ink leading-none ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
-              {flight && <p className="text-sm text-ink-muted mt-1.5">{FLIGHT_LABEL[flight] || flight}</p>}
-              {!isFlightTransfer(job) && <p className="text-sm text-ink-muted mt-1.5 flex items-center gap-1"><Car size={14} />Transfer</p>}
+                  yolcu adına düşer ve uçuş durumu satırı hiç basılmaz.
+                  Uçuş DURUMU artık şeritte — burada tekrarlanmaz. */}
+              <p className={`font-bold text-2xl text-ink leading-tight truncate ${isFlightTransfer(job) ? 'font-mono' : ''}`}>{transferLabel(job)}</p>
+              <p className="text-xs text-ink-muted mt-0.5 truncate">
+                {isFlightTransfer(job) ? job.passenger_name : 'Transfer'}
+              </p>
             </div>
             {job.job_status && (
               <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${done ? 'bg-ok-50 text-ok-800' : 'bg-brand-50 text-brand-700'}`}>
-                {done && <CheckCircle2 size={13} />}
+                {done && <CheckCircle2 size={13} aria-hidden="true" />}
                 {jobState(job.job_status, job)}
               </span>
             )}
@@ -138,7 +147,7 @@ export default function JobPage() {
           {/* Buluşma noktası en üstte ve vurgulu: şoförün ilk sorusu bu. */}
           {job.meeting_point && (
             <div className="bg-accent-50 border-l-4 border-accent-600 rounded-r-control px-4 py-3 mb-2">
-              <p className="text-xs font-semibold text-accent-800 uppercase tracking-wide mb-0.5">Buluşma Noktası</p>
+              <p className="text-xs font-semibold text-accent-800 mb-0.5">Buluşma Noktası</p>
               <p className="text-ink font-semibold">{job.meeting_point}</p>
             </div>
           )}
@@ -155,6 +164,7 @@ export default function JobPage() {
           {job.vehicle_plate && <Row icon={Car} label="Araç">{job.vehicle_plate}</Row>}
           {job.notes && <Row icon={StickyNote} label="Not">{job.notes}</Row>}
           {job.pnr && <Row icon={MapPin} label="PNR">{job.pnr}</Row>}
+          </div>
         </div>
 
         {/* İletişim — sadece iş penceresindeyken sunucudan gelir. */}

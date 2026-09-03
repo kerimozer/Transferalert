@@ -3,9 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
-import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine, typeKey, TYPE_AIRPORT, TYPE_TRANSFER } from '../lib/transfer';
+import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine, needsDriver as driverPending, initials } from '../lib/transfer';
 import TransferTypeToggle from '../components/TransferTypeToggle';
-import { Button } from '../components/ui';
+import { Button, StatusStrip } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
 import WelcomeSignModal from '../components/WelcomeSignModal';
 import PaymentLinkModal from '../components/PaymentLinkModal';
@@ -23,12 +23,19 @@ function nowLocal() {
 
 const EMPTY = { transfer_type: FLIGHT, flight_number: '', pnr: '', passenger_name: '', passenger_phone: '', meeting_point: '', scheduled_pickup: '', dropoff_point: '', scheduled_dropoff: '', notes: '' };
 
-const FLIGHT_STATUS = {
-  landed:    { label: 'İndi',          icon: CheckCircle,   cls: 'text-ok-600 bg-ok-50 border-ok-600/20' },
-  cancelled: { label: 'İptal',         icon: XCircle,       cls: 'text-bad-800 bg-bad-50 border-bad-600/20' },
-  active:    { label: 'Havada',        icon: Plane,         cls: 'text-brand-600 bg-brand-50 border-brand-600/20' },
-  scheduled: { label: 'Planlandı',     icon: Clock,         cls: 'text-ink-muted bg-surface-bg border-surface-border' },
-  diverted:  { label: 'Yönlendi',      icon: AlertTriangle, cls: 'text-warn-600 bg-warn-50 border-warn-600/20' },
+// SALT İKON. Burada eskiden `label` ve `cls` de vardı ve şerit onları
+// kullanıyordu; şerit ortak `StatusStrip`'e taşınınca ikisi de ÖLDÜ. Ölü
+// alanları bırakmak tehlikeli: bu haritada `diverted` için 'Yönlendi' yazıyordu,
+// `lib/status.js` → FLIGHT_BADGE'de aynı durum 'Yönlendirildi'. Tam bu ayrışmayı
+// temizlemek için yapılan turdan sonra birinin yine `fs.label`'a uzanması
+// yeterdi. Etiket ve renk TEK KAYNAKTA (FLIGHT_BADGE); burada yalnız uçuş
+// satırının küçük ikonu kalır.
+const FLIGHT_ICON = {
+  landed:    CheckCircle,
+  cancelled: XCircle,
+  active:    Plane,
+  scheduled: Clock,
+  diverted:  AlertTriangle,
 };
 
 // Ortak haritayı kullan; bu sayfada aktif rezervasyon "Takipte" olarak etiketlenir.
@@ -477,7 +484,7 @@ export default function ReservationsPage() {
       {/* Gruplu Liste */}
       {Object.entries(grouped).map(([label, flights]) => (
         <div key={label} className="mb-6">
-          <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-3">{label} ({flights.length})</h2>
+          <h2 className="text-xs font-semibold text-ink-muted mb-3">{label} ({flights.length})</h2>
           <div className="space-y-3">
             {flights.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} onComplete={handleComplete} onShowSign={setSignFor} onShowPay={setPayFor} onAssign={setAssignFor} />)}
           </div>
@@ -487,7 +494,7 @@ export default function ReservationsPage() {
       {/* Geçmiş */}
       {past.length > 0 && (
         <div className="mb-6">
-          <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-wide mb-3">Geçmiş</h2>
+          <h2 className="text-xs font-semibold text-ink-muted mb-3">Geçmiş</h2>
           <div className="space-y-2 opacity-60">
             {past.map(r => <FlightCard key={r.id} r={r} onDelete={handleDelete} isPast />)}
           </div>
@@ -530,37 +537,18 @@ function groupByDate(reservations) {
   return groups;
 }
 
-// Yolcu adından baş harfler — mobil TransferCard ile AYNI kural.
-function initials(name) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '–';
-  const first = parts[0][0] || '';
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : '';
-  return (first + last).toLocaleUpperCase('tr');
-}
-
-// Şeridin tonu, canlı uçuş durumu yokken TÜRE göre belirlenir.
-const STRIP_TONE = {
-  [TYPE_AIRPORT]: 'text-ink-soft bg-surface-neutral',
-  [TYPE_TRANSFER]: 'text-ink-soft bg-surface-alt',
-};
-
 function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, isPast }) {
   const [copied, setCopied] = useState(false);
   const [driverCopied, setDriverCopied] = useState(false);
   const [driverBusy, setDriverBusy] = useState(false);
   const ls   = r.latest_status;
-  const fs   = ls ? (FLIGHT_STATUS[ls.flight_status] || FLIGHT_STATUS.scheduled) : null;
+  // `fs` artık yalnız BİR SORUYA cevap veriyor: canlı uçuş verisi VAR MI?
+  // (Aşağıda "yaklaşıyor" çanının şeritte tekrar etmemesi için kullanılır.)
+  const fs   = !!ls?.flight_status;
   const rs   = RES_STATUS[r.status] || RES_STATUS.active;
-  const Icon = fs?.icon || Clock;
+  const Icon = (ls && FLIGHT_ICON[ls.flight_status]) || Clock;
 
-  // ŞERİT: canlı uçuş verisi varsa DURUMU, yoksa TÜRÜ söyler. Tür kararı
-  // lib/transfer.js'ten gelir — ikinci bir cevap üretmiyoruz.
-  const tk = typeKey(r);
-  const StripIcon = fs ? Clock : (tk === TYPE_AIRPORT ? Plane : Car);
-  const stripCls = fs ? fs.cls : (STRIP_TONE[tk] || STRIP_TONE[TYPE_TRANSFER]);
-  const stripLabel = fs ? fs.label : (tk === TYPE_AIRPORT ? 'Havalimanı' : 'Transfer');
-
+  // ŞERİT: artık ortak `StatusStrip` bileşeninde — tür/durum kararını o veriyor.
   function handleShare() {
     const link = `${window.location.origin}/track/${r.share_token}`;
     navigator.clipboard.writeText(link);
@@ -594,7 +582,9 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   // ürettiği tek durum budur — kart seviyesinde ayrışsın ki dispatcher rozeti
   // okumadan da görsün. Onay bekleyen (otel talebi) kayıt bu sayıma GİRMEZ:
   // henüz kabul edilmemiş bir talepte şoför yokluğu eksiklik değildir.
-  const needsDriver = !isPast && r.status === 'active' && !r.assigned_member_id && !r.driver_name;
+  // Geçmiş kartta uyarı basılmaz — sayım kuralı ORTAK (lib/transfer.js), üstüne
+  // bu ekrana özel `!isPast` kapısı biner.
+  const needsDriver = !isPast && driverPending(r);
   // Yolcu adı yoksa başlık uçuş numarasına düşer; o durumda alt satırda
   // TEKRAR yazmak aynı bilgiyi iki kez göstermek olur. Uçuşsuz transferde
   // uçuş satırı HİÇ basılmaz — kural lib/transfer.js'te, çünkü aynı karar
@@ -614,27 +604,24 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
           (Havada/İndi/Rötarlı), yoksa TÜRÜ (Havalimanı/Transfer).
           Saat ve tarih artık sabit genişlikli bir sol sütunda değil: mobilde
           o sütun "13:00"ü ikiye bölüyordu, iki platform aynı kuralı taşısın. */}
-      <div className={`flex items-center gap-2 px-4 py-2 ${stripCls}`}>
-        {fs
-          ? <span className="w-[7px] h-[7px] rounded-full bg-current shrink-0" aria-hidden="true" />
-          : <StripIcon size={13} className="shrink-0" aria-hidden="true" />}
-        <span className="text-xs font-bold truncate">{stripLabel}</span>
+      {/* Şerit ORTAK bileşende (components/ui/StatusStrip): şoför panosu ve
+          taşeron iş linki de aynısını kullanıyor. Üçü ayrı yazılıyken wording
+          ayrışmıştı — burada "İndi" derken panoda "Uçak indi" yazıyordu.
+          Bu ekrana ÖZEL iki ek şeridin içine `children` ile giriyor. */}
+      {/* Ekler ŞERİDİN KENDİ RENGİNİ devralır (`text-warn-800` YAZMA): şerit
+          artık dolu renkli olabiliyor ve sabit bir amber, koyu petrol/yeşil
+          zeminde okunmaz. Renk zaten durumu söylüyor; notun ayrı bir hue'ya
+          ihtiyacı yok. Mobilde aynı sebeple `notes` dizeleri kullanılıyor. */}
+      <StatusStrip r={r}>
         {ls?.arrival_delay > 0 && (
-          <span className="text-xs font-medium text-warn-800 whitespace-nowrap">+{ls.arrival_delay} dk rötar</span>
+          <span className="text-xs font-medium whitespace-nowrap">+{ls.arrival_delay} dk rötar</span>
         )}
         {isClose && !fs && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-warn-800 whitespace-nowrap">
+          <span className="inline-flex items-center gap-1 text-xs font-medium whitespace-nowrap">
             <Bell size={11} aria-hidden="true" /> {Math.round(hoursLeft)}s
           </span>
         )}
-        <span className="grow" />
-        <span className="text-xs font-semibold tabular-nums opacity-70 whitespace-nowrap shrink-0">
-          {pickup.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}
-        </span>
-        <span className="text-sm font-bold tabular-nums whitespace-nowrap shrink-0">
-          {pickup.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-        </span>
-      </div>
+      </StatusStrip>
 
       <div className="flex items-center gap-3 px-4 py-3">
         {/* Baş harf rozeti — mobil kartla aynı. Bilgi taşımaz, satıra insani

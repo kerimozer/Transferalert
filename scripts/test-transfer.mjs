@@ -13,7 +13,7 @@
 // (2) KART KURALI: aynı transferin Ana Sayfa'da ve Transferlerim'de farklı
 //     görünmesi güveni bozar. Başlık/uçuş satırı kararı lib/transfer.js'te
 //     tek yerde; burası o kararın beklenen davranışını çiviler.
-import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine, looksLikeFlightNumber } from '../src/lib/transfer.js';
+import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine, looksLikeFlightNumber, needsDriver, initials } from '../src/lib/transfer.js';
 
 let passed = 0, failed = 0;
 const check = (name, cond, extra = '') => {
@@ -64,6 +64,33 @@ for (const q of ['TK1234', 'tk1234', 'PC4567', 'TK1', 'W61', 'TK 1234', 'TK123A'
 for (const q of ['Anna Schmidt', 'Ibrahim', '1234', 'Hilton Bomonti', '', null, undefined]) {
   check(`"${q}" uçuş numarası SAYILMIYOR`, !looksLikeFlightNumber(q));
 }
+
+console.log('\n[6] Şoför bekleyen transfer');
+// Bu koşul DÖRT yerde kopyalanmıştı: Ana Sayfa uyarı şeridi, kartın kırmızı
+// kenarlığı, "Şoför ata" düğmesi, Transferlerim listesi. Ayrıştıklarında şerit
+// "1 transferde şoför yok" derken listede uyarılı tek kart olmuyor ve
+// dispatcher hangisine inanacağını bilemiyor. Tek kaynak lib/transfer.js.
+check('aktif + atanmamış + adsız → şoför bekliyor', needsDriver({ status: 'active' }));
+// ATANMA = ÜYELİK SATIRI (migration 025).
+check('üye atanmışsa beklemiyor', !needsDriver({ status: 'active', assigned_member_id: 'uuid' }));
+// Taşeron/elle yazılan şoför de bir atamadır — adı varsa iş sahipsiz değildir.
+check('şoför adı yazılmışsa beklemiyor', !needsDriver({ status: 'active', driver_name: 'Kerim' }));
+// Bitmiş ya da iptal edilmiş işe şoför aranmaz; şerit onları saymamalı.
+for (const s of ['completed', 'cancelled', 'pending']) {
+  check(`${s} durumunda beklemiyor`, !needsDriver({ status: s }));
+}
+check('kayıt yoksa çökmüyor', !needsDriver(null) && !needsDriver(undefined));
+
+console.log('\n[7] Baş harfler (kart rozeti)');
+check('iki kelimeli ad → ilk + son', initials('Kübra Gümüş') === 'KG', initials('Kübra Gümüş'));
+check('tek kelime → tek harf', initials('Anna') === 'A', initials('Anna'));
+check('üç kelimede ORTA atlanır', initials('Ayşe Nur Yıldız') === 'AY', initials('Ayşe Nur Yıldız'));
+// Türkçe yerel ŞART: düz toUpperCase 'i'yi 'I' yapar ve "İbrahim" yanlış
+// baş harfle çıkar. Plakadaki kuralın TERSİ — ikisi karıştırılmamalı.
+check('İ/ı Türkçe yerelde doğru', initials('ibrahim yıldız') === 'İY', initials('ibrahim yıldız'));
+check('fazla boşluk kırpılıyor', initials('  Anna   Schmidt  ') === 'AS', initials('  Anna   Schmidt  '));
+// Kart adsız kalabilir (uçuşsuz olmayan, yolcu adı henüz yazılmamış kayıt).
+for (const v of ['', null, undefined, '   ']) check(`"${v}" → tire`, initials(v) === '–');
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

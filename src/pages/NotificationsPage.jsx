@@ -28,11 +28,14 @@ export default function NotificationsPage() {
           <div className="divide-y divide-surface-border">
             {notifications.map(n => (
               <div key={n.id} className="px-5 py-4 flex items-start gap-3">
-                {/* İkon */}
+                {/* İKON HER ZAMAN KANALIN MARKASINI TAŞIR — durumdan bağımsız.
+                    Eskiden durum da buradaydı: başarısızsa ikon kırmızıya
+                    düşüyor ve kanal rengi kayboluyordu. Canlıda bildirimlerin
+                    TAMAMI başarısız olduğu için ekran tek renk bir duvara
+                    dönüşmüştü. Kural: BİR ELEMAN, BİR ANLAM — kanal ikonda,
+                    durum rozette. Mobille (NotificationsScreen) aynı karar. */}
                 <div className={`mt-0.5 p-1.5 rounded-control shrink-0 ${
-                  n.status === 'sent'
-                    ? n.type === 'whatsapp' ? 'bg-ok-50 text-ok-600' : 'bg-brand-50 text-brand-600'
-                    : 'bg-bad-50 text-bad-600'
+                  n.type === 'whatsapp' ? 'bg-wa-50 text-wa-700' : 'bg-sms-50 text-sms-700'
                 }`}>
                   {n.type === 'whatsapp' ? <MessageCircle size={14} /> : <MessageSquare size={14} />}
                 </div>
@@ -58,7 +61,12 @@ export default function NotificationsPage() {
                   <p className="text-sm text-ink-soft mb-1">{n.message}</p>
 
                   <p className="text-xs text-ink-muted">
-                    {n.type === 'whatsapp' ? 'WhatsApp' : 'SMS'} → {n.recipient} &bull;{' '}
+                    {/* Kanal adı da ikonla AYNI rengi taşır — 14px'lik bir ikon
+                        tek başına hangi kanal olduğunu ancak yakından söylüyor. */}
+                    <span className={`font-bold ${n.type === 'whatsapp' ? 'text-wa-700' : 'text-sms-700'}`}>
+                      {n.type === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                    </span>
+                    {' → '}{n.recipient} &bull;{' '}
                     {new Date(n.created_at).toLocaleString('tr-TR')}
                   </p>
                 </div>
