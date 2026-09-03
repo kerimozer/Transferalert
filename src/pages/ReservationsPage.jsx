@@ -730,7 +730,12 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
             {/* "Atanmış mı" ölçütü ad DEĞİL atamanın kendisidir: profilinde adı
                 olmayan bir üyeye atandığında kart yanlışlıkla "atanmadı" derdi. */}
             <span className="text-sm font-semibold text-ink truncate">
-              {r.driver_name || (r.assigned_member_id ? 'Şoför atandı (adı girilmemiş)' : 'Şoför atanmadı')}
+              {/* Aşağıdaki satır "şoförü var mı" SORMUYOR — o karar yukarıda
+                  hasDriver(r) ile verildi. Burada hangi ETİKETİN basılacağı
+                  seçiliyor: adı varsa ad, yoksa "atandı ama adı girilmemiş".
+                  Bu yüzden şekil kapısından muaf; işaret ifadeyle AYNI satırda
+                  olmak zorunda (muafiyet satır bazında çalışır). */}
+              {/* driver-def-ok */ r.driver_name || (r.assigned_member_id ? 'Şoför atandı (adı girilmemiş)' : 'Şoför atanmadı')}
             </span>
             {/* Rozet rezervasyondan türetilir: uçuşsuz transferde
                 "Havalimanında" yanlış bilgidir, "Alış noktasında" denir. */}

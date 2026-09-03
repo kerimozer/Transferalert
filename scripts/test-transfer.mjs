@@ -122,17 +122,45 @@ console.log('\n[6b] Şoför tanımının SATIR-İÇİ kopyası kalmamış');
 
   // TEK MEŞRU YER: tanımın kendisi.
   const ALLOWED = ['lib/transfer.js'];
-  const SHAPE = /(driver_name|assigned_member_id|assigned_driver_id)\s*\|\|\s*r?\.?\s*(driver_name|assigned_member_id|assigned_driver_id)/;
+  const F = '(?:driver_name|assigned_member_id|assigned_driver_id)';
+
+  // KAPININ KENDİSİ DE DENETLENDİ. İlk yazdığım hâli `r.` alıcısını bekliyordu
+  // ve `res.driver_name || res.assigned_member_id`i KAÇIRIYORDU — yani tam
+  // olarak düzelttiğimiz satırın bulunduğu dosyanın kendi değişken adını
+  // (`res`) göremiyordu. Aynı hata aynı dosyaya geri yazılsa kapı kör kalırdı.
+  // Artık alıcı adı serbest, `?.` serbest, `??` de sayılır ve arama SATIRA
+  // değil DOSYA BÜTÜNÜNE bakar (çok satıra yayılmış yazım da yakalanır).
+  const SHAPE = new RegExp(`${F}\\s*(?:\\|\\||\\?\\?)[\\s\\S]{0,60}?${F}`);
+  // DE MORGAN: bir SAYAÇ için en doğal yazım budur (`!a && !b`) ve düzelttiğimiz
+  // satır zaten bir sayaçtı. Ayrı desen olmadan bu şekil sessizce geçerdi.
+  const DEMORGAN = new RegExp(`!\\s*[\\w?.]*\\b${F}\\b[\\s\\S]{0,60}?&&\\s*!`);
+
+  // Yorumlar ELENİR: bu dosyaların yorumları alan adlarını bolca anıyor ve
+  // dosya bütününe bakan bir arama onlara takılıp yanlış alarm üretirdi.
+  //
+  // `// driver-def-ok` işaretli SATIR da elenir — muafiyet SATIR bazındadır,
+  // dosya bazında DEĞİL: tek bir meşru satır yüzünden koca bir sayfayı kapıya
+  // kapatmak, kapıyı o sayfada tamamen kör etmek olurdu. (`stage-map-ok`
+  // muafiyetiyle aynı desen.)
+  // SIRA ÖNEMLİ: muaf satırlar ÖNCE elenir. Yorumları önce silseydik
+  // `// driver-def-ok` işaretinin kendisi de silinir ve muafiyet hiç
+  // çalışmazdı — sessizce işlevsiz bir mekanizma kalırdı.
+  const stripComments = (s) => s
+    .split('\n').map((l) => (l.includes('driver-def-ok') ? '' : l)).join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+
+  const lineOf = (text, idx) => text.slice(0, idx).split('\n').length;
 
   const offenders = [];
   for (const file of walk(SRC)) {
     const rel = relative(SRC, file).replace(/\\/g, '/');
     if (ALLOWED.includes(rel)) continue;
-    readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
-      // `// driver-def-ok` muafiyeti: bu alanları meşru olarak yan yana kullanan
-      // (ama "şoförü var mı" sormayan) bir satır çıkarsa işaretlenebilir.
-      if (SHAPE.test(line) && !line.includes('driver-def-ok')) offenders.push(`${rel}:${i + 1}`);
-    });
+    const src = stripComments(readFileSync(file, 'utf8'));
+    for (const re of [SHAPE, DEMORGAN]) {
+      const m = src.match(re);
+      if (m) offenders.push(`${rel}:${lineOf(src, m.index)}`);
+    }
   }
   check('şoför tanımı yalnız lib/transfer.js\'te', offenders.length === 0,
     offenders.length ? `satır-içi kopya: ${offenders.join(', ')} — hasDriver(r) kullanın` : '');
