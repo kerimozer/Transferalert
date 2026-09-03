@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
 import { formatPickup, localInputToIso } from '../lib/format';
-import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine, needsDriver as driverPending, initials } from '../lib/transfer';
+import { FLIGHT, isFlightTransfer, cardTitle, showFlightLine, needsDriver as driverPending, hasDriver, initials } from '../lib/transfer';
 import TransferTypeToggle from '../components/TransferTypeToggle';
 import { Button, StatusStrip } from '../components/ui';
 import { Plus, Trash2, Plane, X, AlertCircle, Clock, CheckCircle, XCircle, AlertTriangle, CheckSquare, Calendar, Bell, Share2, UserCheck, CreditCard, FileSpreadsheet, Link2, Check, Inbox, Car } from 'lucide-react';
@@ -724,7 +724,7 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
             <span className="text-sm font-semibold text-bad-800 grow">Şoför atanmadı</span>
             <span className="text-sm font-bold text-bad-800 underline shrink-0">Ata</span>
           </button>
-        ) : (r.driver_name || r.assigned_member_id || jobBadge(r)) ? (
+        ) : (hasDriver(r) || jobBadge(r)) ? (
           <div className="flex items-center gap-2 px-4 min-h-[44px] border-t border-surface-alt">
             <UserCheck size={14} className="text-ink-soft shrink-0" aria-hidden="true" />
             {/* "Atanmış mı" ölçütü ad DEĞİL atamanın kendisidir: profilinde adı

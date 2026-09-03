@@ -98,6 +98,46 @@ for (const r of [{ status: 'active' }, { status: 'active', driver_name: 'Kerim' 
   check(`active işte iki tanım örtüşüyor (${JSON.stringify(r)})`, needsDriver(r) === !hasDriver(r));
 }
 
+console.log('\n[6b] Şoför tanımının SATIR-İÇİ kopyası kalmamış');
+// KAPI ADA DEĞİL ŞEKLE BAKAR — aşama etiketlerinde öğrenilen ders.
+//
+// `hasDriver()` eklendiği turda kartı çevirdik ama AYNI EKRANIN başlık sayacı
+// (`NightWatchScreen`) satır-içi kopyayı taşımaya devam ediyordu: kart "Şoför
+// atanmadı" derken üstteki özet "0" gösteriyordu. Denetçi yakaladı. Aynı tarama
+// webde ÜÇÜNCÜ bir kopyayı da buldu (`ReservationsPage`).
+//
+// Ada bakan bir kapı (değişken adı `hasDriver` mı?) bunların hiçbirini görmezdi
+// — ikisinin de adı farklıydı. Şekil aranır: `driver_name` ile
+// `assigned_member_id`/`assigned_driver_id`i `||` ile birleştiren her ifade.
+{
+  const { readdirSync, readFileSync, statSync } = await import('node:fs');
+  const { join, relative } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const SRC = join(fileURLToPath(new URL('../src', import.meta.url)));
+
+  const walk = (dir) => readdirSync(dir).flatMap((n) => {
+    const p = join(dir, n);
+    return statSync(p).isDirectory() ? walk(p) : (/\.(js|jsx)$/.test(n) ? [p] : []);
+  });
+
+  // TEK MEŞRU YER: tanımın kendisi.
+  const ALLOWED = ['lib/transfer.js'];
+  const SHAPE = /(driver_name|assigned_member_id|assigned_driver_id)\s*\|\|\s*r?\.?\s*(driver_name|assigned_member_id|assigned_driver_id)/;
+
+  const offenders = [];
+  for (const file of walk(SRC)) {
+    const rel = relative(SRC, file).replace(/\\/g, '/');
+    if (ALLOWED.includes(rel)) continue;
+    readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+      // `// driver-def-ok` muafiyeti: bu alanları meşru olarak yan yana kullanan
+      // (ama "şoförü var mı" sormayan) bir satır çıkarsa işaretlenebilir.
+      if (SHAPE.test(line) && !line.includes('driver-def-ok')) offenders.push(`${rel}:${i + 1}`);
+    });
+  }
+  check('şoför tanımı yalnız lib/transfer.js\'te', offenders.length === 0,
+    offenders.length ? `satır-içi kopya: ${offenders.join(', ')} — hasDriver(r) kullanın` : '');
+}
+
 console.log('\n[7] Baş harfler (kart rozeti)');
 check('iki kelimeli ad → ilk + son', initials('Kübra Gümüş') === 'KG', initials('Kübra Gümüş'));
 check('tek kelime → tek harf', initials('Anna') === 'A', initials('Anna'));

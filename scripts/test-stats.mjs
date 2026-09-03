@@ -26,7 +26,9 @@ function check(name, ok, detail = '') {
 
 // KANONİK SÖZLEŞME (mobildeki kopyasıyla birebir aynı olmalı)
 const CANON = {
-  status: 'sent',            // notifications.status yalnız 'sent' | 'failed' alır
+  // notifications.status ÜÇ değer alır (migration 031):
+  // 'sent' | 'failed' | 'skipped'. Yalnız 'sent' gönderilen sayılır.
+  status: 'sent',
   window: 100,               // backend /api/notifications tavanı; liste de bu pencereyi gösterir
   labelTr: 'Gönderilen',
 };
@@ -34,15 +36,72 @@ const CANON = {
 const page = readFileSync(join(root, 'src', 'pages', 'DashboardPage.jsx'), 'utf8');
 
 console.log('[1] Sayaç ölçütü: yalnız gönderilmiş bildirimler');
-check(`sentCount = filter(status === '${CANON.status}')`,
-  new RegExp(`sentCount\\s*=\\s*notifications\\.filter\\([^)]*status\\s*===\\s*'${CANON.status}'`).test(page),
-  'ölçüt bulunamadı');
+// Ölçüt artık SATIR İÇİNDE değil, `lib/notify.js` → `isSent`'te. Aynı soru
+// dört ekranda soruluyordu (Ana Sayfa, Bildirimler, Raporlar ×2) ve satır-içi
+// kopyalar üçüncü hâl (`skipped`) gelince ayrışmaya hazırdı.
+check('sayaç ORTAK ölçütü kullanıyor (isSent)',
+  /sentCount\s*=\s*notifications\.filter\(isSent\)/.test(page),
+  'ölçüt bulunamadı — satır-içi kopya kalmış olabilir');
+check('isSent lib/notify\'dan import edilmiş',
+  /import\s*\{[^}]*\bisSent\b[^}]*\}\s*from\s*'\.\.\/lib\/notify'/.test(page));
 
 // Ham toplam bir daha istatistik değeri olmasın: hatayı doğuran tek satır
 // tam olarak buydu (`value: notifications.length`).
 check('ham `notifications.length` istatistik değeri değil',
   !/value:\s*notifications\.length/.test(page),
   'notifications.length doğrudan StatRow değerine veriliyor');
+
+console.log('[1b] ÜÇ HÂL ayrı: "denenmedi" ne gönderildi ne başarısız');
+// X1'in özü buydu: yapılandırma eksikken gönderici mock dönüyor, `success:true`
+// olduğu için satır `sent` yazılıyordu — hiç gönderilmemiş bildirim panelde
+// "Gönderilen" sayılıyordu. Sayaç yalan söyleyince arıza görünmez olur.
+// Bu kontroller DAVRANIŞA bakar (regex'e değil): ölçüt gerçekten ne diyor?
+{
+  const { isSent, notifyKey, notifyTone, notifyReason } =
+    await import(new URL('../src/lib/notify.js', import.meta.url));
+
+  check('sent → gönderilen sayılır', isSent({ status: 'sent' }));
+  check('skipped gönderilen SAYILMAZ', !isSent({ status: 'skipped' }));
+  check('failed gönderilen SAYILMAZ', !isSent({ status: 'failed' }));
+  // İkisini aynı torbaya atmak "sistem denedi ve olmadı" dedirtir; oysa gerçek
+  // "kanal hiç kurulmamış"tır ve çözümü bambaşkadır.
+  check('skipped, failed\'dan AYIRT EDİLİYOR', notifyKey('skipped') !== notifyKey('failed'));
+  // Ton adları web Badge bileşeninin SÖZLEŞMESİ: brand|ok|warn|bad|neutral.
+  // Sözleşmede olmayan bir ad sessizce neutral'a düşer ve ton artık burada
+  // değil, Badge'in yedeğinde kararlaşır.
+  check('skipped NÖTR ton alır (kırmızı değil)', notifyTone('skipped') === 'neutral', notifyTone('skipped'));
+  check('sent yeşil, failed kırmızı', notifyTone('sent') === 'ok' && notifyTone('failed') === 'bad');
+  check('bilinmeyen/eksik değer failed sayılır',
+    notifyKey('pending') === 'failed' && notifyKey(undefined) === 'failed');
+  check('gerekçe okunuyor ve kırpılıyor', notifyReason({ error: '  Netgsm: 30  ' }) === 'Netgsm: 30');
+  check('gerekçe yoksa null', notifyReason({}) === null && notifyReason({ error: '   ' }) === null);
+
+  // TON SÖZLEŞMESİ GERÇEKTEN VAR MI: Badge'in bilmediği bir ton üretirsek
+  // rozet sessizce nötr olur ve "kırmızı olmalıydı" hatası hiç görünmez.
+  const badge = readFileSync(join(root, 'src', 'components', 'ui', 'Badge.jsx'), 'utf8');
+  for (const s of ['sent', 'failed', 'skipped']) {
+    check(`Badge '${notifyTone(s)}' tonunu tanıyor (${s})`,
+      new RegExp(`^\\s*${notifyTone(s)}:`, 'm').test(badge));
+  }
+}
+
+console.log('[1c] Gerekçe EKRANDA basılıyor');
+// Gerekçesiz bir "Başarısız" rozeti X1'i başlatan şikâyetin ta kendisidir.
+const notifPage = readFileSync(join(root, 'src', 'pages', 'NotificationsPage.jsx'), 'utf8');
+check('bildirim listesi üç hâli de basıyor', /notifyKey\(/.test(notifPage));
+check('bildirim listesi gerekçeyi basıyor', /notifyReason\(/.test(notifPage));
+check('üç hâlin de kendi etiketi var',
+  /skipped:\s*'Denenmedi'/.test(notifPage), 'NOTIFY_LABEL eksik');
+// Anlam yalnız renkle verilmez: her hâlin kendi ikonu olmalı (erişilebilirlik).
+check('üç hâlin de kendi ikonu var',
+  /NOTIFY_ICON\s*=\s*\{[^}]*sent:[^}]*failed:[^}]*skipped:/.test(notifPage));
+
+// Raporlar sayfası "başarısız"ı `toplam - gönderilen` diye hesaplıyordu;
+// yapılandırılmamış kanalın hiç denenmemiş satırlarını arıza gibi gösterirdi.
+const reports = readFileSync(join(root, 'src', 'pages', 'ReportsPage.jsx'), 'utf8');
+check('Raporlar `toplam - gönderilen` ile başarısız SAYMIYOR',
+  !/notifications\.length\s*-\s*sentSms/.test(reports));
+check('Raporlar denenmedi sayısını ayrı tutuyor', /skippedSms/.test(reports));
 
 console.log('[2] Sayaç ile liste AYNI pencereyi gösteriyor');
 // Bildirimler backend ucundan alınır ve orada son 100 satırla sınırlıdır

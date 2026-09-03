@@ -15,6 +15,7 @@ import { Plane, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'luc
 import AssignDriverModal from '../components/AssignDriverModal';
 import { matchesQuery } from '../lib/search';
 import { cardTitle, showFlightLine, isFlightTransfer, looksLikeFlightNumber, needsDriver as isDriverless } from '../lib/transfer';
+import { isSent } from '../lib/notify';
 
 export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -41,8 +42,11 @@ export default function DashboardPage() {
   // farklı sayı gösteriyordu: canlıda 46 bildirimin 46'sı da 'failed', yani
   // web "46 bildirim gitti" derken gerçekte hiçbiri gitmemişti. Başarısızı
   // sayan bir sayı, tam da bakılma sebebini (gitti mi?) yanlış cevaplar.
+  // `status` artık ÜÇ değer alır (migration 031): sent | failed | skipped.
+  // `skipped` = kanal yapılandırılmadığı için hiç denenmedi — gönderilen
+  // SAYILMAZ. Ölçüt lib/notify.js'te, dört ekranda ortak.
   // Kapı: scripts/test-stats.mjs (mobilde de aynısı var).
-  const sentCount = notifications.filter(n => n.status === 'sent').length;
+  const sentCount = notifications.filter(isSent).length;
 
   // Eşleştirme SAF fonksiyonda (lib/search.js) ve mobille AYNI: Türkçe I/İ ve
   // ş/ğ/ü/ö/ç katlaması olmadan 'Ibrahim' sorgusu 'İbrahim'i bulmuyordu.

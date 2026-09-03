@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
 import { Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
 import { cardTitle, showFlightLine } from '../lib/transfer';
+import { notifyKey, notifyTone, notifyReason } from '../lib/notify';
+
+// Hâl → ikon/etiket. Anlam yalnız RENKLE verilmez (erişilebilirlik): üç hâlin
+// üçünün de kendi ikonu ve kendi kelimesi var. `skipped` için çarpı DEĞİL eksi
+// ikonu — çarpı "denendi ve olmadı" der, oysa hiç denenmedi.
+const NOTIFY_ICON  = { sent: CheckCircle, failed: XCircle, skipped: MinusCircle };
+const NOTIFY_LABEL = { sent: 'Gönderildi', failed: 'Başarısız', skipped: 'Denenmedi' };
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -53,12 +60,28 @@ export default function NotificationsPage() {
                         {n.reservations.flight_number}
                       </span>
                     )}
-                    <Badge className="ml-auto" tone={n.status === 'sent' ? 'ok' : 'bad'} icon={n.status === 'sent' ? CheckCircle : XCircle}>
-                      {n.status === 'sent' ? 'Gönderildi' : 'Başarısız'}
+                    {/* ÜÇ HÂL (migration 031). `skipped` NÖTR ton alır: kimse
+                        başarısız olmadı, kanal hiç kurulmadı. Kırmızıya
+                        boyamak dispatcher'ı olmayan bir arızayı kovalamaya
+                        yollar. Ölçüt lib/notify.js'te, iki platformda ortak. */}
+                    <Badge
+                      className="ml-auto"
+                      tone={notifyTone(n.status)}
+                      icon={NOTIFY_ICON[notifyKey(n.status)]}
+                    >
+                      {NOTIFY_LABEL[notifyKey(n.status)]}
                     </Badge>
                   </div>
 
                   <p className="text-sm text-ink-soft mb-1">{n.message}</p>
+
+                  {/* GEREKÇE (migration 031). Gerekçesiz bir "Başarısız"
+                      rozeti X1'i başlatan şikâyetin ta kendisidir: "gitmiyor
+                      ama neden bilmiyorum". Sağlayıcının cümlesi artık
+                      veritabanında; basılmazsa kimse göremez. */}
+                  {notifyReason(n) && (
+                    <p className="text-xs text-ink-muted mb-1 break-words">{notifyReason(n)}</p>
+                  )}
 
                   <p className="text-xs text-ink-muted">
                     {/* Kanal adı da ikonla AYNI rengi taşır — 14px'lik bir ikon

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { TrendingUp, Plane, CheckCircle, XCircle, Clock, Bell } from 'lucide-react';
 import { EmptyState, LoadingBlock } from '../components/ui';
+import { isSent, notifyKey } from '../lib/notify';
 
 export default function ReportsPage() {
   const [reservations,  setReservations]  = useState([]);
@@ -20,7 +21,15 @@ export default function ReportsPage() {
   const completed = reservations.filter(r => r.status === 'completed').length;
   const cancelled = reservations.filter(r => r.status === 'cancelled').length;
   const active    = reservations.filter(r => r.status === 'active').length;
-  const sentSms   = notifications.filter(n => n.status === 'sent').length;
+  // Ölçüt lib/notify.js'te — aynı soru dört ekranda soruluyor ve kopyalar
+  // ayrışırsa sayaçlar birbirini tutmaz.
+  const sentSms   = notifications.filter(isSent).length;
+  // "Başarısız" ile "denenmedi" AYRI sayılır (migration 031). Eskiden burada
+  // `toplam - gönderilen` yazıyordu; yapılandırılmamış bir kanalın hiç
+  // denenmemiş satırlarını "başarısız" diye raporluyordu ve firma sahibine
+  // olmayan bir arıza gösteriyordu.
+  const failedSms  = notifications.filter(n => notifyKey(n.status) === 'failed').length;
+  const skippedSms = notifications.filter(n => notifyKey(n.status) === 'skipped').length;
 
   // Son 30 günün günlük dağılımı
   const last30 = getLast30Days(reservations);
@@ -134,7 +143,10 @@ export default function ReportsPage() {
               </div>
               <div className="flex justify-between mt-2 text-xs text-ink-muted">
                 <span>{sentSms} gönderildi</span>
-                <span>{notifications.length - sentSms} başarısız</span>
+                <span>
+                  {failedSms} başarısız
+                  {skippedSms > 0 && ` · ${skippedSms} denenmedi`}
+                </span>
               </div>
             </>
           )}
