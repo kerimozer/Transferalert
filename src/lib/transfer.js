@@ -79,7 +79,22 @@ export function looksLikeFlightNumber(q) {
   return /^[A-Z]{1,3}\d{1,4}[A-Z]?$/.test(s);
 }
 
-// Bir transfer ŞOFÖR BEKLİYOR mu?
+// Bir transferin ATANMIŞ ŞOFÖRÜ var mı?
+//
+// ATANMA = ÜYELİK SATIRI (migration 025). `driver_name` ise taşeron/elle
+// yazılan şoförü kapsar: adı yazılmış bir iş atanmamış sayılmaz.
+//
+// `assigned_driver_id`e BAKILMAZ. O alan üyeden TÜRETİLİR ve hesabı olmayan
+// şoförde MEŞRU OLARAK NULL'dur — şoförlerin çoğunun hesabı yok (028).
+// Canlıda ölçüldü (2026-09-03b, 20 kayıt): üye NULL + sürücü dolu olan
+// **0** satır, üye dolu + sürücü NULL olan 2 satır ve ikisi de tam olarak
+// hesapsız şoför. Yani `assigned_driver_id`i kabul etmek koruma değil, yalnız
+// tanımı ikinci bir yere kopyalamaktı.
+export function hasDriver(r) {
+  return !!(r?.assigned_member_id || r?.driver_name);
+}
+
+// Bir transfer ŞOFÖR BEKLİYOR mu? (= şoförsüzlük ALARMI üretir mi)
 //
 // TEK KAYNAK OLMAK ZORUNDA: bu koşul dört yerde kopyalanmıştı (Ana Sayfa
 // uyarı şeridi, kartın kırmızı kenarlığı + "Şoför ata" düğmesi, Transferlerim
@@ -87,10 +102,13 @@ export function looksLikeFlightNumber(q) {
 // hiçbir kartta uyarı olmayan bir hâl doğar ve dispatcher hangisine
 // inanacağını bilemez.
 //
-// ATANMA = ÜYELİK SATIRI (migration 025). `driver_name` ise taşeron/elle
-// yazılan şoförü kapsar: adı yazılmış bir iş atanmamış sayılmaz.
+// "ATANMIŞ MI" İLE "ALARM MI" AYRI SORULARDIR ve ayrı durmak ZORUNDALAR:
+// gece tahtası `pending` işleri de gösterir, bu fonksiyon ise yalnız `active`
+// işte alarm üretir. Tahtada `!needsDriver()` yazmak, şoförsüz bir `pending`
+// işi "atanmış" göstermek demekti — gecenin ortasında tam olarak görülmesi
+// gereken şeyi gizlerdi. Ortak olan alt soru `hasDriver`, üstteki kapı değil.
 export function needsDriver(r) {
-  return r?.status === 'active' && !r?.assigned_member_id && !r?.driver_name;
+  return r?.status === 'active' && !hasDriver(r);
 }
 
 // Yolcu adından baş harfler — kart gövdesine insani bir çapa verir.

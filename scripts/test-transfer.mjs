@@ -13,7 +13,7 @@
 // (2) KART KURALI: aynı transferin Ana Sayfa'da ve Transferlerim'de farklı
 //     görünmesi güveni bozar. Başlık/uçuş satırı kararı lib/transfer.js'te
 //     tek yerde; burası o kararın beklenen davranışını çiviler.
-import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine, looksLikeFlightNumber, needsDriver, initials } from '../src/lib/transfer.js';
+import { FLIGHT, POINT_TO_POINT, isFlightTransfer, transferLabel, cardTitle, showFlightLine, looksLikeFlightNumber, needsDriver, hasDriver, initials } from '../src/lib/transfer.js';
 
 let passed = 0, failed = 0;
 const check = (name, cond, extra = '') => {
@@ -80,6 +80,23 @@ for (const s of ['completed', 'cancelled', 'pending']) {
   check(`${s} durumunda beklemiyor`, !needsDriver({ status: s }));
 }
 check('kayıt yoksa çökmüyor', !needsDriver(null) && !needsDriver(undefined));
+
+// `hasDriver` = "ATANMIŞ MI", `needsDriver` = "ALARM MI". İkisi ayrı durmak
+// ZORUNDA: gece tahtası `pending` işleri de gösterir ve orada `!needsDriver()`
+// yazmak şoförsüz bir `pending` işi "atanmış" gösterirdi — gecenin ortasında
+// tam olarak görülmesi gereken şeyi gizlerdi.
+check('durumdan BAĞIMSIZ: pending + şoförsüz → atanmamış', !hasDriver({ status: 'pending' }));
+check('pending + üye atanmış → atanmış', hasDriver({ status: 'pending', assigned_member_id: 'uuid' }));
+check('ama pending ALARM üretmez', !needsDriver({ status: 'pending' }));
+// `assigned_driver_id` üyeden TÜRETİLİR ve hesapsız şoförde meşru olarak
+// NULL'dur; TEK BAŞINA atama sayılmaz. Nöbet tahtası bunu kabul ediyordu,
+// Ana Sayfa etmiyordu — aynı kayıt için iki ekran zıt şey söylüyordu.
+check('yalnız assigned_driver_id atama SAYILMAZ', !hasDriver({ status: 'active', assigned_driver_id: 'uuid' }));
+check('hasDriver kayıt yoksa çökmüyor', !hasDriver(null) && !hasDriver(undefined));
+// İkisi `active` işte AYNI cevabı vermeli, yoksa şerit ile kart ayrışır.
+for (const r of [{ status: 'active' }, { status: 'active', driver_name: 'Kerim' }, { status: 'active', assigned_member_id: 'u' }]) {
+  check(`active işte iki tanım örtüşüyor (${JSON.stringify(r)})`, needsDriver(r) === !hasDriver(r));
+}
 
 console.log('\n[7] Baş harfler (kart rozeti)');
 check('iki kelimeli ad → ilk + son', initials('Kübra Gümüş') === 'KG', initials('Kübra Gümüş'));
