@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [reservations,  setReservations]  = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [query, setQuery]     = useState('');
   const [assignFor, setAssignFor] = useState(null);
   // Şoförsüz uyarı şeridinin "Göster"i — listeyi şoförsüz işlere daraltır.
@@ -29,8 +30,23 @@ export default function DashboardPage() {
   // uyarıyı bilgiden çok gürültüye çevirir.
   const [driverlessOnly, setDriverlessOnly] = useState(false);
 
-  const load = () => Promise.all([api.listReservations(), api.listNotifications()])
-    .then(([r, n]) => { setReservations(r || []); setNotifications(n || []); });
+  // HATA YUTULMAZ — ve `Promise.all` KULLANILMAZ.
+  //
+  // Burası webin ANA çalışma ekranı ve iki hata bir aradaydı: `.catch` yoktu,
+  // `Promise.all` de biri reddedilince diğerinin verisini çöpe atıyordu. Jetonu
+  // düşmüş / 429 yemiş dispatcher "0 aktif · 0 tamamlanan · 0 gönderilen" +
+  // "Yaklaşan transfer yok" görüyordu; ekranda tek bir uyarı yoktu.
+  //
+  // `allSettled` geleni gösterir, gelmeyeni SÖYLER (ReportsPage ile aynı karar;
+  // mobil `DashboardScreen` de aynı yere getirildi — üç ekran ayrışmasın).
+  const load = () => Promise.allSettled([api.listReservations(), api.listNotifications()])
+    .then(([r, n]) => {
+      if (r.status === 'fulfilled') setReservations(r.value || []);
+      if (n.status === 'fulfilled') setNotifications(n.value || []);
+      const errs = [r, n].filter(x => x.status === 'rejected')
+        .map(x => x.reason?.message || String(x.reason));
+      setLoadError(errs.length ? errs.join(' · ') : null);
+    });
 
   useEffect(() => { load().finally(() => setLoading(false)); }, []);
 
@@ -91,6 +107,19 @@ export default function DashboardPage() {
     <div className="p-8 max-w-5xl">
       <h1 className="text-2xl font-bold text-ink mb-1">Ana Sayfa</h1>
       <p className="text-sm text-ink-muted mb-6">Transferlerinizi buradan arayın ve takip edin.</p>
+
+      {/* HATA ŞERİDİ arama kutusunun ÜSTÜNDE ve kalıcı. Sessiz kalırsa boş
+          liste + sıfır sayaçlar "hiç işim yok" diye okunur; sunucunun kendi
+          cümlesi basılır ki hangi kapının kapandığı belli olsun. */}
+      {loadError && (
+        <div className="mb-6 flex items-start gap-2 rounded-card bg-bad-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-bad-800">
+            <span className="font-semibold">Veriler yüklenemedi — aşağıdaki liste ve sayılar eksik olabilir.</span>{' '}
+            <span className="break-words">{loadError}</span>
+          </p>
+        </div>
+      )}
 
       <div className="relative mb-6">
         {/* Aktifken büyüteç marka rengine döner: "ekran seni dinliyor"

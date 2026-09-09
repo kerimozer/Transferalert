@@ -46,6 +46,7 @@ const RES_STATUS = {
 
 export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
+  const [loadError, setLoadError] = useState(null);
   const [showForm, setShowForm]         = useState(false);
   const [form, setForm]                 = useState(EMPTY);
   const [submitting, setSubmitting]     = useState(false);
@@ -68,7 +69,13 @@ export default function ReservationsPage() {
   // form sessizce gönderilemez hale gelir ve sebebi ekranda görünmez.
   const isFlight = form.transfer_type === FLIGHT;
 
-  const load = () => api.listReservations().then(d => setReservations(d || []));
+  // HATA YUTULMAZ. `.catch` yoktu ve bu fonksiyon yalnız ilk açılışta değil
+  // SİLME / OLUŞTURMA / ONAYLAMA sonrasında da çağrılıyor — yani bir istek
+  // düştüğünde dispatcher "Henüz transfer yok" görüyor ve az önce yaptığı
+  // işlemin kayıtları sildiğini sanabiliyordu.
+  const load = () => api.listReservations()
+    .then(d => { setReservations(d || []); setLoadError(null); })
+    .catch(e => setLoadError(e?.message || String(e)));
   useEffect(() => { load(); }, []);
 
   // Ana Sayfa'daki "TK1234 uçuşunu canlı ara" bağlantısından gelindiyse formu
@@ -242,6 +249,19 @@ export default function ReservationsPage() {
           <Button onClick={openForm} icon={Plus}>Transfer Ekle</Button>
         </div>
       </div>
+
+      {/* HATA ŞERİDİ listenin ÜSTÜNDE. `load()` silme/ekleme/onaylama sonrası
+          da koşuyor: sessiz kalırsa dispatcher az önceki işleminin kayıtları
+          sildiğini sanar. Sunucunun kendi cümlesi basılır. */}
+      {loadError && (
+        <div className="mb-6 flex items-start gap-2 rounded-card bg-bad-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-bad-800">
+            <span className="font-semibold">Transferler yüklenemedi — aşağıdaki liste eksik olabilir.</span>{' '}
+            <span className="break-words">{loadError}</span>
+          </p>
+        </div>
+      )}
 
       {showBulk && <Suspense fallback={null}><BulkImportModal onClose={() => setShowBulk(false)} onDone={load} /></Suspense>}
 
