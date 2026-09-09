@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { TrendingUp, Plane, CheckCircle, XCircle, Clock, Bell } from 'lucide-react';
+import { TrendingUp, Plane, CheckCircle, XCircle, Clock, Bell, AlertTriangle } from 'lucide-react';
 import { EmptyState, LoadingBlock } from '../components/ui';
 import { isSent, notifyKey } from '../lib/notify';
 
@@ -8,10 +8,25 @@ export default function ReportsPage() {
   const [reservations,  setReservations]  = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading,       setLoading]       = useState(true);
+  const [loadError,     setLoadError]     = useState(null);
 
+  // HATA YUTULMAZ. `.catch` YOKTU ve bu sayfada sonuç daha da yanıltıcıydı:
+  // istek düşünce her sayaç SIFIR basıyordu — "0 transfer · 0 gönderildi ·
+  // %0 başarı". Yani okunamayan bir veri, "hiç iş yapılmadı" diye RAPORLANIYOR
+  // ve firma sahibi bunu gerçek bir rapor sanıyordu.
+  //
+  // `Promise.all` ayrıca HEPSİNİ birden düşürür: tek bir uç 429 alsa diğerinin
+  // verisi de atılır. Bu yüzden ikisi AYRI AYRI karşılanıyor — biri gelirse o
+  // gösterilir, gelmeyen için uyarı basılır.
   useEffect(() => {
-    Promise.all([api.listReservations(), api.listNotifications()])
-      .then(([r, n]) => { setReservations(r || []); setNotifications(n || []); })
+    Promise.allSettled([api.listReservations(), api.listNotifications()])
+      .then(([r, n]) => {
+        if (r.status === 'fulfilled') setReservations(r.value || []);
+        if (n.status === 'fulfilled') setNotifications(n.value || []);
+        const errs = [r, n].filter(x => x.status === 'rejected')
+          .map(x => x.reason?.message || String(x.reason));
+        setLoadError(errs.length ? errs.join(' · ') : null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -41,6 +56,20 @@ export default function ReportsPage() {
     <div className="p-8 max-w-4xl">
       <h1 className="text-2xl font-bold text-ink mb-1">Raporlar</h1>
       <p className="text-sm text-ink-muted mb-8">Genel performans ve istatistikler.</p>
+
+      {/* HATA ŞERİDİ bu sayfada özellikle ŞART: veri okunamadığında sayaçlar
+          sıfır basar ve "hiç iş yapılmadı" gibi görünür. Sessiz kalırsa firma
+          sahibi boş bir raporu gerçek sanır — sayı yanlış olduğunda bile
+          kendinden emin görünür. */}
+      {loadError && (
+        <div className="mb-6 flex items-start gap-2 rounded-card bg-bad-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-bad-800">
+            <span className="font-semibold">Veriler eksik yüklendi — aşağıdaki sayılar tam değil.</span>{' '}
+            <span className="break-words">{loadError}</span>
+          </p>
+        </div>
+      )}
 
       {/* Özet Kartlar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">

@@ -579,7 +579,7 @@ export default function OrganizationPage() {
                     <button
                       type="button"
                       onClick={() => handleCreateDriverLink(m.id)}
-                      className="text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-100 transition-colors"
+                      className="text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-50/70 transition-colors"
                     >
                       Şoför linki oluştur
                     </button>
@@ -593,7 +593,7 @@ export default function OrganizationPage() {
                       {copied === m.id ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                     </button>
                     {wa && (
-                      <a href={wa} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-100 transition-colors">
+                      <a href={wa} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-50/70 transition-colors">
                         <Send size={12} /> Gönder
                       </a>
                     )}
@@ -645,7 +645,7 @@ export default function OrganizationPage() {
                     <p className="text-xs font-semibold text-ink-soft mb-1.5">Şoför linki — hesap gerektirmez</p>
                     <div className="flex items-center gap-2">
                       <input readOnly value={driverLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
-                      <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-control transition-colors">
+                      <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-50/70 text-brand-700 font-semibold rounded-control transition-colors">
                         {copied === 'driver' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                       </button>
                     </div>

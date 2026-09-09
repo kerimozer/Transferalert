@@ -6,7 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node scripts/test-job-labels.mjs && node scripts/test-search.mjs && node scripts/test-transfer.mjs && node scripts/test-imports.mjs && node scripts/test-tokens.mjs && node scripts/test-stats.mjs"
+    "test": "node scripts/test-job-labels.mjs && node scripts/test-search.mjs && node scripts/test-transfer.mjs && node scripts/test-imports.mjs && node scripts/test-tokens.mjs && node scripts/test-styles.mjs && node scripts/test-silent.mjs && node scripts/test-stats.mjs"
   },
   "dependencies": {
     "@sentry/react": "^10.63.0",

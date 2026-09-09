@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
-import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle, MinusCircle } from 'lucide-react';
+import { Bell, MessageSquare, MessageCircle, CheckCircle, XCircle, MinusCircle, AlertTriangle } from 'lucide-react';
 import { Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
 import { cardTitle, showFlightLine } from '../lib/transfer';
 import { notifyKey, notifyTone, notifyReason } from '../lib/notify';
@@ -14,10 +14,16 @@ const NOTIFY_LABEL = { sent: 'Gönderildi', failed: 'Başarısız', skipped: 'De
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
+  // HATA YUTULMAZ. Burada `.catch` YOKTU — jetonu düşmüş / RLS reddetmiş /
+  // 429 yemiş kullanıcı "Henüz bildirim gönderilmedi" görüyordu. Yani bir ağ
+  // hatası "her şey yolunda, hiç bildirim yok" diye raporlanıyordu: ekrana yeni
+  // taşıdığımız üç hâl ayrımının görünmez DÖRDÜNCÜ hâli, "okuyamadım".
   useEffect(() => {
     api.listNotifications()
-      .then(data => setNotifications(data || []))
+      .then(data => { setNotifications(data || []); setLoadError(null); })
+      .catch(e => setLoadError(e?.message || String(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -27,11 +33,26 @@ export default function NotificationsPage() {
     <div className="p-8 max-w-3xl">
       <h1 className="text-2xl font-bold text-ink mb-6">Bildirim Geçmişi</h1>
 
+      {/* HATA ŞERİDİ boş durumun YERİNE değil, ÜSTÜNDE durur ve sunucunun
+          kendi cümlesini taşır: "Bir hata oluştu" 401'i, 429'u ve 500'ü aynı
+          torbaya atar ve hangi kapının kapandığını söylemez. */}
+      {loadError && (
+        <div className="mb-4 flex items-start gap-2 rounded-card bg-bad-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-bad-800">
+            <span className="font-semibold">Bildirimler yüklenemedi.</span>{' '}
+            <span className="break-words">{loadError}</span>
+          </p>
+        </div>
+      )}
+
       <Card padding="none" className="overflow-hidden">
-        {notifications.length === 0 ? (
+        {/* Hata varken BOŞ DURUM BASILMAZ: "hiç bildirim yok" ile "okuyamadım"
+            ekranda birebir aynı görünüyordu ve teşhisi tahmine çeviriyordu. */}
+        {notifications.length === 0 ? (loadError ? null : (
           <EmptyState icon={Bell} title="Henüz bildirim gönderilmedi"
             description="Uçuş durumu değiştiğinde bildirimler otomatik gönderilir ve burada listelenir." />
-        ) : (
+        )) : (
           <div className="divide-y divide-surface-border">
             {notifications.map(n => (
               <div key={n.id} className="px-5 py-4 flex items-start gap-3">
