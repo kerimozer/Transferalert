@@ -232,7 +232,12 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {listed.length === 0 ? (
+        {/* Hata varken BOŞ DURUM BASILMAZ — mobil `DashboardScreen` ile AYNI
+            karar. İkisi ayrışınca ekranda hem "Veriler yüklenemedi" şeridi hem
+            ortada büyük "Yaklaşan transfer yok / İlk transferi ekleyin" duruyor
+            ve bu ikisi birbirini çürütüyordu. Bu proje aynı sınıftaki şikâyeti
+            ("kayıtlarım silinmiş") üç tur kovaladı. */}
+        {listed.length === 0 ? (loadError ? null : (
           <EmptyState
             icon={q ? Search : Plane}
             title={q ? 'Kayıtlı transferlerinizde eşleşme yok' : 'Yaklaşan transfer yok'}
@@ -258,7 +263,7 @@ export default function DashboardPage() {
                 : <Link to="/app/reservations" className="text-sm font-semibold text-brand-600 hover:underline">Transfer Ekle →</Link>
             }
           />
-        ) : (
+        )) : (
           <div className="divide-y divide-surface-border">
             {listed.map(r => {
               const status = STATUS_BADGE[r.status] || STATUS_BADGE.active;

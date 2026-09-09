@@ -98,7 +98,7 @@ export default function ReportsPage() {
                 <span className="text-xs font-semibold text-ink-soft w-4">{count}</span>
               </div>
             ))}
-            {last30.every(d => d.count === 0) && (
+            {last30.every(d => d.count === 0) && !loadError && (
               <EmptyState size="sm" title="Henüz veri yok" />
             )}
           </div>
@@ -109,7 +109,7 @@ export default function ReportsPage() {
           <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
             <Plane size={16} className="text-brand-600" /> En Çok Takip Edilen
           </h2>
-          {topFlights.length === 0 ? (
+          {topFlights.length === 0 ? (loadError ? null : 
             <EmptyState size="sm" title="Henüz veri yok" />
           ) : (
             <div className="space-y-3">
@@ -134,7 +134,7 @@ export default function ReportsPage() {
         {/* Tamamlanma Oranı */}
         <div className="bg-white border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Tamamlanma Oranı</h2>
-          {total === 0 ? (
+          {total === 0 ? (loadError ? null : 
             <EmptyState size="sm" title="Henüz veri yok" />
           ) : (
             <>
@@ -157,7 +157,7 @@ export default function ReportsPage() {
         {/* Bildirim Başarı Oranı */}
         <div className="bg-white border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Bildirim Başarı Oranı</h2>
-          {notifications.length === 0 ? (
+          {notifications.length === 0 ? (loadError ? null : 
             <EmptyState size="sm" title="Henüz bildirim yok" />
           ) : (
             <>

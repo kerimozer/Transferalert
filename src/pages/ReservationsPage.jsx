@@ -521,7 +521,11 @@ export default function ReservationsPage() {
         </div>
       )}
 
-      {reservations.length === 0 && (
+      {/* Hata varken BOŞ DURUM BASILMAZ — mobil `FlightListScreen` ile aynı
+          karar. "Henüz uçuş yok / İlk Uçuşu Ekle" ile "okuyamadım" aynı ekranı
+          üretirse dispatcher kayıtlarının silindiğini sanar; hata şeridi
+          yukarıda zaten neyin olduğunu söylüyor. */}
+      {reservations.length === 0 && !loadError && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-16 h-16 bg-brand-50 rounded-card flex items-center justify-center mb-4">
             <Plane size={28} className="text-brand-600" />
