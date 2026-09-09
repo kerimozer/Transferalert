@@ -158,12 +158,17 @@ export default function DashboardPage() {
               sayıyor, "Bildirim" ise toplamı sayıyormuş gibi okunuyordu — etiket
               ölçütü söylemediği için iki platformun ayrıştığı da fark edilmedi.
               ÖLÇÜLDÜ (Manrope 600, 11px, TTF advance): "Gönderilen" 58.1px —
-              hücreye sığar ve hâlihazırda basılan "Tamamlanan"dan (67.5px)
-              dardır. Sığmayan alternatifler: "Toplam Bildirim" 80.3px,
-              "Gönderilen Bildirim" daha da uzun. */}
+              hücreye sığar. Sığmayan alternatifler: "Toplam Bildirim" 80.3px,
+              "Gönderilen Bildirim" daha da uzun.
+
+              "Tamamlanan" (67.5px) → "Biten" (2026-09-09): hücre ~68px olduğu
+              için varsayılan yazı ölçeğinde bile TAM SINIRDAYDI ve mobilde
+              "Tamamlan…" diye kırpılıyordu. Kırpılmış etiket, sayının neyi
+              saydığını söylemeyi bırakır. EN karşılığı da kısaldı:
+              "Completed" → "Done". */}
           <StatRow items={[
-            { label: 'Aktif',      value: active,    to: '/app/reservations', tone: 'brand' },
-            { label: 'Tamamlanan', value: completed, to: '/app/reservations' },
+            { label: 'Aktif',      value: active,    to: '/app/reservations', tone: 'lead' },
+            { label: 'Biten',      value: completed, to: '/app/reservations' },
             { label: 'İptal',      value: cancelled, to: '/app/reservations' },
             { label: 'Gönderilen', value: sentCount, to: '/app/notifications' },
           ]} />

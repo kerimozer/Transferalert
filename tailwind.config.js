@@ -28,13 +28,32 @@ export default {
           // #EFF1EF idi ve `alt` ile arası ΔE 3.0'dı: "Havalimanı" ile
           // "Transfer" gözle ayrılmıyordu. Artık İKİ TÜR DE bu tonu kullanıyor
           // (ikisi de "canlı veri yok" demek), ayrımı ikon taşıyor.
-          neutral: '#F6F7F6',
-          // "Planlandı" şeridi — canlı veri VAR ama olay yok. Dolu durum
-          // şeritlerinin yanında sakin, tür şeridinden ayrı: eski palette
-          // `scheduled` ile `transfer` BİREBİR aynı renkti (ΔE 0.0).
-          quiet: '#EDE7DC',
+          neutral: '#F5F6F4',
+          // "Planlandı" şeridi — canlı veri VAR ama olay yok. Diğer şeritlerin
+          // yanında sakin, tür şeridinden ayrı: eski palette `scheduled` ile
+          // `transfer` BİREBİR aynı renkti (ΔE 0.0).
+          quiet: '#E9DFCB',
           // Alarm satırının kenarlığı.
           dangerborder: '#F1D9D3',
+        },
+        // ŞERİT ZEMİNLERİ (2026-09-09) — `ok`/`bad`/`warn` ailelerinin `50`
+        // tonlarının YERİNE GEÇMEZ, AYRI bir ailedir. Rozet küçük bir çiptir;
+        // şerit kartın tam genişliğinde bir banttır ve listede alt alta
+        // ONLARCA kez tekrarlanır. Aynı tonun iki ölçekte aynı ağırlıkta
+        // okunacağını varsaymak bu turun kök nedeniydi.
+        //
+        // BİR TUR ÖNCE DOLUYDU (bg-ok-600 + beyaz metin) ve geri alındı: dolu
+        // bant tek kartta harika, on kartta dayanılmaz. Ama eski `*-50`
+        // tonlarına DÖNÜLMEDİ — ölçüldü ve elendi (Havada ↔ İndi ΔE 4.1,
+        // yani doldurmadan önceki şikâyetin ta kendisi). Bu palet ikisini
+        // birden tutar: sayfa ağırlığı ~5 kat düşer, en yakın çift ΔE 7.8.
+        //
+        // `oliveink`/`amberink` ödünç ALINMADI (ok-800 / warn-800 kullanılmadı):
+        // onlar bu zeminlerde hiç ölçülmedi. Mobil ikizi: theme.js `strip*`.
+        strip: {
+          air: '#D8E8EA', landed: '#DCE9CE',
+          cancelled: '#F3D9CF', diverted: '#F7E3B8',
+          oliveink: '#3B5A21', amberink: '#6B3E08',
         },
         // DİKKAT: `muted` daha AÇIK bir tona çekilemez. #A8A29E beyaz üstünde
         // 2.7:1, #7C756C ise uygulamanın kendi zemininde (#FAF8F5) 4.29 —

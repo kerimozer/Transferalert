@@ -2,7 +2,10 @@
 // Yeni bir rezervasyon/uçuş durumu eklerken SADECE burayı güncelle;
 // sayfalar bu haritaları import eder (sayfaya özel etiket gerekiyorsa
 // spread ile üzerine yazılır, ReservationsPage'deki "Takipte" gibi).
-import { isFlightTransfer } from './transfer';
+// UZANTI AÇIK YAZILIR (`./transfer.js`): Vite uzantısız hâli de çözer ama Node
+// çözmez, ve `scripts/test-tokens.mjs` bu modülü DAVRANIŞ testi için doğrudan
+// import ediyor. Uzantısızken kapı modülü hiç yükleyemiyordu.
+import { isFlightTransfer } from './transfer.js';
 
 export const RES_STATUS_BADGE = {
   active:    { label: 'Aktif',      cls: 'bg-brand-50 text-brand-700' },
@@ -14,24 +17,56 @@ export const RES_STATUS_BADGE = {
 // ve bu bilinçli: o bir ROZET reçetesi (küçük çip, soft zemin) ve Ana Sayfa
 // listesinde öyle kullanılıyor. Şerit büyük ve yalnız başına duruyor.
 //
-// NEDEN DOLU RENK: soft tonlar rozet boyutunda çalışıyor ama tam genişlikte
-// yan yana referans kalmadığı için hepsi tek bir açık banda çöküyordu —
-// ÖLÇÜLDÜ: "Planlandı" ile "Transfer" ΔE 0.0 (birebir aynı piksel),
-// "Havada" ile "İndi" 4.1. Dolu palette en yakın çift 7.8.
+// NEDEN DOLU DEĞİL (2026-09-09 — bir tur önce DOLUYDU, geri alındı):
+// dolu bant tek bir kartta harika, alt alta ON kartta dayanılmaz. Sayfa zemini
+// L* 97.7 iken şeritler L* 36–43'te oturuyordu; göz artık satırları değil
+// BANTLARI okuyordu.
+//
+// DİKKAT — ŞİKÂYET HARFİ HARFİNE DOĞRU DEĞİLDİ: "tonlar birbirine yakın"
+// denmişti ama ölçüm dolu tonların ΔE 27.2 ile zaten çok uzak olduğunu
+// gösterdi. Sorun AYRIM değil AĞIRLIKTI; tonları daha da uzaklaştırmak
+// (ilk refleks) yanlış hastalığı tedavi ederdi.
+//
+// PEKİ NEDEN ESKİ `*-50` TONLARINA DÖNÜLMÜYOR: ölçüldü ve ELENDİ — Havada ↔
+// İndi ΔE 4.1, yani doldurmadan önceki şikâyetin ta kendisi. Bu palet ikisini
+// birden tutuyor: sayfa ağırlığı 5.35–7.08 → 1.19–1.27 ve en yakın çift 7.8.
 //
 // ETİKET BURADA TEKRARLANMAZ: `FLIGHT_BADGE`ten okunur. İki harita iki farklı
 // ŞEYİ (çip rengi / şerit rengi) tutar, aynı METNİ değil — metin çoğaltılsaydı
 // bu turda temizlediğimiz "İndi" ↔ "Uçak indi" ayrışması geri gelirdi.
 //
-// `scheduled` BİLEREK dolu değil: canlı veri var ama olay yok, sakin kalmalı.
-// Beyaz metin kontrastları: Havada 7.50 · İndi 5.98 · İptal 6.28 · Yönlendi 5.68.
+// Metin kontrastları: Havada 8.77 · İndi 6.21 · İptal 6.27 · Yönlendi 7.18 ·
+// Planlandı 5.56 — hepsi AA. Kapı: scripts/test-tokens.mjs (mobil ikizinde de).
 export const FLIGHT_STRIP = {
-  landed:    'bg-ok-600 text-white',
-  cancelled: 'bg-bad-600 text-white',
-  active:    'bg-brand-600 text-white',
+  landed:    'bg-strip-landed text-strip-oliveink',
+  cancelled: 'bg-strip-cancelled text-bad-800',
+  active:    'bg-strip-air text-brand-700',
   scheduled: 'bg-surface-quiet text-ink-soft',
-  diverted:  'bg-warn-600 text-white',
+  diverted:  'bg-strip-diverted text-strip-amberink',
 };
+
+// TÜR TONU — canlı uçuş verisi YOK. Havalimanı ve şehir içi transfer AYNI tonu
+// paylaşır (ikisi de aynı şeyi söyler), ayrımı ikon taşır. Ayrı iki nötr
+// denendi ve aralarındaki fark ΔE 3.0'dı — gözle ayrılmıyordu.
+export const TYPE_TONE = 'text-ink-soft bg-surface-neutral';
+
+// ŞERİT TONU — "bu rezervasyon hangi tonu alır" sorusunun TEK cevabı.
+//
+// NEDEN AYRI BİR FONKSİYON: kural İKİ DEPODA kopyalanmış durumda (mobil ikizi
+// `mobile/src/theme.js` → `stripTone`) ve satır-içi bırakıldığında hiçbir kapı
+// onu göremiyordu — denetimde koşul kaldırıldı ve TÜM kapılar yeşil geçti.
+// Saf fonksiyon olunca DAVRANIŞI test edilebiliyor (scripts/test-tokens.mjs [6]).
+//
+// BİTEN İŞTE ŞERİT SUSAR: uçuşun inmiş olması TAMAMLANMIŞ bir transfer için
+// eski haberdir; kart "Tamamlandı" rozetini zaten taşıyor. Bağırma hakkı
+// yalnız EYLEM BEKLEYEN işlerde. `cancelled` bilinçli olarak KAPSAM DIŞI:
+// iptal hâlâ dikkat isteyen bir durumdur, biten iş değildir.
+export function stripTone(r) {
+  const fs = r?.latest_status?.flight_status;
+  if (!fs) return TYPE_TONE;
+  if (r?.status === 'completed') return TYPE_TONE;
+  return FLIGHT_STRIP[fs] || FLIGHT_STRIP.scheduled;
+}
 
 export const FLIGHT_BADGE = {
   landed:    { label: 'İndi',          cls: 'bg-ok-50 text-ok-800' },

@@ -1,5 +1,5 @@
 import { Plane, Car } from 'lucide-react';
-import { FLIGHT_BADGE, FLIGHT_STRIP } from '../../lib/status';
+import { FLIGHT_BADGE, stripTone } from '../../lib/status';
 import { typeKey, TYPE_AIRPORT } from '../../lib/transfer';
 
 // "Kart C" DURUM ŞERİDİ — kartın üstündeki tonlu bant.
@@ -14,17 +14,17 @@ import { typeKey, TYPE_AIRPORT } from '../../lib/transfer';
 // NE SÖYLER: canlı uçuş verisi varsa DURUMU (Havada / İndi / İptal), yoksa
 // TÜRÜ (Havalimanı / Transfer). Tür kararı lib/transfer.js'ten gelir —
 // ikinci bir cevap üretmiyoruz.
-// TÜRLERİN İKİSİ DE AYNI NÖTR TONDA: ikisi de "canlı uçuş verisi yok" demek,
-// ayrımı ikon taşır (uçak / araba). Ayrı iki nötr denendi ve aralarındaki fark
-// ΔE 3.0'dı — gözle ayrılmıyordu. İki ton üretip ayırt ettirememek fayda değil
-// borç: sonraki geliştirici onları "anlamlı" sanıp korumaya çalışır.
-const TYPE_TONE = 'text-ink-soft bg-surface-neutral';
-
 export default function StatusStrip({ r, children }) {
   const fs = r?.latest_status?.flight_status;
   const badge = fs ? (FLIGHT_BADGE[fs] || FLIGHT_BADGE.scheduled) : null;
   const tk = typeKey(r);
   const Icon = tk === TYPE_AIRPORT ? Plane : Car;
+
+  // TON KARARI BURADA DEĞİL, `lib/status.js` → `stripTone()`de: kural mobil
+  // ikizinde de var ve satır-içi bırakıldığında hiçbir kapı onu görmüyordu.
+  // Yalnız TON düşer, İÇERİK düşmez: biten işte de etiket ("İndi") ve nokta
+  // yerinde kalır — bilgi yanlış değil, sadece artık öncelikli değil.
+  const tone = stripTone(r);
 
   const pickup = r?.scheduled_pickup ? new Date(r.scheduled_pickup) : null;
   const valid = pickup && !Number.isNaN(pickup.getTime());
@@ -40,7 +40,7 @@ export default function StatusStrip({ r, children }) {
     && pickup.getDate() === now.getDate();
 
   return (
-    <div className={`flex items-center gap-2 px-4 py-2 ${fs ? (FLIGHT_STRIP[fs] || FLIGHT_STRIP.scheduled) : TYPE_TONE}`}>
+    <div className={`flex items-center gap-2 px-4 py-2 ${tone}`}>
       {/* Canlı veri varken NOKTA, yokken TÜR İKONU: nokta "bu bir durum"
           demektir, ikon "bu bir kategori". İkisi aynı işareti kullanırsa
           şerit, bilmediği bir şeyi biliyormuş gibi görünür. */}
@@ -81,7 +81,12 @@ export default function StatusStrip({ r, children }) {
            girilmemiş" gibi değil, NORMAL gibi gösterir. Üstelik Ana Sayfa'nın
            alt sınırı (`NaN > x` → false) bozuk tarihli kaydı listeden sessizce
            düşürüyor; "—" o sessiz düşmeyi teşhis edilebilir kılan tek iz. */
-        <span className="text-sm font-bold text-ink-muted shrink-0">—</span>
+        /* RENGİ TONDAN MİRAS ALIR, sabit değil: `text-ink-muted` ile
+           sabitlenmişti ve yeni açık şerit zeminlerinin BEŞİNDE AA altına
+           düşüyordu (4.15–4.42). Mobil ikizi zaten `tone.color` kullanıyordu —
+           yani aynı işaret iki platformda farklı okunurluktaydı. Şeridin
+           bütün metinleri tonun mürekkebini alır; bu da almalı. */
+        <span className="text-sm font-bold shrink-0">—</span>
       )}
     </div>
   );

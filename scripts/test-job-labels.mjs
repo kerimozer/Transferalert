@@ -189,8 +189,12 @@ check('jobAction / jobState / jobView / jobBadge dışa veriliyor',
 // "Uçuşsuz mu?" sorusunun İKİNCİ bir cevabı olmamalı: lib/transfer.js tek
 // kaynak. Yerel bir kopya daha gevşek davranıp aynı kaydı kartta uçuşsuz,
 // rozette uçuşlu gösterebilir.
+// Uzantı İSTEĞE BAĞLI eşleşir: kapının derdi "bu karar NEREDEN geliyor",
+// dosya adının nasıl yazıldığı değil. `./transfer` → `./transfer.js` yapıldı
+// (Node uzantısız çözmüyor, `test-tokens.mjs` modülü davranış testi için
+// import ediyor) ve kapı bunu bir tür kopyası sanıp kırılmıştı.
 check('uçuşsuz kararı lib/transfer.js\'ten geliyor',
-  /import \{[^}]*isFlightTransfer[^}]*\} from '\.\/transfer'/.test(statusSrc),
+  /import \{[^}]*isFlightTransfer[^}]*\} from '\.\/transfer(\.js)?'/.test(statusSrc),
   'status.js kendi tür kontrolünü yazmamalı');
 
 // [5] YOLCU SAYFASININ ÇEVİRİLERİ — aşama × dil kapsaması.

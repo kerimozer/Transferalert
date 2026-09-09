@@ -30,10 +30,16 @@ const CANON = {
   success: '#2E6F52', successSoft: '#E5F0EA', successText: '#1E523C',
   warning: '#96580F', warningSoft: '#FAEEDB', warningText: '#7A460A',
   danger: '#A93B29', dangerSoft: '#F8E7E3', dangerText: '#8A2E20',
-  // ŞERİT TONLARI (2026-08-30, "dolu şerit" kararı). `neutralSoft` #EFF1EF idi
-  // ve `surfaceAlt` ile arası ΔE 3.0'dı; eski `scheduled` tonu ise surfaceAlt
-  // ile BİREBİR aynıydı (ΔE 0.0) — "uçuş yok" ile "uçuş planlandı" aynı renkti.
-  neutralSoft: '#F6F7F6', stripQuiet: '#EDE7DC', dangerBorder: '#F1D9D3',
+  // ŞERİT TONLARI (2026-09-09, "ağırlık" kararı — bkz. design/renk-ayrimi/
+  // KARAR-AGIRLIK.md). Bir tur önce DOLUYDU (bg-ok-600 + beyaz metin) ve geri
+  // alındı: dolu bant tek kartta harika, alt alta on kartta dayanılmaz. Eski
+  // `*-50` tonlarına da DÖNÜLMEDİ — ölçüldü ve elendi (Havada ↔ İndi ΔE 4.1).
+  neutralSoft: '#F5F6F4', stripQuiet: '#E9DFCB', dangerBorder: '#F1D9D3',
+  stripAir: '#D8E8EA', stripLanded: '#DCE9CE',
+  stripCancelled: '#F3D9CF', stripDiverted: '#F7E3B8',
+  // Zeytin ve koyu kehribar mürekkebi — `ok.800`/`warn.800` ödünç ALINMADI:
+  // onlar bu zeminlerde hiç ölçülmedi.
+  stripLandedInk: '#3B5A21', stripDivertedInk: '#6B3E08',
   // Bildirim kanalları — marka işaretleri, durum rengi değil.
   // `whatsappInk` markanın kendi yeşili DEĞİL: #25D366 açık zeminde 1.77.
   sms: '#1B5FB8', smsSoft: '#E4EEFB',
@@ -45,6 +51,9 @@ const MAP = {
   'surface.bg': 'bg', 'surface.DEFAULT': 'surface', 'surface.alt': 'surfaceAlt',
   'surface.border': 'border', 'surface.borderstrong': 'borderStrong',
   'surface.neutral': 'neutralSoft', 'surface.quiet': 'stripQuiet', 'surface.dangerborder': 'dangerBorder',
+  'strip.air': 'stripAir', 'strip.landed': 'stripLanded',
+  'strip.cancelled': 'stripCancelled', 'strip.diverted': 'stripDiverted',
+  'strip.oliveink': 'stripLandedInk', 'strip.amberink': 'stripDivertedInk',
   'wa.50': 'whatsappSoft', 'wa.700': 'whatsappInk', 'sms.50': 'smsSoft', 'sms.700': 'sms',
   'ink.DEFAULT': 'ink', 'ink.soft': 'inkSoft', 'ink.muted': 'inkMuted',
   'brand.600': 'primary', 'brand.700': 'primaryDark', 'brand.50': 'primarySoft',
@@ -111,8 +120,13 @@ for (const [t, b] of [['primaryDark', 'primarySoft'], ['successText', 'successSo
 // Kanal renkleri okunur mu (ikon + kanal adı aynı tonda basılıyor → METİN
 // eşiği geçerli). WhatsApp markasının kendi yeşili burada KULLANILAMAZ;
 // kapı bunu sayıyla tutuyor ki biri "marka rengi olsun" diye geri koymasın.
+// ŞERİT metin/zemin çiftleri: şerit artık DOLU DEĞİL, yani beyaz metin yok —
+// her zeminin kendi koyu mürekkebi var ve her biri AYRI ölçülür. "Beyaz metin
+// hepsinde geçiyordu" güvencesi bu palette ARTIK GEÇERSİZ.
 for (const [t, b] of [['sms', 'smsSoft'], ['whatsappInk', 'whatsappSoft'],
-                      ['inkSoft', 'stripQuiet'], ['inkSoft', 'neutralSoft']]) {
+                      ['inkSoft', 'stripQuiet'], ['inkSoft', 'neutralSoft'],
+                      ['primaryDark', 'stripAir'], ['stripLandedInk', 'stripLanded'],
+                      ['dangerText', 'stripCancelled'], ['stripDivertedInk', 'stripDiverted']]) {
   const r = ratio(CANON[t], CANON[b]);
   check(`${t} / ${b} = ${r.toFixed(2)}`, r >= 4.5, 'AA eşiği 4.5');
 }
@@ -137,8 +151,8 @@ function deltaE(a, b) {
 // AYIRT EDİLEBİLİRLİK — kontrast YETMEZ. Eski palette her ton AA geçiyordu ama
 // kullanıcı "hangisinin ne olduğu belli olmuyor" diye bildirdi. Mobil kapıda
 // birebir aynı kontrol var.
-const SERIT = { active: CANON.primary, landed: CANON.success, cancelled: CANON.danger,
-                diverted: CANON.warning, scheduled: CANON.stripQuiet, tur: CANON.neutralSoft };
+const SERIT = { active: CANON.stripAir, landed: CANON.stripLanded, cancelled: CANON.stripCancelled,
+                diverted: CANON.stripDiverted, scheduled: CANON.stripQuiet, tur: CANON.neutralSoft };
 const adlar = Object.keys(SERIT);
 for (let i = 0; i < adlar.length; i++) {
   for (let j = i + 1; j < adlar.length; j++) {
@@ -146,6 +160,81 @@ for (let i = 0; i < adlar.length; i++) {
     check(`şerit ${adlar[i]} ↔ ${adlar[j]} = ΔE ${d.toFixed(1)}`, d >= 6,
       'iki şerit tonu gözle ayrılmıyor (ΔE 6 altı)');
   }
+}
+
+// AĞIRLIK — AYRIMDAN AYRI BİR ÖLÇÜ, ve bu kapının ASIL varlık sebebi.
+// 2026-09-09'da şikâyet "tonlar birbirine yakın"dı; ölçüm tonların ΔE 27 ile
+// zaten UZAK olduğunu, asıl sorunun AĞIRLIK olduğunu gösterdi (şeritler
+// L* 36–43, sayfa zemini L* 97.7 → göz satırları değil BANTLARI okuyor).
+// Yukarıdaki ΔE kapısı doygun bir paleti sorunsuz geçirir; dolu banda dönüşü
+// YAKALAYAMAZ. Bu kontrol tam olarak onun için var. Mobil ikizinde de aynısı.
+console.log('\n[4] Şerit AĞIRLIĞI — sayfa zemini üstünde sakin');
+for (const [ad, hex] of Object.entries(SERIT)) {
+  const r = ratio(hex, CANON.bg);
+  check(`şerit ${ad} / sayfa = ${r.toFixed(2)}`, r <= 1.6,
+    'şerit sayfadan çok ağır — alt alta on kartta bant gibi okunur');
+}
+
+// TANIM VAR ≠ DOĞRU YERDE KULLANILIYOR. [1] yalnız token'ın tailwind.config'de
+// TANIMLI olduğunu görür; FLIGHT_STRIP eski `bg-ok-600`u kullanmaya devam etse
+// [1] yine yeşil kalırdı. Kapı, tanımı değil KULLANIMI de görmeli.
+console.log('\n[5] FLIGHT_STRIP gerçekten şerit sınıflarını kullanıyor');
+const statusSrc = readFileSync(join(root, 'src', 'lib', 'status.js'), 'utf8');
+const stripBlock = statusSrc.match(/export const FLIGHT_STRIP = \{[\s\S]*?\n\};/);
+check('FLIGHT_STRIP bulundu', !!stripBlock);
+if (stripBlock) {
+  for (const cls of ['bg-surface-quiet', 'bg-strip-air', 'bg-strip-landed',
+                     'bg-strip-cancelled', 'bg-strip-diverted',
+                     'text-strip-oliveink', 'text-strip-amberink']) {
+    check(`FLIGHT_STRIP ${cls} kullanıyor`, stripBlock[0].includes(cls));
+  }
+  // Dolu banda dönüş token silinmeden de olabilir: `bg-ok-600` yazmak yeter.
+  check('şeritte DOLU marka/durum zemini yok',
+    !/bg-(brand|ok|bad|warn|accent)-600\b/.test(stripBlock[0]),
+    'dolu şerit 2026-09-09\'da ölçülerek geri alındı (ağırlık 5.35–7.08)');
+  check('şeritte beyaz metin yok', !/text-white\b/.test(stripBlock[0]),
+    'açık zeminde beyaz metin okunmaz');
+}
+
+// A0'ın 2. maddesi ("biten kayıtta şerit susar") DAVRANIŞTIR, bir hex değil —
+// ve önceki turda hiçbir kapısı YOKTU. Kural iki depoda kopyalanmış olduğu için
+// (mobil ikizi `src/theme.js` → `stripTone`) kapısız bırakmak, aynı transferin
+// iki platformda farklı görünmesi demekti.
+console.log('\n[6] stripTone davranışı — biten iş susar');
+{
+  const { stripTone, FLIGHT_STRIP, TYPE_TONE } =
+    await import(new URL('../src/lib/status.js', import.meta.url));
+  const res = (status, flight_status) => ({
+    status, latest_status: flight_status ? { flight_status } : null,
+  });
+
+  check('canlı veri yok → tür tonu', stripTone(res('active', null)) === TYPE_TONE);
+  check('aktif + indi → İNDİ tonu (bağırır)',
+    stripTone(res('active', 'landed')) === FLIGHT_STRIP.landed);
+  check('BİTEN + indi → tür tonu (susar)',
+    stripTone(res('completed', 'landed')) === TYPE_TONE,
+    'A0 madde 2: biten işte uçuşun inmiş olması eski haber');
+  check('BİTEN + havada → tür tonu (susar)',
+    stripTone(res('completed', 'active')) === TYPE_TONE);
+  // İPTAL bilinçli olarak KAPSAM DIŞI: hâlâ dikkat isteyen bir durum.
+  check('iptal + iptal → İPTAL tonu (susmaz)',
+    stripTone(res('cancelled', 'cancelled')) === FLIGHT_STRIP.cancelled);
+  check('bilinmeyen uçuş durumu → planlandı tonuna düşer',
+    stripTone(res('active', 'kayip_deger')) === FLIGHT_STRIP.scheduled);
+  check('kayıt yoksa çökmez', stripTone(null) === TYPE_TONE);
+
+  // ŞERİT METİNLERİ TONU MİRAS ALMALI, kendi rengini SABİTLEMEMELİ. Bozuk
+  // tarihteki "—" işareti `text-ink-muted` ile sabitlenmişti ve yeni açık
+  // zeminlerin BEŞİNDE AA altına düşüyordu (4.15–4.42); mobil ikizi aynı metni
+  // tonun mürekkebiyle basıyordu, yani iki platform ayrışmıştı.
+  // YORUMLAR SOYULUR: bu kuralın GEREKÇESİ yorumda `text-ink-muted` sınıfını
+  // adıyla anıyor. Ham metinde arayan ilk hâl tam da o gerekçe yüzünden
+  // kırmızı yanıyordu — kapı kodu değil kendi açıklamasını ölçüyordu.
+  const strip = readFileSync(join(root, 'src', 'components', 'ui', 'StatusStrip.jsx'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  check('şeritte sabitlenmiş mürekkep rengi yok',
+    !/text-ink-(muted|soft)\b/.test(strip),
+    'şerit metinleri tonun rengini miras almalı — sabit renk açık zeminde AA altına düşer');
 }
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
