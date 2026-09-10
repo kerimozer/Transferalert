@@ -125,5 +125,74 @@ for (const path of files) {
 }
 check(`paylaşılan yardımcı kullanan ${checkedFiles} dosyanın importları tutarlı`, failed === 0);
 
+// ── [3] YEREL MODÜLDEN İSTENEN AD GERÇEKTEN DIŞA VERİLİYOR MU ──────────────
+//
+// NEDEN EKLENDİ (2026-09-10): `NightWatchPage` yazılırken ölçüldü —
+// `../components/ui` gibi bir BARREL dosyadan var olmayan bir ad import etmek
+// `npm run build`i KIRMIYOR. Kullanılmıyorsa Rollup sessizce ağaç budar;
+// KULLANILIYORSA değer `undefined` olur ve React açılışta
+// "Element type is invalid" ile çöker. Yani yukarıdaki [1] bölümünün anlattığı
+// felaketin (girişsiz yüzlerin tamamı `ReferenceError`) bileşen tarafındaki
+// ikizi ve ona karşı hiçbir kapı yoktu.
+//
+// [1] DAR ve kasıtlıydı (`src/lib/*`). Bu bölüm tamamlayıcı: kaynağı değil
+// HEDEFİ doğrular — "istediğin ad o dosyada var mı".
+console.log('\n[3] Yerel modüllerden istenen adlar gerçekten dışa veriliyor');
+// Uzantı AÇIK yazılmış olabilir (`./transfer.js` — bkz. lib/status.js): önce
+// yolun kendisini dene, yoksa uzantı/`index` adaylarına bak. İlk hâl yalnız
+// ekleme yapıyordu ve `transfer.js.js` arayıp "modül bulunamadı" diyordu.
+const cozumle = (fromDir, spec) => {
+  const base = join(fromDir, spec);
+  for (const aday of [base, `${base}.jsx`, `${base}.js`, join(base, 'index.js'), join(base, 'index.jsx')]) {
+    try { if (statSync(aday).isFile()) return aday; } catch { /* aday yok, sıradakine bak */ }
+  }
+  return null;
+};
+// YORUMLAR SOYULUR. `components/ui/index.js` kendi başlığında örnek bir
+// import satırı taşıyor ve kapı onu gerçek bir import sanıp kırılıyordu —
+// bu turda ÜÇÜNCÜ kez: metin tarayan her kapı önce yorumları atmalı.
+const kodu = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+// Bir modülün dışa verdiği ADLAR. `export default` bilinçli DIŞARIDA:
+// varsayılan dışa aktarım süslü parantezle import edilmez.
+const disaVerilenler = (kod) => {
+  const set = new Set();
+  for (const m of kod.matchAll(/export\s+(?:async\s+)?(?:const|let|var|function\*?|class)\s+(\w+)/g)) set.add(m[1]);
+  // `export { a, b as c }` ve `export { default as X } from '...'`
+  for (const m of kod.matchAll(/export\s*\{([^}]*)\}/g)) {
+    for (const parca of m[1].split(',')) {
+      const t = parca.trim();
+      if (!t) continue;
+      const as = t.match(/\bas\s+(\w+)$/);
+      set.add(as ? as[1] : t);
+    }
+  }
+  return set;
+};
+let kontrolEdilen = 0;
+const eksikler = [];
+// `files` KULLANILIR, `walk(SRC)` DEĞİL: mobilde kök App.js `src/` dışında
+// duruyor ve tam da orada bozuk bir ad TÜM uygulamayı açılışta düşürür —
+// kapının en çok koruması gereken dosya taranmıyordu.
+for (const dosya of files) {
+  const rel = relative(ROOT, dosya).replace(/\\/g, '/');
+  const kod = kodu(readFileSync(dosya, 'utf8'));
+  // ÜÇ BİÇİM DE TARANIR: adlı import, VARSAYILAN + adlı (`import D, { a }` —
+  // ilk hâl bunu hiç görmüyordu) ve çift tırnaklı yol. Bugün ikisi de
+  // kullanılmıyor ama kapı bugünü değil YARIN YAZILACAĞI korumalı.
+  for (const m of kod.matchAll(/import\s+(?:\w+\s*,\s*)?\{([^}]+)\}\s*from\s*['"](\.[^'"]+)['"]/g)) {
+    const hedef = cozumle(join(dosya, '..'), m[2]);
+    if (!hedef) { eksikler.push(`${rel}: '${m[2]}' modülü bulunamadı`); continue; }
+    const verilen = disaVerilenler(readFileSync(hedef, 'utf8'));
+    kontrolEdilen++;
+    for (const parca of m[1].split(',')) {
+      const ad = parca.trim().split(/\s+as\s+/)[0].trim();
+      if (!ad) continue;
+      if (!verilen.has(ad)) eksikler.push(`${rel}: '${m[2]}' → "${ad}" dışa verilmiyor`);
+    }
+  }
+}
+check(`${kontrolEdilen} yerel import'un tamamı çözülüyor`, eksikler.length === 0,
+  eksikler.length ? `\n      ${eksikler.join('\n      ')}` : '');
+
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

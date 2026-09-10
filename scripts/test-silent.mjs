@@ -36,9 +36,18 @@ const page = (f) => readFileSync(join(root, 'src', 'pages', f), 'utf8');
 // gizlemek ise kapıyı ada bağlamanın başka bir biçimi olurdu.
 const NOT_YET = new Set(['LandingPage.jsx', 'OrganizationPage.jsx', 'PartnersPage.jsx', 'PlatformAdminPage.jsx']);
 
+// KAPSAM `api.list*`TEN GENİŞ OLMALI. İlk hâli yalnız onu arıyordu ve
+// 2026-09-10'da eklenen `NightWatchPage` (veri ucu `api.nightWatchBoard()`)
+// kapıya HİÇ GÖRÜNMEDİ — yani yeni bir veri sayfası sözleşmesiz doğabilirdi.
+// Bu, bu kapının daha önce İKİ KEZ yediği hatanın aynısı (önce iki dosya adına
+// çivilenmişti, sonra tek bir çağrı desenine).
+//
+// Ölçüt artık ŞEKİL: ya bir liste ucu çağırıyor ya da sözleşmenin kendisini
+// (`loadError`) taşıyor. İkincisi önemli — sözleşmeyi benimseyen her sayfa,
+// hangi ucu çağırdığından bağımsız olarak denetlenir.
 const PAGES = readdirSync(join(root, 'src', 'pages'))
   .filter((f) => f.endsWith('.jsx'))
-  .filter((f) => /api\.list\w+\(/.test(page(f)));
+  .filter((f) => /api\.list\w+\(/.test(page(f)) || /loadError/.test(page(f)));
 
 console.log(`[1] Veri yükleyen sayfalar hatayı EKRANA basıyor (${PAGES.length} sayfa bulundu)`);
 check('taranacak sayfa bulundu', PAGES.length >= 6, 'api.list* deseni değişmiş olabilir');
@@ -51,8 +60,14 @@ for (const file of PAGES) {
   // mobil kapısının ilk hâli tam bu yüzden yanlış sebepten geçiyordu
   // (`setLoadError(null)` da bir eşleşmedir). Kapı reddedilen dalın KENDİSİNİ
   // görmeli: ya `.catch(...)` zinciri ya `allSettled` reddi.
+  // ÜÇ MEŞRU BİÇİM: promise zinciri (`.catch(e => setLoadError(...))`),
+  // `allSettled` reddi, ve `try { await ... } catch (e) { setLoadError(...) }`.
+  // Üçüncüsü ilk hâlde YOKTU ve `async/await` yazan her yeni sayfayı haksız
+  // yere kırardı — mobil ikizi zaten try/catch kullanıyor.
   check(`${file}: reddedilen istek yakalanıyor`,
-    /\.catch\(\s*\w*\s*=>\s*setLoadError\(/.test(src) || /status\s*===\s*'rejected'/.test(src),
+    /\.catch\(\s*\w*\s*=>\s*setLoadError\(/.test(src)
+      || /status\s*===\s*'rejected'/.test(src)
+      || /catch\s*\([^)]*\)\s*\{[\s\S]{0,300}?setLoadError\(/.test(src),
     'sessizce yutuluyor olabilir');
   check(`${file}: hata state'e yazılıyor`, /setLoadError\(/.test(src));
   // Sunucunun KENDİ cümlesi basılmalı: "Bir hata oluştu" 401'i, 429'u ve 500'ü
@@ -118,6 +133,32 @@ console.log('[3b] EYLEM yolları da hata basıyor (yalnız YÜKLEME değil)');
 // sarmalayıcıdan mı geçiyor". Yeni bir eylem eklendiğinde `try/catch`
 // yazmayı unutmak kuralı yeniden bozardı; sarmalayıcı bunu yapısal olarak
 // engelliyor.
+// EYLEM/YÜKLEME AYRIMI TÜM SAYFALARDA. Bu kontrol `ReservationsPage`
+// ADINA çiviliydi ve `NightWatchPage` yazılırken kuralı ihlal ederken kapı
+// 42/0 yeşil kaldı (harita hatası `loadError`a yazılıyordu → tahta 403 ile
+// boşaldığı an "Nöbet tahtası yüklenemedi — Harita açılamadı" tam ekranı).
+// Bu, bu oturumda DÖRDÜNCÜ "kapı yalnız bugün bildiği dosyaya bakıyor" vakası.
+for (const file of PAGES) {
+  if (NOT_YET.has(file)) continue;
+  const src = page(file);
+  // Sayfa hem YÜKLEME hem EYLEM hatası üretiyorsa ikisi ayrı state olmalı.
+  // Eylem göstergesi: kullanıcı jestiyle çağrılan `api.*` ya da `window.open`.
+  const eylemVar = /onClick=\{[^}]*\b(api|window\.open)\b/.test(src)
+    || /async function handle\w+\([\s\S]{0,400}?\bapi\./.test(src)
+    || /window\.open\(/.test(src);
+  if (!eylemVar) continue;
+  // TEMİZLEME ÇAĞRISI SAYILMAZ. `/setActionError\(/` yeterli sanılmıştı ve
+  // prob onu kırmadı: state tanımını silsem bile JSX'teki `setActionError('')`
+  // (kapatma düğmesi) eşleşmeye devam ediyordu. Bu, CLAUDE.md'de yazılı
+  // `setLoadError(null)` dersinin birebir tekrarı — kapı, kimliğin VARLIĞINI
+  // değil GERÇEK BİR HATA YAZDIĞINI görmeli.
+  const hepsi = (src.match(/setActionError\(/g) || []).length;
+  const temizleme = (src.match(/setActionError\(\s*(?:''|"")\s*\)/g) || []).length;
+  check(`${file}: eylem hatası yükleme hatasından ayrı`,
+    hepsi > temizleme,
+    'eylem hatası `loadError`a yazılırsa yükleme ekranını tetikleyebilir');
+}
+
 {
   const res = page('ReservationsPage.jsx');
   check('eylem hatası AYRI state\'te', /setActionError\(/.test(res),

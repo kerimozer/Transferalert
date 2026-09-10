@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Plane, LayoutDashboard, Bell, LogOut, User, BarChart2, Menu, X, Building2, ShieldCheck, Handshake } from 'lucide-react';
+import { Plane, LayoutDashboard, Bell, LogOut, User, BarChart2, Menu, X, Building2, ShieldCheck, Handshake, Moon } from 'lucide-react';
 import { api } from '../lib/api';
 
 const NAV = [
@@ -19,6 +19,11 @@ export default function Layout() {
   const navigate   = useNavigate();
   const [open, setOpen] = useState(false);
   const [trialDaysLeft, setTrialDaysLeft] = useState(null);
+  // Nöbet bağlantısı YALNIZ nöbetçiye görünür. "Nöbetçi miyim" sorusunu
+  // SUNUCU cevaplar (`assigned`) — istemcinin rolüne bakıp tahmin etmesi
+  // yanlış olurdu: nöbetçiyi firma yöneticisi seçer ve seçilen kişi şoför
+  // rolünde de olabilir. Mobilde de aynı kural (koşullu "Nöbet" sekmesi).
+  const [nightWatch, setNightWatch] = useState(false);
 
   useEffect(() => {
     api.getMyOrg().then(({ org }) => {
@@ -34,11 +39,31 @@ export default function Layout() {
     // tutulduğu için değil. Dürüst ifade: bu hata KULLANICIYA GÖSTERİLMİYOR;
     // band düşerse süresi dolmuş firma uyarıyı görmez ve bu risk kabul edildi.
     }).catch((e) => { console.warn('[trial] plan bilgisi okunamadı:', e?.message); });
+
+    // Aynı en-iyi-çaba gerekçesi: bu yalnız bir NAV BAĞLANTISINI gösterip
+    // gizliyor, veri yolu değil. Başarısız olursa bağlantı çıkmaz ama
+    // `/app/night-watch` ROTASI açık kalır (App.jsx) — yani nöbetçi
+    // adresi bilerek ya da paylaşılan linkle yine ulaşır ve sayfa kendi
+    // durumunu sunucudan sorar. Erişimi bu istek DEĞİL, sunucu belirler.
+    api.nightWatchStatus()
+      .then((s) => setNightWatch(!!s?.assigned))
+      .catch((e) => { console.warn('[nöbet] durum okunamadı:', e?.message); });
   }, []);
 
-  const nav = isPlatformAdmin
-    ? [...NAV, { to: '/app/admin', label: 'Platform', icon: ShieldCheck }]
-    : NAV;
+  // Nöbet, PROFİL'İN HEMEN ÜSTÜNE konur: gece açılan ama gündüz hiç
+  // kullanılmayan bir ekran, her gün bakılan Transferlerim'in önüne geçmemeli.
+  //
+  // Konum İNDEKSLE DEĞİL ADRESLE bulunur (`slice(0, -1)` idi): "Profil
+  // sonuncudur" varsayımı hiçbir yerde yazılı değil ve NAV yeniden
+  // sıralandığında nöbet linki sessizce yanlış yere giderdi.
+  const profilIdx = NAV.findIndex((n) => n.to === '/app/profile');
+  const kesme = profilIdx === -1 ? NAV.length : profilIdx;
+  const nav = [
+    ...NAV.slice(0, kesme),
+    ...(nightWatch ? [{ to: '/app/night-watch', label: 'Gece Nöbeti', icon: Moon }] : []),
+    ...NAV.slice(kesme),
+    ...(isPlatformAdmin ? [{ to: '/app/admin', label: 'Platform', icon: ShieldCheck }] : []),
+  ];
 
   async function handleLogout() {
     await logout();

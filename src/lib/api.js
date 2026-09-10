@@ -68,6 +68,13 @@ export const api = {
   joinOrg:       (token) => req('POST',  `/api/organizations/join/${token}`),
   setNightWatch: (data) => req('PATCH',  '/api/organizations/night-watch', data),
 
+  // Gece nöbeti — nöbetçinin okuma uçları.
+  // "Nöbetçi miyim" kararını SUNUCU verir; istemcinin rolüne bakarak tahmin
+  // etmesi yanlış olur (nöbetçiyi firma yöneticisi seçer ve rolü şoför de
+  // olabilir). Mobil ikizi: mobile/src/api.js → nightWatchStatus/Board.
+  nightWatchStatus: () => req('GET', '/api/night-watch'),
+  nightWatchBoard:  () => nightWatchBoard(),
+
   // İş ortakları (otel / acenta portalı)
   listPartners:   ()          => req('GET',    '/api/partners'),
   createPartner:  (name)      => req('POST',   '/api/partners', { name }),
@@ -88,3 +95,32 @@ export const api = {
   // Herkese açık fiyatlandırma (landing sayfası, giriş gerektirmez)
   listPublicPlans: () => req('GET', '/api/public/plans'),
 };
+
+// Nöbet dışında sunucu 403 döner. Bu bir HATA DEĞİL, ekranın ikinci normal
+// durumu ("sıra sende değil") — kırmızı bir hata metni göstermek yanlış olurdu
+// ve nöbetçi sistemin bozuk olduğunu sanırdı. Ayırt edilebilmesi için
+// sunucunun GÖVDEDEKİ bilgisini hataya iliştiriyoruz; ortak `req()` yalnız
+// `error` alanını okuyup gerisini atıyor.
+//
+// Mobil ikiziyle BİREBİR aynı sözleşme (mobile/src/api.js): `err.offDuty`
+// → `{ assigned, window }`. İki istemci bu iki durumu farklı ayırırsa aynı
+// nöbetçi telefonda "nöbetin başlamadı", masaüstünde "bir hata oluştu" görür.
+async function nightWatchBoard() {
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch(`${API}/api/night-watch/reservations`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+  });
+  // `req()` ile aynı varsayım: bu uç her hâlde JSON gövde döner. Burada
+  // `.catch(() => null)` YAZILAMAZ — o desen sessiz yutmadır ve kapı yasaklar.
+  const json = await res.json();
+  if (res.status === 403 && json?.on_duty === false) {
+    const err = new Error(json.error || 'Nöbet dışı');
+    err.offDuty = { assigned: !!json.assigned, window: json.window || null };
+    throw err;
+  }
+  if (!res.ok) throw new Error(json?.error || `Hata ${res.status}`);
+  return json;
+}

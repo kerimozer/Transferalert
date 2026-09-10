@@ -13,6 +13,7 @@ const ReservationsPage  = lazy(() => import('./pages/ReservationsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const ProfilePage       = lazy(() => import('./pages/ProfilePage'));
 const ReportsPage       = lazy(() => import('./pages/ReportsPage'));
+const NightWatchPage    = lazy(() => import('./pages/NightWatchPage'));
 const OrganizationPage  = lazy(() => import('./pages/OrganizationPage'));
 const PlatformAdminPage = lazy(() => import('./pages/PlatformAdminPage'));
 const TrackPage         = lazy(() => import('./pages/TrackPage'));
@@ -76,6 +77,11 @@ export default function App() {
             <Route path="organization"  element={<OrganizationPage />} />
             <Route path="partners"      element={<PartnersPage />} />
             <Route path="reports"       element={<ReportsPage />} />
+            {/* Gece nöbeti — nav'da YALNIZ nöbetçiye görünür ama rota HERKESE
+                açıktır: sunucu zaten 403 ile kapıyı tutuyor ve nöbetçilik
+                oturum ortasında verilebiliyor. Rotayı da gizlemek, linki
+                paylaşılan nöbetçiyi "sayfa yok"a düşürürdü. */}
+            <Route path="night-watch"   element={<NightWatchPage />} />
             <Route path="profile"       element={<ProfilePage />} />
             <Route path="admin"         element={<PlatformAdminRoute><PlatformAdminPage /></PlatformAdminRoute>} />
           </Route>
