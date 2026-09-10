@@ -117,6 +117,49 @@ console.log('[2] Renk sınıfı DİNAMİK kurulmuyor');
 check('şablon dizesiyle sınıf üretilmiyor', dynamic.length === 0,
   dynamic.length ? dynamic.join(', ') : '');
 
+console.log('[2b] YORUMDA geçen sınıf adı ÖLÜ CSS üretmiyor');
+// TAILWIND İÇERİK TARAMASINI YORUMLARA DA UYGULAR. 2026-09-10'da İKİ KEZ
+// yaşandı: bir düzeltmenin gerekçesi ("`X` idi, artık `Y`") eski sınıfın tam
+// adını yazıyordu ve o sınıf, hiçbir yerde KULLANILMADIĞI hâlde üretilen
+// CSS'e giriyordu. Canlı pakette bulundu.
+//
+// Zararı üç katmanlı: (1) paketi şişirir, (2) "bu sınıf hâlâ kullanılıyor mu?"
+// sorusuna YANLIŞ cevap verir — CSS'e bakan biri kullanımda sanır, (3) ölü
+// kuralı gören sonraki geliştirici onu "anlamlı" sanıp korumaya çalışır.
+//
+// Kapı: bir renk sınıfı YALNIZ yorumlarda geçiyorsa (kodda hiç yoksa), o
+// sınıf ya koda girmeli ya da yorumdan çıkmalı. Gerekçe sınıf adını
+// yazmadan da anlatılabilir ("marka tonunun %70 saydam hâli").
+const COMMENT = /\/\*[\s\S]*?\*\/|(?:^|[^:])\/\/.*$/gm;
+const kod = new Set();
+const yorum = new Map();   // sınıf → onu ANAN dosyalar
+for (const file of files) {
+  const rel = relative(ROOT, file).replace(/\\/g, '/');
+  const text = readFileSync(file, 'utf8');
+  const yorumlar = (text.match(COMMENT) || []).join('\n');
+  const kodKismi = text.replace(COMMENT, (m) => (m.startsWith('/*') ? '' : m[0] === '/' ? '' : m[0]));
+
+  const cikar = (s) => (s.match(TOKEN) || []).flatMap((raw) => {
+    const bare = raw.includes(':') ? raw.slice(raw.lastIndexOf(':') + 1) : raw;
+    const dash = bare.indexOf('-');
+    if (dash < 0) return [];
+    if (!UTILS.includes(bare.slice(0, dash))) return [];
+    const rest = bare.slice(dash + 1).split('/')[0];
+    return FAMILIES.some((f) => rest === f || rest.startsWith(`${f}-`)) ? [bare] : [];
+  });
+
+  for (const c of cikar(kodKismi)) kod.add(c);
+  for (const c of cikar(yorumlar)) {
+    if (!yorum.has(c)) yorum.set(c, new Set());
+    yorum.get(c).add(rel);
+  }
+}
+const olu = [...yorum.entries()]
+  .filter(([c]) => !kod.has(c))
+  .map(([c, dosyalar]) => `${c} — yalnız yorumda: ${[...dosyalar].join(', ')}`);
+check('yorumda anılan her sınıf kodda da kullanılıyor', olu.length === 0,
+  olu.length ? `\n      ${olu.join('\n      ')}` : '');
+
 console.log('[3] Palet ailesi boş bırakılmamış');
 // Boş bir aile, kapıyı o aile için sessizce işlevsiz yapardı.
 const empty = FAMILIES.filter((f) => VALID.get(f).size === 0);

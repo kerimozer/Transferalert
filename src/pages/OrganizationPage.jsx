@@ -576,14 +576,19 @@ export default function OrganizationPage() {
                     akışına mahkûm kalır. */}
                 {!m.driver_link && m.role === 'driver' && (
                   <div className="mt-3 pt-3 border-t border-surface-border">
-                    {/* HOVER KOYULAŞIR, AÇILMAZ (2026-09-10). `bg-brand-50/70`
-                        idi ve tabandan farkı yalnız ΔE 2.25'ti — bu proje
-                        ΔE 3.0'ı "gözle ayrılmıyor" diye zaten reddetmişti,
-                        yani hover geri bildirimi CSS'te vardı ama ekranda
-                        yoktu. Üstelik renk AÇILIYORDU: "etkileşimli" değil
-                        "pasifleşti" okunur. Şimdi ΔE 9.46, metin 7.40.
-                        Palete `brand-100` EKLENMEDİ — opaklık son eki
-                        yerleşik desen (bkz. CLAUDE.md). */}
+                    {/* HOVER KOYULAŞIR, AÇILMAZ (2026-09-10). Önceden marka
+                        tonunun %70 saydam hâliydi ve tabandan farkı yalnız
+                        ΔE 2.25'ti — bu proje ΔE 3.0'ı "gözle ayrılmıyor" diye
+                        zaten reddetmişti, yani hover geri bildirimi CSS'te
+                        vardı ama EKRANDA yoktu. Üstelik renk AÇILIYORDU:
+                        "etkileşimli" değil "pasifleşti" okunur. Şimdi
+                        ΔE 9.46, metin kontrastı 7.40. Palete yeni bir ton
+                        EKLENMEDİ — opaklık son eki yerleşik desen (CLAUDE.md).
+
+                        Eski sınıfın TAM ADI buraya yazılamaz: Tailwind içerik
+                        taramasını yorumlara da uygular ve adı geçen sınıf,
+                        hiçbir yerde kullanılmasa bile üretilen CSS'e girer.
+                        Canlı pakette iki kez bu şekilde ölü kural bulundu. */}
                     <button
                       type="button"
                       onClick={() => handleCreateDriverLink(m.id)}
