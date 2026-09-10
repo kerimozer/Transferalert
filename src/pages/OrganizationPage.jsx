@@ -576,10 +576,18 @@ export default function OrganizationPage() {
                     akışına mahkûm kalır. */}
                 {!m.driver_link && m.role === 'driver' && (
                   <div className="mt-3 pt-3 border-t border-surface-border">
+                    {/* HOVER KOYULAŞIR, AÇILMAZ (2026-09-10). `bg-brand-50/70`
+                        idi ve tabandan farkı yalnız ΔE 2.25'ti — bu proje
+                        ΔE 3.0'ı "gözle ayrılmıyor" diye zaten reddetmişti,
+                        yani hover geri bildirimi CSS'te vardı ama ekranda
+                        yoktu. Üstelik renk AÇILIYORDU: "etkileşimli" değil
+                        "pasifleşti" okunur. Şimdi ΔE 9.46, metin 7.40.
+                        Palete `brand-100` EKLENMEDİ — opaklık son eki
+                        yerleşik desen (bkz. CLAUDE.md). */}
                     <button
                       type="button"
                       onClick={() => handleCreateDriverLink(m.id)}
-                      className="text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-50/70 transition-colors"
+                      className="text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-600/25 transition-colors"
                     >
                       Şoför linki oluştur
                     </button>
@@ -593,7 +601,7 @@ export default function OrganizationPage() {
                       {copied === m.id ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                     </button>
                     {wa && (
-                      <a href={wa} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-50/70 transition-colors">
+                      <a href={wa} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-brand-50 text-brand-700 font-semibold rounded-control hover:bg-brand-600/25 transition-colors">
                         <Send size={12} /> Gönder
                       </a>
                     )}
@@ -645,7 +653,7 @@ export default function OrganizationPage() {
                     <p className="text-xs font-semibold text-ink-soft mb-1.5">Şoför linki — hesap gerektirmez</p>
                     <div className="flex items-center gap-2">
                       <input readOnly value={driverLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
-                      <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-50/70 text-brand-700 font-semibold rounded-control transition-colors">
+                      <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-600/25 text-brand-700 font-semibold rounded-control transition-colors">
                         {copied === 'driver' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                       </button>
                     </div>

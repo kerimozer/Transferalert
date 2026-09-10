@@ -9,7 +9,7 @@
 // İnsan kaynağı: design/yon-secimi/KARAR.md (dokümanlar deposu).
 // Bir token'ı değiştirirken ÜÇÜNÜ birden güncelle: bu liste, mobil
 // scripts/test-tokens.mjs ve KARAR.md.
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -235,6 +235,58 @@ console.log('\n[6] stripTone davranışı — biten iş susar');
   check('şeritte sabitlenmiş mürekkep rengi yok',
     !/text-ink-(muted|soft)\b/.test(strip),
     'şerit metinleri tonun rengini miras almalı — sabit renk açık zeminde AA altına düşer');
+}
+
+// MAVİ-GRİ YASAĞI (B13, 2026-09-10). `test-styles.mjs` yalnız BİZİM renk
+// ailelerimizi denetliyor ve Tailwind'in varsayılan paletini BİLİNÇLİ olarak
+// atlıyor — o kapı "sınıf palete çözülüyor mu" diye sorar, `text-gray-400`
+// ise gayet geçerli bir sınıftır. Sonuç: `WelcomeSignModal`da uçuş numarası
+// #9CA3AF ile basılıyordu, beyazda **2.54:1** — büyük metin eşiği 3.0'ı bile
+// geçmiyor, üstelik o ekran havalimanında UZAKTAN okunan karşılama tabelası.
+//
+// İki ayrı sebeple yasak: (1) kontrast, varsayılan gri tonları bizim
+// zeminlerimizde ölçülmedi; (2) `gray`/`slate`/`zinc` MAVİ-gri ailedir ve bu
+// projenin sıcak nötr dilinin tam zıddı ("göz yoran soğukluğun kaynağı odur").
+console.log('\n[7] Varsayılan MAVİ-GRİ palet kullanılmıyor');
+const walk = (d) => readdirSync(d).flatMap((n) => {
+  const p = join(d, n);
+  return statSync(p).isDirectory() ? walk(p) : (/\.(js|jsx)$/.test(n) ? [p] : []);
+});
+const COLD = /\b(text|bg|border|ring|divide|placeholder|from|via|to)-(gray|slate|zinc|cool|blue-?gray)-\d{2,3}\b/;
+const soguk = [];
+for (const f of walk(join(root, 'src'))) {
+  // Yorumlar soyulur: bu kuralın GEREKÇESİ yasak sınıfı adıyla anıyor.
+  const src = readFileSync(f, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  const m = src.match(new RegExp(COLD, 'g'));
+  if (m) soguk.push(`${f.replace(root, '').replace(/\\/g, '/')}: ${[...new Set(m)].join(', ')}`);
+}
+check('sıcak nötr dili korunuyor', soguk.length === 0,
+  soguk.length ? `\n      ${soguk.join('\n      ')}` : '');
+
+// Karşılama tabelasının KENDİ metinleri de ölçülür: bu ekranın tek işi
+// uzaktan okunmak ve "yumuşatma uygulanmaz" kuralı dosyanın kendi yorumunda
+// yazılıydı — kod o yorumla ÇELİŞİYORDU.
+// ADA DEĞİL ŞEKLE BAK. İlk hâli `text-ink\b` arıyordu ve `\b`, `k` ile `-`
+// arasında sınır saydığı için `text-ink-muted`ı DA eşliyordu: denetimde
+// tabelanın 6xl yolcu adı `text-ink` → `text-ink-muted` yapıldı (16.59 → 5.26)
+// ve kapı 111/0 YEŞİL kaldı. Yani kontrol hiçbir şey ölçmüyordu.
+//
+// Doğrusu: metnin PUNTOSUNDAN renk sınıfını bul, tokenı ondan çöz, kontrastı
+// ÖLÇ. Böylece biri rengi değiştirdiğinde kapı sayıyla cevap verir — sınıf
+// adını ezberlemiş olmakla değil.
+const sign = readFileSync(join(root, 'src', 'components', 'WelcomeSignModal.jsx'), 'utf8');
+const TW_INK = { 'text-ink': 'ink', 'text-ink-soft': 'inkSoft', 'text-ink-muted': 'inkMuted' };
+for (const [punto, rol, esik] of [['text-6xl', 'yolcu adı', 7], ['text-3xl', 'uçuş no', 4.5]]) {
+  // O punto sınıfını taşıyan className dizesini bul, içindeki ink sınıfını çöz.
+  const line = sign.split('\n').find((l) => l.includes(punto));
+  const cls = line && Object.keys(TW_INK).find((c) => new RegExp(`${c}(?![-\\w])`).test(line));
+  check(`tabela ${rol} (${punto}) token renk kullanıyor`, !!cls,
+    line ? `bulunan sınıf yok: ${line.trim().slice(0, 60)}` : `${punto} satırı bulunamadı`);
+  if (!cls) continue;
+  const r = ratio(CANON[TW_INK[cls]], CANON.surface);
+  // Tabela UZAKTAN okunuyor: eşik gövde metninden yüksek tutulur.
+  check(`tabela ${rol} = ${cls} → ${r.toFixed(2)}`, r >= esik, `bu ekranda eşik ${esik}`);
 }
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);

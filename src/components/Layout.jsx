@@ -25,7 +25,15 @@ export default function Layout() {
       if (org?.plan === 'starter' && org.trial_ends_at) {
         setTrialDaysLeft(Math.ceil((new Date(org.trial_ends_at) - Date.now()) / 86400000));
       }
-    }).catch(() => {});
+    // BİLİNÇLİ EN-İYİ-ÇABA: deneme bandı bir UYARI şeridi, veri yolu değil.
+    // Bu `useEffect` her sayfada koşuyor; başarısızlığı ekrana basmak, tek bir
+    // 429'da uygulamanın TAMAMINI kırmızı bir şeritle karşılamak olurdu.
+    // Mobil ikizi de aynı gerekçeyle muaf (`screens/DashboardScreen.js`).
+    // NOT: web kapısında muafiyet listesi YOK (tam tarama, sıfır tolerans) —
+    // bu satır kapıya `console.warn`la takılmadığı için geçiyor, muaf
+    // tutulduğu için değil. Dürüst ifade: bu hata KULLANICIYA GÖSTERİLMİYOR;
+    // band düşerse süresi dolmuş firma uyarıyı görmez ve bu risk kabul edildi.
+    }).catch((e) => { console.warn('[trial] plan bilgisi okunamadı:', e?.message); });
   }, []);
 
   const nav = isPlatformAdmin

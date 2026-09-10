@@ -105,16 +105,87 @@ check('Promise.allSettled kullanılıyor', /Promise\.allSettled\(/.test(reports)
   'Promise.all tek hatada tüm veriyi düşürür');
 check('Promise.all ARTIK kullanılmıyor', !/Promise\.all\(/.test(reports));
 
+console.log('[3b] EYLEM yolları da hata basıyor (yalnız YÜKLEME değil)');
+// Denetçi bulgusu B9: yükleme yolları kapatılmıştı, EYLEM yolları açık kaldı.
+// `ReservationsPage`te `error` state'i YALNIZ form modalinin içinde render
+// ediliyordu — `handleDelete` ona yazıyordu ama modal kapalı olduğu için
+// mesaj hiç görünmüyordu; `handleComplete`/`handleApprove`/`handleReject`
+// içinde `try/catch` HİÇ YOKTU. Dispatcher "Onayla"ya basar, uç 403 döner,
+// ekranda sıfır iz kalır, bir daha basar.
+//
+// Kapı ADA değil ŞEKLE bakıyor: "eylem hatası için AYRI bir state var mı,
+// sayfa düzeyinde basılıyor mu, ve `api.*` çağıran eylemler ortak
+// sarmalayıcıdan mı geçiyor". Yeni bir eylem eklendiğinde `try/catch`
+// yazmayı unutmak kuralı yeniden bozardı; sarmalayıcı bunu yapısal olarak
+// engelliyor.
+{
+  const res = page('ReservationsPage.jsx');
+  check('eylem hatası AYRI state\'te', /setActionError\(/.test(res),
+    'form hatasıyla aynı state kullanılırsa modal kapalıyken mesaj görünmez');
+  check('eylem hatası SAYFA düzeyinde basılıyor', /\{actionError\}/.test(res),
+    'yalnız modal içinde render ediliyorsa kimse göremez');
+  check('eylemler ortak sarmalayıcıdan geçiyor', /async function runAction\(/.test(res));
+
+  // ADA DEĞİL ŞEKLE BAK. İlk hâli DÖRT SABİT AD tarıyordu; denetimde beşinci
+  // bir eylem (`handleCancelTrip`, try/catch yok) eklendi ve kapı 39/0 YEŞİL
+  // kaldı. Yorumu "yapısal olarak engelliyor" diyordu ama engellemiyordu —
+  // yalnız bugün var olan dördünü tanıyordu.
+  //
+  // Doğrusu: `api.` çağıran HER `async function`, ya `runAction(` ya `try {`
+  // içermeli. Meşru istisnalar `// action-ok` ile muaf tutulur.
+  const kacak = [];
+  for (const m of res.matchAll(/async function (\w+)\([^)]*\)\s*\{/g)) {
+    const ad = m[1];
+    if (ad === 'runAction') continue;
+    // Gövdeyi kabaca al: bir sonraki üst düzey `\n  }` kapanışına kadar.
+    const rest = res.slice(m.index);
+    const body = rest.slice(0, rest.indexOf('\n  }') + 4);
+    if (!/\bapi\.\w+\(/.test(body)) continue;              // veri ucu çağırmıyor
+    if (/runAction\(|try\s*\{/.test(body)) continue;        // hata yolu var
+    if (res.slice(Math.max(0, m.index - 80), m.index).includes('action-ok')) continue;
+    kacak.push(ad);
+  }
+  check('api.* çağıran her eylemin hata yolu var', kacak.length === 0,
+    kacak.length ? `hata yolu yok: ${kacak.join(', ')}` : '');
+  // `alert()` de sessiz sayılır: kapatılınca iz kalmaz (projenin kendi kuralı).
+  check('eylemlerde tarayıcı alert() kullanılmıyor', !/(^|[^.\w])alert\(/.test(
+    res.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')),
+    'alert kapatılınca iz kalmaz — şeride bas');
+}
+
 console.log('[4] Bütün sayfalarda kayıp `.catch` yok');
 // Ratchet DEĞİL, tam tarama: webde bugün hiç boş `catch` yok ve öyle kalmalı.
+//
+// DÖRT desen — mobil ikiziyle BİREBİR aynı (2026-09-10, B11). Önceden yalnız
+// `catch {}` DEYİMİNİ arıyordu; promise zincirinde yutmanın deyimsel yolları
+// (`.catch(() => {})`, parantezsiz `.catch(e => {})`, ve `null` dönen biçim)
+// hiç sayılmıyordu. İki kapı aynı soruyu aynı sertlikte sormalı, yoksa aynı
+// hata bir depoda yakalanıp diğerinde geçer.
+//
+// `null` dönen biçim en sinsisi: "hatayı ele aldım" gibi durur ama çağırana
+// `null` verir ve o `null` çoğu yerde "kayıt yok" diye okunur — hata, VERİ
+// YOKLUĞU kılığına girer.
+const SILENT = [
+  /catch\s*(\([^)]*\))?\s*\{\s*\}/,                        // catch {} · catch (e) {}
+  /\.catch\(\s*\(\s*[\w_$]*\s*\)\s*=>\s*\{\s*\}\s*\)/,     // .catch(() => {})
+  /\.catch\(\s*[\w_$]+\s*=>\s*\{\s*\}\s*\)/,               // .catch(e => {})  ← parantezsiz
+  /\.catch\(\s*(\([^)]*\)|[\w_$]+)\s*=>\s*(null|undefined)\s*\)/, // .catch(() => null)
+];
+// YORUMLAR SOYULUR: yoksa kapı KENDİ AÇIKLAMASINI ölçer — yukarıdaki
+// açıklamada geçen kod örnekleri yeni bir sessiz yol gibi görünürdü.
+const stripComments = (s) =>
+  s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
 const walk = (d) => readdirSync(d).flatMap((n) => {
   const p = join(d, n);
   return statSync(p).isDirectory() ? walk(p) : (/\.(js|jsx)$/.test(n) ? [p] : []);
 });
 const offenders = walk(join(root, 'src'))
-  .filter((f) => /catch\s*(\([^)]*\))?\s*\{\s*\}/.test(readFileSync(f, 'utf8')))
+  .filter((f) => {
+    const src = stripComments(readFileSync(f, 'utf8'));
+    return SILENT.some((re) => re.test(src));
+  })
   .map((f) => f.replace(root, '').replace(/\\/g, '/'));
-check('hiçbir dosyada boş catch yok', offenders.length === 0, offenders.join(', '));
+check('hiçbir dosyada sessizce yutulan hata yok', offenders.length === 0, offenders.join(', '));
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

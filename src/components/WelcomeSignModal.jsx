@@ -19,15 +19,27 @@ export default function WelcomeSignModal({ reservation, onClose }) {
             <Plane size={24} />
             <span className="font-bold text-lg">TransferAlert</span>
           </div>
-          <p className="text-6xl font-black text-gray-900 leading-tight break-words">
+          <p className="text-6xl font-black text-ink leading-tight break-words">
             {reservation.passenger_name || reservation.notes || 'Yolcu'}
           </p>
           {/* Uçuş numarası tabelada YARDIMCI bilgidir (yolcu kendi uçuşunu
               teyit eder). Uçuşsuz transferde yoktur ve boş satır dev puntoda
-              bir boşluk olarak görünürdü — hiç basılmaz. Bu ekran bilinçli
-              olarak maksimum kontrastlıdır, "yumuşatma" uygulanmaz. */}
+              bir boşluk olarak görünürdü — hiç basılmaz.
+
+              Bu ekran bilinçli olarak MAKSİMUM KONTRASTLIDIR, "yumuşatma"
+              uygulanmaz: havalimanı karşılama tabelası, metrelerce öteden ve
+              çoğu zaman kötü ışıkta okunuyor. Hiyerarşi PUNTO ile kuruluyor
+              (6xl ↔ 3xl) — renk soldurarak DEĞİL.
+
+              `text-gray-400` idi: beyazda **2.54:1**, yani büyük metin eşiği
+              3.0'ı bile geçmiyordu; üstelik `gray` MAVİ-GRİ ailesidir ve bu
+              projenin sıcak nötr diline aykırı. `ink-soft` 7.36 (AAA) ve
+              isim `ink` 16.59. B3'ün stil kapısı bunu göremiyordu — yalnız
+              BİZİM renk ailelerimizi denetliyordu, Tailwind'in varsayılan
+              paletini bilinçli olarak atlıyordu. Kapı artık mavi-griyi de
+              yasaklıyor (test-tokens [7]). */}
           {reservation.flight_number && (
-            <p className="mt-8 font-mono text-3xl font-bold text-gray-400 tracking-wider">
+            <p className="mt-8 font-mono text-3xl font-bold text-ink-soft tracking-wider">
               {reservation.flight_number}
             </p>
           )}

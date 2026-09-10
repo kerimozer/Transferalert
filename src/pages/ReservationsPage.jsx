@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE, jobBadge } from '../lib/status';
@@ -51,6 +51,13 @@ export default function ReservationsPage() {
   const [form, setForm]                 = useState(EMPTY);
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState('');
+  // Form hatası MODAL İÇİNDE basılır; eylem hatası SAYFA düzeyinde. İkisi tek
+  // state olsaydı (öyleydi) modal kapalıyken yazılan mesaj hiç görünmezdi.
+  const [actionError, setActionError]   = useState('');
+  // Aynı anda tek eylem: çift PATCH'i ve "bastım mı basmadım mı"yı önler.
+  const [busyAction, setBusyAction]     = useState('');
+  // Hata şeridine odaklanmak için — uzun listede şerit ekran dışında kalıyor.
+  const errorRef = useRef(null);
   const [flightInfo, setFlightInfo]     = useState(null);
   // Canlı sorgu sonuç vermedi mi? `flightInfo === null` YETMEZ: "henüz
   // aranmadı" ile "arandı, bulunamadı" aynı değere düşüyordu.
@@ -180,36 +187,62 @@ export default function ReservationsPage() {
 
   const openForm = () => { setShowForm(true); setError(''); setForm(EMPTY); setFlightInfo(null); setFlightMiss(false); };
 
+  // EYLEM hatası FORM hatasından AYRI bir state'te durur.
+  //
+  // NEDEN: `error` YALNIZ form modalinin içinde render ediliyor. `handleDelete`
+  // ona yazıyordu ama modal kapalı olduğu için mesaj hiçbir zaman görünmüyordu;
+  // diğer üç eylemde `try/catch` HİÇ YOKTU — istek reddedilirse yakalanmamış
+  // promise reddi ve ekranda SIFIR iz. Dispatcher "Onayla"ya basar, uç 403/409
+  // döner, kayıt `pending` kalır, hiçbir şey söylenmez, bir daha basar.
+  //
+  // Ortak sarmalayıcı: her eylem aynı yoldan geçsin. Beşinci bir eylem
+  // eklendiğinde `try/catch` yazmayı unutmak, kuralı yeniden bozmak demek.
+  async function runAction(label, fn) {
+    // UÇUŞ SIRASINDA DA İZ BIRAK. Kilit yokken yavaş şebekede: dispatcher
+    // "Onayla"ya basar → eski hata silinir, yeni bir şey belirmez, düğme
+    // aktif kalır → ikinci kez basar (iki PATCH). "İşlem sürüyor" ile
+    // "hiçbir şey olmadı" yine ayırt edilemez hâle gelir.
+    if (busyAction) return;
+    setBusyAction(label);
+    try {
+      setActionError('');
+      await fn();
+    } catch (err) {
+      // Sunucunun KENDİ cümlesi basılır: "Sunucu hatası" 403'ü, 409'u ve
+      // 500'ü aynı torbaya atar ve hangi kapının kapandığını söylemez.
+      setActionError(`${label}: ${err.message}`);
+      // CEVAP, SORUNUN SORULDUĞU YERDE DOĞMALI. Şerit sayfanın tepesinde;
+      // 30 transferlik listede aşağıdaki bir karta basan dispatcher için
+      // ekranda GÖRÜNEN hiçbir şey değişmezdi ve şikâyet yine "sildim, tepki
+      // vermedi" olurdu. Bu, projenin iki tam tur yaktığı kendi dersi.
+      errorRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    } finally {
+      setBusyAction('');
+    }
+    // Her hâlükârda tazele — 404 bile olsa kaydın gitmiş olması istenen
+    // sonuçtur ve liste gerçeği göstermelidir.
+    load();
+  }
+
   async function handleDelete(id) {
     if (!confirm('Bu uçuşu takip listesinden kaldırmak istiyor musunuz?')) return;
-    // Silme ucu artık dokunduğu satırı doğruluyor: kayıt başka bir sekmede
-    // (ya da başka bir kullanıcı tarafından) çoktan silinmişse 404 gelir.
-    // Yakalanmazsa liste hiç tazelenmez ve ekranda HİÇBİR ŞEY olmaz — kullanıcı
-    // butona basıp basmadığını bilemez. Her hâlükârda tazele: 404 de olsa
-    // kaydın gitmiş olması istenen sonuçtur.
-    try {
-      await api.deleteReservation(id);
-      setError('');
-    } catch (err) {
-      setError(err.message);
-    }
-    load();
+    await runAction('Transfer silinemedi', () => api.deleteReservation(id));
   }
 
   async function handleComplete(id) {
-    await api.updateReservation(id, { status: 'completed' });
-    load();
+    await runAction('Tamamlandı olarak işaretlenemedi',
+      () => api.updateReservation(id, { status: 'completed' }));
   }
 
   async function handleApprove(id) {
-    await api.updateReservation(id, { status: 'active' });
-    load();
+    await runAction('Talep onaylanamadı',
+      () => api.updateReservation(id, { status: 'active' }));
   }
 
   async function handleReject(id) {
     if (!confirm('Bu talebi reddetmek istiyor musunuz?')) return;
-    await api.updateReservation(id, { status: 'cancelled' });
-    load();
+    await runAction('Talep reddedilemedi',
+      () => api.updateReservation(id, { status: 'cancelled' }));
   }
 
   async function copyBookingLink() {
@@ -220,7 +253,10 @@ export default function ReservationsPage() {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2500);
     } catch (err) {
-      alert('Link alınamadı: ' + err.message);
+      // `alert()` DEĞİL: kapatılınca iz kalmaz ve kullanıcı "bastım, bir şey
+      // olmadı" der — projenin kendi sessiz-desen listesinde (CLAUDE.md).
+      setActionError(`Talep linki alınamadı: ${err.message}`);
+      errorRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
   }
 
@@ -260,6 +296,27 @@ export default function ReservationsPage() {
             <span className="font-semibold">Transferler yüklenemedi — aşağıdaki liste eksik olabilir.</span>{' '}
             <span className="break-words">{loadError}</span>
           </p>
+        </div>
+      )}
+
+      {/* EYLEM hatası — sil / tamamla / onayla / reddet. Yükleme hatasından
+          AYRI kutu: "liste eksik olabilir" ile "az önceki işlem yapılamadı"
+          bambaşka iki cümle ve dispatcher'ın alacağı aksiyon da farklı.
+          KALICI: kapatma düğmesiyle kapanır, kendi kendine kaybolmaz.
+          `role="alert"` — ekran okuyucu, sayfanın altındaki bir karta basıp
+          yukarıdaki şeridi hiç görmeyen kullanıcıyı da uyarsın. */}
+      {actionError && (
+        <div ref={errorRef} role="alert" className="mb-6 flex items-start gap-2 rounded-card bg-bad-50 px-4 py-3">
+          <AlertTriangle size={16} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="flex-1 text-sm text-bad-800 break-words">{actionError}</p>
+          <button
+            type="button"
+            onClick={() => setActionError('')}
+            aria-label="Hatayı kapat"
+            className="shrink-0 text-bad-800 hover:bg-bad-600/15 rounded-control p-0.5"
+          >
+            <X size={15} />
+          </button>
         </div>
       )}
 
@@ -565,6 +622,8 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   const [copied, setCopied] = useState(false);
   const [driverCopied, setDriverCopied] = useState(false);
   const [driverBusy, setDriverBusy] = useState(false);
+  // Kart içi hata: şoför linki üretilemezse cevap BU kartta görünür.
+  const [driverErr, setDriverErr] = useState('');
   const ls   = r.latest_status;
   // `fs` artık yalnız BİR SORUYA cevap veriyor: canlı uçuş verisi VAR MI?
   // (Aşağıda "yaklaşıyor" çanının şeritte tekrar etmemesi için kullanılır.)
@@ -590,8 +649,12 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
       await navigator.clipboard.writeText(`${window.location.origin}/job/${driver_token}`);
       setDriverCopied(true);
       setTimeout(() => setDriverCopied(false), 2500);
-    } catch {
-      alert('Şoför linki oluşturulamadı. Tekrar deneyin.');
+    } catch (err) {
+      // `alert()` DEĞİL (kapatılınca iz kalmaz) ve sayfa şeridine de DEĞİL:
+      // bu hata KARTA ait, cevabı da kartın içinde doğmalı. Dispatcher 30
+      // transferlik listede aşağıdaki bir karttaysa sayfanın tepesindeki
+      // şeridi hiç görmez. Sunucunun kendi cümlesi korunur.
+      setDriverErr(err?.message || 'Bilinmeyen hata');
     } finally {
       setDriverBusy(false);
     }
@@ -732,6 +795,23 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
         </button>
       </div>
       </div>
+
+      {/* Kart içi hata — cevabın sorunun sorulduğu yerde doğması için.
+          `alert()` ile basılıyordu: kapatılınca iz kalmıyor ve dispatcher
+          linkin oluşup oluşmadığını bilmiyordu. Dokunmayla kapanır. */}
+      {driverErr && (
+        <button
+          type="button"
+          onClick={() => setDriverErr('')}
+          role="alert"
+          className="mx-4 mb-3 w-[calc(100%-2rem)] flex items-start gap-2 rounded-control bg-bad-50 px-3 py-2 text-left"
+        >
+          <AlertCircle size={14} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+          <span className="text-xs text-bad-800 break-words">
+            Şoför linki oluşturulamadı: {driverErr}
+          </span>
+        </button>
+      )}
 
       {/* TEK EYLEM SATIRI — Kart C. Kim sürüyor ve iş nerede: dispatcher'ın
           panoda görmesi gereken iki şey. Şoför YOKSA satır uyarı zeminlidir ve

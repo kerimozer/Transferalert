@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink } from 'lucide-react';
+import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
 import { localInputToIso } from '../lib/format';
 import { FLIGHT, cardTitle, showFlightLine, isFlightTransfer } from '../lib/transfer';
 import { jobView } from '../lib/status';
@@ -35,6 +35,10 @@ export default function PartnerPortalPage() {
   const navigate = useNavigate();
   const [info, setInfo]       = useState(null);
   const [loadErr, setLoadErr] = useState('');
+  // Liste hatası portal hatasından AYRI: biri sayfayı komple değiştirir,
+  // diğeri yalnız listenin yerine geçer. Tek state olsaydı, talep listesi
+  // yüklenemediğinde çalışan FORM da ekrandan kalkardı.
+  const [listErr, setListErr] = useState('');
   const [loading, setLoading] = useState(true);
   const [form, setForm]       = useState(EMPTY);
   const [submitting, setSubmitting] = useState(false);
@@ -43,11 +47,23 @@ export default function PartnerPortalPage() {
   const [requests, setRequests] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
+  // TALEP LİSTESİ AYRI bir hata taşır: portal linkinin kendisi geçerli
+  // (`loadErr` sayfayı tamamen değiştirir) ama liste yüklenemeyebilir.
+  //
+  // ÖNCEDEN SESSİZDİ: `catch { }` + `if (res.ok)` — yani hem ağ reddi hem
+  // 4xx/5xx yutuluyordu ve partner "Henüz talebiniz yok" görüyordu. Gönderdiği
+  // talebin KAYBOLDUĞUNU sanmak, listenin yüklenememesinden çok daha kötü:
+  // partner aynı transferi ikinci kez giriyor. "Kayıt yok" ile "okuyamadım"
+  // asla aynı ekranı üretmemeli (bkz. CLAUDE.md).
   const loadRequests = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/public/partner/${token}/requests`);
-      if (res.ok) setRequests(await res.json());
-    } catch { /* liste yüklenemezse form yine çalışır */ }
+      if (!res.ok) throw new Error(`Sunucu ${res.status}`);
+      setRequests(await res.json());
+      setListErr('');
+    } catch (e) {
+      setListErr(e?.message || 'Bağlantı kurulamadı');
+    }
   }, [token]);
 
   useEffect(() => {
@@ -187,11 +203,35 @@ export default function PartnerPortalPage() {
               </button>
             </div>
 
-            {requests.length === 0 ? (
-              <div className="text-center py-10">
-                <Clock size={36} className="text-ink-muted mx-auto mb-3" />
-                <p className="text-sm text-ink-muted">Henüz talebiniz yok.<br />Gönderdiğiniz talepler burada listelenir.</p>
+            {/* TAZELEME HATASI ÇALIŞAN LİSTEYİ BOZMAZ. Şerit listenin ÜSTÜNDE
+                ayrı bir blok; elde veri varken liste basılmaya DEVAM EDER.
+                İlk hâli `listErr ? <hata> : ...` idi ve otel "Yenile"ye basıp
+                429 yediğinde altı talebi birden kayboluyordu — yani düzeltme,
+                tam da önlemeye çalıştığı korkuyu ("talebim kayboldu") kendisi
+                üretiyordu. Aynı kural yolcu takip sayfasında da yazılı
+                (bkz. CLAUDE.md): hata ekranı yalnız elde HİÇ veri yokken. */}
+            {listErr && (
+              <div role="alert" className="mb-3 flex items-start gap-2 rounded-control bg-bad-50 px-4 py-3">
+                <AlertCircle size={15} className="text-bad-800 shrink-0 mt-0.5" aria-hidden="true" />
+                <p className="text-sm text-bad-800">
+                  <span className="font-semibold">Talep listeniz güncellenemedi.</span>{' '}
+                  <span className="break-words">{listErr}</span>{' '}
+                  {requests.length > 0
+                    ? 'Aşağıdaki liste son başarılı yüklemeden kalma olabilir.'
+                    : 'Talepleriniz duruyor olabilir — "Yenile"yi deneyin.'}
+                </p>
               </div>
+            )}
+
+            {/* HATA VARKEN BOŞ DURUM BASILMAZ: "Henüz talebiniz yok" ile
+                "okuyamadım" aynı ekranı üretirse ayrım kaybolur. */}
+            {requests.length === 0 ? (
+              listErr ? null : (
+                <div className="text-center py-10">
+                  <Clock size={36} className="text-ink-muted mx-auto mb-3" />
+                  <p className="text-sm text-ink-muted">Henüz talebiniz yok.<br />Gönderdiğiniz talepler burada listelenir.</p>
+                </div>
+              )
             ) : (
               <ul className="space-y-2.5 max-h-[28rem] overflow-y-auto">
                 {requests.map((r) => {
