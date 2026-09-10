@@ -31,13 +31,20 @@ export default function WelcomeSignModal({ reservation, onClose }) {
               çoğu zaman kötü ışıkta okunuyor. Hiyerarşi PUNTO ile kuruluyor
               (6xl ↔ 3xl) — renk soldurarak DEĞİL.
 
-              `text-gray-400` idi: beyazda **2.54:1**, yani büyük metin eşiği
-              3.0'ı bile geçmiyordu; üstelik `gray` MAVİ-GRİ ailesidir ve bu
-              projenin sıcak nötr diline aykırı. `ink-soft` 7.36 (AAA) ve
-              isim `ink` 16.59. B3'ün stil kapısı bunu göremiyordu — yalnız
-              BİZİM renk ailelerimizi denetliyordu, Tailwind'in varsayılan
-              paletini bilinçli olarak atlıyordu. Kapı artık mavi-griyi de
-              yasaklıyor (test-tokens [7]). */}
+              Numara Tailwind'in varsayılan gri-400'üyle (#9CA3AF) basılıyordu:
+              beyazda **2.54:1**, yani büyük metin eşiği 3.0'ı bile geçmiyordu;
+              üstelik o aile MAVİ-GRİ ve bu projenin sıcak nötr diline aykırı.
+              `ink-soft` 7.36 (AAA), isim `ink` 16.59. B3'ün stil kapısı bunu
+              göremiyordu — yalnız BİZİM renk ailelerimizi denetliyordu,
+              Tailwind'in varsayılanlarını bilinçli olarak atlıyordu. Kapı
+              artık mavi-griyi de yasaklıyor (test-tokens [7]).
+
+              DİKKAT — YASAK SINIFIN TAM ADI BURAYA YAZILAMAZ: Tailwind içerik
+              taramasını YORUMLARA DA uygular. Bu açıklamada sınıf adı tam
+              geçtiği sürece, hiçbir yerde KULLANILMAYAN bir kural üretilen
+              CSS'e giriyor. Canlı pakette bulundu ve tam da bu yüzden
+              "bu sınıf hâlâ kullanılıyor mu?" sorusuna yanlış cevap
+              veriyordu. Kapı yorumları soyduğu için onu göremez. */}
           {reservation.flight_number && (
             <p className="mt-8 font-mono text-3xl font-bold text-ink-soft tracking-wider">
               {reservation.flight_number}
