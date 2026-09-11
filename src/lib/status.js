@@ -41,8 +41,20 @@ export const FLIGHT_STRIP = {
   landed:    'bg-strip-landed text-strip-oliveink',
   cancelled: 'bg-strip-cancelled text-bad-800',
   active:    'bg-strip-air text-brand-700',
-  scheduled: 'bg-surface-quiet text-ink-soft',
+  scheduled: 'bg-surface-quiet text-strip-sandink',
   diverted:  'bg-strip-diverted text-strip-amberink',
+};
+
+// BİTEN işin şeridi — AYNI anahtarlar, sakin tonlar. Tek griye çökmüyor:
+// listesi tamamen tamamlanmış bir firmada o kural her şeridi aynı yapıyor
+// ve "hangi iş iptal olmuştu" sorusunu cevapsız bırakıyordu. Sesi kısılır,
+// kimliği kalır. Mobil ikizi: theme.js → STRIP_DONE.
+export const FLIGHT_STRIP_DONE = {
+  landed:    'bg-done-landed text-done-landedink',
+  cancelled: 'bg-done-cancelled text-done-cancelledink',
+  active:    'bg-done-air text-done-airink',
+  scheduled: 'bg-done-scheduled text-ink-soft',
+  diverted:  'bg-done-diverted text-done-divertedink',
 };
 
 // TÜR TONU — canlı uçuş verisi YOK. Havalimanı ve şehir içi transfer AYNI tonu
@@ -64,7 +76,8 @@ export const TYPE_TONE = 'text-ink-soft bg-surface-neutral';
 export function stripTone(r) {
   const fs = r?.latest_status?.flight_status;
   if (!fs) return TYPE_TONE;
-  if (r?.status === 'completed') return TYPE_TONE;
+  // Biten iş TEK GRİYE değil, KENDİ renginin sakin hâline düşer.
+  if (r?.status === 'completed') return FLIGHT_STRIP_DONE[fs] || FLIGHT_STRIP_DONE.scheduled;
   return FLIGHT_STRIP[fs] || FLIGHT_STRIP.scheduled;
 }
 

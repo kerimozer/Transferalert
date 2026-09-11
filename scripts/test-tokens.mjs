@@ -34,12 +34,19 @@ const CANON = {
   // KARAR-AGIRLIK.md). Bir tur önce DOLUYDU (bg-ok-600 + beyaz metin) ve geri
   // alındı: dolu bant tek kartta harika, alt alta on kartta dayanılmaz. Eski
   // `*-50` tonlarına da DÖNÜLMEDİ — ölçüldü ve elendi (Havada ↔ İndi ΔE 4.1).
-  neutralSoft: '#F5F6F4', stripQuiet: '#E9DFCB', dangerBorder: '#F1D9D3',
-  stripAir: '#D8E8EA', stripLanded: '#DCE9CE',
-  stripCancelled: '#F3D9CF', stripDiverted: '#F7E3B8',
+  neutralSoft: '#F1EEE9', stripQuiet: '#F7E6BC', stripQuietInk: '#6B4A08',
+  dangerBorder: '#F1D9D3',
+  stripAir: '#C2DFE6', stripLanded: '#C9E2B2',
+  stripCancelled: '#F7CCBB', stripDiverted: '#F5C88F',
   // Zeytin ve koyu kehribar mürekkebi — `ok.800`/`warn.800` ödünç ALINMADI:
   // onlar bu zeminlerde hiç ölçülmedi.
-  stripLandedInk: '#3B5A21', stripDivertedInk: '#6B3E08',
+  stripLandedInk: '#31521A', stripDivertedInk: '#6B3E08',
+  // BİTEN işin şeridi — kendi renginin sakin hâli (2026-09-11).
+  doneScheduled: '#EAE0C6',
+  doneAir: '#DCEAEF', doneAirInk: '#33525C',
+  doneLanded: '#D4E5C1', doneLandedInk: '#3F5530',
+  doneCancelled: '#F3D6CA', doneCancelledInk: '#7E4A40',
+  doneDiverted: '#F5DAAB', doneDivertedInk: '#6B5026',
   // Bildirim kanalları — marka işaretleri, durum rengi değil.
   // `whatsappInk` markanın kendi yeşili DEĞİL: #25D366 açık zeminde 1.77.
   sms: '#1B5FB8', smsSoft: '#E4EEFB',
@@ -54,6 +61,12 @@ const MAP = {
   'strip.air': 'stripAir', 'strip.landed': 'stripLanded',
   'strip.cancelled': 'stripCancelled', 'strip.diverted': 'stripDiverted',
   'strip.oliveink': 'stripLandedInk', 'strip.amberink': 'stripDivertedInk',
+  'strip.sandink': 'stripQuietInk',
+  'done.scheduled': 'doneScheduled',
+  'done.air': 'doneAir', 'done.airink': 'doneAirInk',
+  'done.landed': 'doneLanded', 'done.landedink': 'doneLandedInk',
+  'done.cancelled': 'doneCancelled', 'done.cancelledink': 'doneCancelledInk',
+  'done.diverted': 'doneDiverted', 'done.divertedink': 'doneDivertedInk',
   'wa.50': 'whatsappSoft', 'wa.700': 'whatsappInk', 'sms.50': 'smsSoft', 'sms.700': 'sms',
   'ink.DEFAULT': 'ink', 'ink.soft': 'inkSoft', 'ink.muted': 'inkMuted',
   'brand.600': 'primary', 'brand.700': 'primaryDark', 'brand.50': 'primarySoft',
@@ -126,7 +139,12 @@ for (const [t, b] of [['primaryDark', 'primarySoft'], ['successText', 'successSo
 for (const [t, b] of [['sms', 'smsSoft'], ['whatsappInk', 'whatsappSoft'],
                       ['inkSoft', 'stripQuiet'], ['inkSoft', 'neutralSoft'],
                       ['primaryDark', 'stripAir'], ['stripLandedInk', 'stripLanded'],
-                      ['dangerText', 'stripCancelled'], ['stripDivertedInk', 'stripDiverted']]) {
+                      ['dangerText', 'stripCancelled'], ['stripDivertedInk', 'stripDiverted'],
+                      ['stripQuietInk', 'stripQuiet'],
+                      // BİTEN şeritleri de metin taşıyor — ayrı ölçülür.
+                      ['inkSoft', 'doneScheduled'], ['doneAirInk', 'doneAir'],
+                      ['doneLandedInk', 'doneLanded'], ['doneCancelledInk', 'doneCancelled'],
+                      ['doneDivertedInk', 'doneDiverted']]) {
   const r = ratio(CANON[t], CANON[b]);
   check(`${t} / ${b} = ${r.toFixed(2)}`, r >= 4.5, 'AA eşiği 4.5');
 }
@@ -157,8 +175,13 @@ const adlar = Object.keys(SERIT);
 for (let i = 0; i < adlar.length; i++) {
   for (let j = i + 1; j < adlar.length; j++) {
     const d = deltaE(SERIT[adlar[i]], SERIT[adlar[j]]);
-    check(`şerit ${adlar[i]} ↔ ${adlar[j]} = ΔE ${d.toFixed(1)}`, d >= 6,
-      'iki şerit tonu gözle ayrılmıyor (ΔE 6 altı)');
+    // EŞİK 6 DEĞİL 12 (2026-09-11). 6 "zar zor ayırt edilir" demek ve MUTLAK
+    // bir taban olduğu için GERİLEMEYİ göremedi: palet 27.2'den 7.8'e düştü
+    // (%71 kayıp), kapı yeşil kaldı ve kullanıcı üçüncü kez "renkler birbirine
+    // yakın" dedi. Bir kapı "yeterince iyi mi" diye soruyorsa "dünden kötü mü"
+    // sorusunu sormaz. 12 = "bakışta ayırt edilir"; ölçülen en yakın çift 14.4.
+    check(`şerit ${adlar[i]} ↔ ${adlar[j]} = ΔE ${d.toFixed(1)}`, d >= 12,
+      'iki şerit tonu gözle ayrılmıyor');
   }
 }
 
@@ -173,6 +196,40 @@ for (const [ad, hex] of Object.entries(SERIT)) {
   const r = ratio(hex, CANON.bg);
   check(`şerit ${ad} / sayfa = ${r.toFixed(2)}`, r <= 1.6,
     'şerit sayfadan çok ağır — alt alta on kartta bant gibi okunur');
+}
+// BİTEN şeritleri DAHA DA sakin olmalı (tavan 1.3): biten iş eylem beklemiyor.
+// Ama TÜR tonundan ayrılmalı, yoksa "geçmişte ne olmuştu" yine okunamaz.
+const BITEN = { scheduled: CANON.doneScheduled, active: CANON.doneAir, landed: CANON.doneLanded,
+                cancelled: CANON.doneCancelled, diverted: CANON.doneDiverted };
+for (const [ad, hex] of Object.entries(BITEN)) {
+  check(`biten ${ad} / sayfa = ${ratio(hex, CANON.bg).toFixed(2)}`,
+    ratio(hex, CANON.bg) <= 1.3, 'biten iş eylem beklemiyor, susmalı');
+  // Canlı hâliyle KARIŞMAMALI: yoksa biten iş hâlâ dikkat çeker.
+  if (SERIT[ad]) {
+    const d = deltaE(hex, SERIT[ad]);
+    check(`biten ${ad} canlıdan ayrı = ΔE ${d.toFixed(1)}`, d >= 6,
+      'biten iş canlı işle aynı görünüyor');
+  }
+  // TÜR tonundan da ayrılmalı — tek griye çökmenin sebebi buydu.
+  const dt = deltaE(hex, CANON.neutralSoft);
+  check(`biten ${ad} tür tonundan ayrı = ΔE ${dt.toFixed(1)}`, dt >= 3,
+    'biten iş nötr griye çöküyor — geçmişte durum okunamaz');
+}
+// BİTEN TONLARI BİRBİRİNDEN DE AYRIK OLMALI — bu kontrol İLK SÜRÜMDE YOKTU
+// ve denetim yakaladı: `doneScheduled` ile `doneDiverted` ΔE 2.3'tü, yani
+// "hiçbir şey olmamış" iş ile "yönlendirilmiş" iş aynı görünüyordu.
+// Özelliğin tek varlık sebebi ("geçmişte hangi iş sorunluydu") o çiftte
+// karşılanmıyordu ve HİÇBİR kapı bunu görmüyordu.
+//
+// Eşik canlı şeritten (12) DÜŞÜK ama anlamlı: biten işler tarih, bağırmaları
+// gerekmiyor — ama ayırt edilemezlerse bu özelliğin hiç yazılmaması gerekirdi.
+const bitenAdlar = Object.keys(BITEN);
+for (let i = 0; i < bitenAdlar.length; i++) {
+  for (let j = i + 1; j < bitenAdlar.length; j++) {
+    const d = deltaE(BITEN[bitenAdlar[i]], BITEN[bitenAdlar[j]]);
+    check(`biten ${bitenAdlar[i]} ↔ ${bitenAdlar[j]} = ΔE ${d.toFixed(1)}`, d >= 6,
+      'iki biten tonu gözle ayrılmıyor — geçmişte durum okunamaz');
+  }
 }
 
 // TANIM VAR ≠ DOĞRU YERDE KULLANILIYOR. [1] yalnız token'ın tailwind.config'de
@@ -202,7 +259,7 @@ if (stripBlock) {
 // iki platformda farklı görünmesi demekti.
 console.log('\n[6] stripTone davranışı — biten iş susar');
 {
-  const { stripTone, FLIGHT_STRIP, TYPE_TONE } =
+  const { stripTone, FLIGHT_STRIP, FLIGHT_STRIP_DONE, TYPE_TONE } =
     await import(new URL('../src/lib/status.js', import.meta.url));
   const res = (status, flight_status) => ({
     status, latest_status: flight_status ? { flight_status } : null,
@@ -211,11 +268,41 @@ console.log('\n[6] stripTone davranışı — biten iş susar');
   check('canlı veri yok → tür tonu', stripTone(res('active', null)) === TYPE_TONE);
   check('aktif + indi → İNDİ tonu (bağırır)',
     stripTone(res('active', 'landed')) === FLIGHT_STRIP.landed);
-  check('BİTEN + indi → tür tonu (susar)',
-    stripTone(res('completed', 'landed')) === TYPE_TONE,
-    'A0 madde 2: biten işte uçuşun inmiş olması eski haber');
-  check('BİTEN + havada → tür tonu (susar)',
-    stripTone(res('completed', 'active')) === TYPE_TONE);
+  // BİTEN iş SUSAR ama KİMLİĞİNİ KORUR (2026-09-11). Önceden tek nötr tona
+  // düşüyordu; listesi tamamen tamamlanmış bir firmada bu, HER şeridi aynı
+  // yapıp "hangi iş iptal olmuştu" sorusunu cevapsız bırakıyordu.
+  check('BİTEN + indi → İNDİ\'nin sakin tonu',
+    stripTone(res('completed', 'landed')) === FLIGHT_STRIP_DONE.landed,
+    'biten iş kendi renginin sakin hâline düşmeli');
+  check('BİTEN + iptal → İPTAL\'in sakin tonu',
+    stripTone(res('completed', 'cancelled')) === FLIGHT_STRIP_DONE.cancelled);
+  check('BİTEN + havada → HAVADA\'nın sakin tonu',
+    stripTone(res('completed', 'active')) === FLIGHT_STRIP_DONE.active);
+  // SINIF ADI DEĞİL, ÇÖZÜLEN RENK karşılaştırılır.
+  //
+  // İlk hâli iki sınıf DİZESİNİ kıyaslıyordu (`'bg-done-landed …'` vs
+  // `'bg-done-cancelled …'`) — bunlar yapıları gereği zaten farklı, yani
+  // kontrol bir TOTOLOJİYDİ. Denetim kanıtladı: beş `done` tonunu tek bir
+  // hex'e çöktürdüm (bu özelliğin önlemek için yazıldığı regresyonun ta
+  // kendisi) ve kapı 145/145 YEŞİL kaldı. Mobil ikizi `.bg` hex'ini
+  // karşılaştırdığı için aynı mutasyonu yakalamıştı.
+  //
+  // Artık sınıf adı palete çözülüyor: kapı ADA değil DEĞERE bakıyor.
+  const hexOf = (cls) => {
+    const m = /bg-([a-z]+)-([a-z]+)/.exec(cls);
+    if (!m) return cls;
+    const grup = cfg.match(new RegExp(`${m[1]}:\\s*\\{[\\s\\S]*?\\}`));
+    const bul = grup && grup[0].match(new RegExp(`${m[2]}:\\s*'(#[0-9A-Fa-f]{6})'`));
+    return bul ? bul[1].toUpperCase() : cls;
+  };
+  check('sınıf → renk çözücüsü çalışıyor',
+    /^#[0-9A-F]{6}$/.test(hexOf(FLIGHT_STRIP_DONE.landed)),
+    `çözülemedi: ${hexOf(FLIGHT_STRIP_DONE.landed)} — kontroller sınıf adına düşer`);
+  check('biten indi ≠ canlı indi',
+    hexOf(stripTone(res('completed', 'landed'))) !== hexOf(stripTone(res('active', 'landed'))));
+  check('biten indi ≠ biten iptal',
+    hexOf(stripTone(res('completed', 'landed'))) !== hexOf(stripTone(res('completed', 'cancelled'))),
+    'biten işler tek griye çöküyor — geçmişte durum okunamaz');
   // İPTAL bilinçli olarak KAPSAM DIŞI: hâlâ dikkat isteyen bir durum.
   check('iptal + iptal → İPTAL tonu (susmaz)',
     stripTone(res('cancelled', 'cancelled')) === FLIGHT_STRIP.cancelled);

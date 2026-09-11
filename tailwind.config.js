@@ -28,11 +28,9 @@ export default {
           // #EFF1EF idi ve `alt` ile arası ΔE 3.0'dı: "Havalimanı" ile
           // "Transfer" gözle ayrılmıyordu. Artık İKİ TÜR DE bu tonu kullanıyor
           // (ikisi de "canlı veri yok" demek), ayrımı ikon taşıyor.
-          neutral: '#F5F6F4',
-          // "Planlandı" şeridi — canlı veri VAR ama olay yok. Diğer şeritlerin
-          // yanında sakin, tür şeridinden ayrı: eski palette `scheduled` ile
-          // `transfer` BİREBİR aynı renkti (ΔE 0.0).
-          quiet: '#E9DFCB',
+          neutral: '#F1EEE9',
+          // "Planlandı" şeridi — canlı veri VAR ama olay yok.
+          quiet: '#F7E6BC',
           // Alarm satırının kenarlığı.
           dangerborder: '#F1D9D3',
         },
@@ -50,10 +48,26 @@ export default {
         //
         // `oliveink`/`amberink` ödünç ALINMADI (ok-800 / warn-800 kullanılmadı):
         // onlar bu zeminlerde hiç ölçülmedi. Mobil ikizi: theme.js `strip*`.
+        // 2026-09-11 — İKİNCİ AYAR. 09-09'da bant doygunluktan pastele
+        // çekilmişti ve kullanıcı sonucu yine "renkler birbirine çok yakın"
+        // buldu. ÖLÇÜM ONU DOĞRULADI: sakinlik AYRIMLA satın alınmış, en
+        // yakın çift ΔE 27.2 → 7.8'e düşmüştü. Kroma + DEĞİŞKEN AÇIKLIK ile
+        // ayrım 14.4'e çıktı, en ağır şerit 1.46 (tavan 1.6).
         strip: {
-          air: '#D8E8EA', landed: '#DCE9CE',
-          cancelled: '#F3D9CF', diverted: '#F7E3B8',
-          oliveink: '#3B5A21', amberink: '#6B3E08',
+          air: '#C2DFE6', landed: '#C9E2B2',
+          cancelled: '#F7CCBB', diverted: '#F5C88F',
+          oliveink: '#31521A', amberink: '#6B3E08', sandink: '#6B4A08',
+        },
+        // BİTEN işin şeridi — kendi renginin SAKİN hâli, tek gri DEĞİL.
+        // Tek griye çökmek, listesi tamamen tamamlanmış bir firmada her
+        // şeridi aynı yapıyor ve "hangi iş iptal olmuştu" sorusunu
+        // cevapsız bırakıyordu. Canlı hâlinden ΔE 8.8–27.1 uzak.
+        done: {
+          scheduled: '#EAE0C6',
+          air: '#DCEAEF', airink: '#33525C',
+          landed: '#D4E5C1', landedink: '#3F5530',
+          cancelled: '#F3D6CA', cancelledink: '#7E4A40',
+          diverted: '#F5DAAB', divertedink: '#6B5026',
         },
         // DİKKAT: `muted` daha AÇIK bir tona çekilemez. #A8A29E beyaz üstünde
         // 2.7:1, #7C756C ise uygulamanın kendi zemininde (#FAF8F5) 4.29 —

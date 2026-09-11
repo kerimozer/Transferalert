@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, jobBadge } from '../lib/status';
 import { StatRow, Card, Badge, EmptyState, LoadingBlock } from '../components/ui';
-import { Plane, ArrowRight, Search, X, AlertTriangle, UserCheck, Car } from 'lucide-react';
+import { Plane, ArrowRight, Search, X, AlertTriangle, UserCheck, Car, Plus } from 'lucide-react';
 import AssignDriverModal from '../components/AssignDriverModal';
 import { matchesQuery } from '../lib/search';
 import { cardTitle, showFlightLine, isFlightTransfer, looksLikeFlightNumber, needsDriver as isDriverless } from '../lib/transfer';
@@ -248,7 +248,7 @@ export default function DashboardPage() {
             title={q ? 'Kayıtlı transferlerinizde eşleşme yok' : 'Yaklaşan transfer yok'}
             description={q
               ? 'Yolcu adı, uçuş numarası, PNR, şoför adı veya adresle arayabilirsiniz. Bu arama YALNIZ kayıtlı transferlerinizi tarar.'
-              : 'İlk transferi ekleyin — uçuş yaklaştığında durum güncellemeleri otomatik gelir.'}
+              : 'Transferinizi ekleyin — uçuşlu işlerde inişi ve rötarı biz takip ederiz.'}
             /* ÇIKMAZI KAPAT: kullanıcı buraya bir uçuş numarası yazıp boş liste
                görünce "arama çalışmıyor" sanıyordu — oysa canlı uçuş sorgusu
                ayrı bir iş ve bu sayfada ona giden HİÇBİR yol yoktu. Numara gibi
@@ -265,7 +265,21 @@ export default function DashboardPage() {
                       {q.toUpperCase().replace(/\s+/g, '')} uçuşunu canlı ara
                     </Link>
                   ))
-                : <Link to="/app/reservations" className="text-sm font-semibold text-brand-600 hover:underline">Transfer Ekle →</Link>
+                /* BOŞ DURUM BİR DAVETTİR, BİR RAPOR DEĞİL (2026-09-11).
+                   Kullanıcı "Ana Sayfa çok cansız" dedi: yaklaşan iş yokken
+                   ekran yalnız hiçbir şey olmadığını bildiriyordu. Eylem
+                   metin bağlantısıydı — mobildeki karşılığı birincil buton
+                   olduğu için iki platform aynı boşlukta farklı ağırlıkta
+                   davranıyordu. */
+                : (
+                    <Link
+                      to="/app/reservations"
+                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control px-5 py-2.5 transition-colors"
+                    >
+                      <Plus size={16} aria-hidden="true" />
+                      Transfer ekle
+                    </Link>
+                  )
             }
           />
         )) : (
