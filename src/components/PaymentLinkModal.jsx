@@ -50,7 +50,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
               <CheckCircle size={15} className="mt-0.5 shrink-0" /> Ödeme linki oluşturuldu. Yolcuya gönderin:
             </div>
             <div className="flex items-center gap-2">
-              <input readOnly value={link} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+              <input readOnly value={link} className="flex-1 border border-surface-inputborder rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
               <button onClick={copyLink} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-surface-alt hover:bg-surface-alt text-ink-soft rounded-control transition-colors">
                 {copied ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
               </button>
@@ -68,7 +68,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="500"
-                className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 required autoFocus
               />
               <p className="text-xs text-ink-muted mt-1">Yolcudan alınacak transfer ücretini girin, iyzico ödeme linki oluşturulacak.</p>

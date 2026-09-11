@@ -288,7 +288,7 @@ export default function OrganizationPage() {
                     value={createForm.name}
                     onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Örnek Transfer Ltd."
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required autoFocus
                   />
                 </div>
@@ -297,7 +297,7 @@ export default function OrganizationPage() {
                   <select
                     value={createForm.plan}
                     onChange={e => setCreateForm(f => ({ ...f, plan: e.target.value }))}
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   >
                     {plans.map(p => (
                       <option key={p.key} value={p.key}>{p.label} ({p.driver_limit} kişi)</option>
@@ -353,7 +353,7 @@ export default function OrganizationPage() {
               <input
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
-                className="flex-1 min-w-0 border border-surface-borderstrong rounded-control px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                className="flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 maxLength={100}
                 required autoFocus
               />
@@ -441,7 +441,7 @@ export default function OrganizationPage() {
                 type="checkbox"
                 checked={nw.enabled}
                 onChange={(e) => setNw({ ...nw, enabled: e.target.checked })}
-                className="w-4 h-4 rounded border-surface-borderstrong text-brand-600 focus:ring-2 focus:ring-brand-600/30"
+                className="w-4 h-4 rounded border-surface-inputborder text-brand-600 focus:ring-2 focus:ring-brand-600/30"
               />
               <span className="text-sm font-semibold text-ink-soft">{nw.enabled ? 'Açık' : 'Kapalı'}</span>
             </label>
@@ -454,7 +454,7 @@ export default function OrganizationPage() {
                 id="nw-user"
                 value={nw.user_id}
                 onChange={(e) => setNw({ ...nw, user_id: e.target.value })}
-                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
               >
                 <option value="">Seçiniz</option>
                 {members.filter(m => m.status === 'active' && m.user_id).map(m => (
@@ -469,7 +469,7 @@ export default function OrganizationPage() {
               <input
                 id="nw-start" type="time" value={nw.start}
                 onChange={(e) => setNw({ ...nw, start: e.target.value })}
-                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
               />
             </div>
             <div>
@@ -477,7 +477,7 @@ export default function OrganizationPage() {
               <input
                 id="nw-end" type="time" value={nw.end}
                 onChange={(e) => setNw({ ...nw, end: e.target.value })}
-                className="w-full rounded-control border border-surface-borderstrong bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
               />
             </div>
           </div>
@@ -558,7 +558,7 @@ export default function OrganizationPage() {
                       defaultValue={m.vehicle_plate || ''}
                       onBlur={(e) => handlePlate(m.id, e.target.value, m.vehicle_plate)}
                       placeholder="07 ABC 123"
-                      className="flex-1 min-w-0 border border-surface-borderstrong rounded-control px-3 py-1.5 text-xs tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                      className="flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-xs tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     />
                     {plateSaved === m.id && (
                       <span className="flex items-center gap-1 text-xs font-semibold text-ok-800 shrink-0">
@@ -601,7 +601,7 @@ export default function OrganizationPage() {
 
                 {m.driver_link && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-surface-border">
-                    <input readOnly value={m.driver_link} className="flex-1 min-w-0 border border-surface-borderstrong rounded-card px-3 py-2 text-xs text-ink-muted bg-surface-bg" />
+                    <input readOnly value={m.driver_link} className="flex-1 min-w-0 border border-surface-inputborder rounded-card px-3 py-2 text-xs text-ink-muted bg-surface-bg" />
                     <button type="button" onClick={() => copyLink(m.driver_link, m.id)} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2 bg-surface-alt text-ink-soft font-semibold rounded-control transition-colors">
                       {copied === m.id ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                     </button>
@@ -657,7 +657,7 @@ export default function OrganizationPage() {
                   <div>
                     <p className="text-xs font-semibold text-ink-soft mb-1.5">Şoför linki — hesap gerektirmez</p>
                     <div className="flex items-center gap-2">
-                      <input readOnly value={driverLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+                      <input readOnly value={driverLink} className="flex-1 border border-surface-inputborder rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
                       <button type="button" onClick={() => copyLink(driverLink, 'driver')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-brand-50 hover:bg-brand-600/25 text-brand-700 font-semibold rounded-control transition-colors">
                         {copied === 'driver' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                       </button>
@@ -676,7 +676,7 @@ export default function OrganizationPage() {
                     </p>
                   )}
                   <div className="flex items-center gap-2">
-                    <input readOnly value={inviteLink} className="flex-1 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+                    <input readOnly value={inviteLink} className="flex-1 border border-surface-inputborder rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
                     <button type="button" onClick={() => copyLink(inviteLink, 'invite')} className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-2.5 bg-surface-alt hover:bg-surface-alt text-ink-soft rounded-control transition-colors">
                       {copied === 'invite' ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
                     </button>
@@ -698,7 +698,7 @@ export default function OrganizationPage() {
                     value={inviteForm.name}
                     onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Ali Kaya"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required autoFocus
                   />
                 </div>
@@ -709,7 +709,7 @@ export default function OrganizationPage() {
                     onChange={e => setInviteForm(f => ({ ...f, phone: e.target.value }))}
                     placeholder="0532 000 00 00"
                     type="tel"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required
                   />
                 </div>
@@ -720,7 +720,7 @@ export default function OrganizationPage() {
                     onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
                     placeholder="ornek@sirket.com"
                     type="email"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </div>
                 <div>
@@ -728,7 +728,7 @@ export default function OrganizationPage() {
                   <select
                     value={inviteForm.role}
                     onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   >
                     <option value="driver">Sürücü</option>
                     <option value="dispatcher">Operasyon</option>
@@ -748,7 +748,7 @@ export default function OrganizationPage() {
                       value={inviteForm.vehicle_plate}
                       onChange={e => setInviteForm(f => ({ ...f, vehicle_plate: e.target.value.toUpperCase() }))}
                       placeholder="07 ABC 123"
-                      className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                      className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     />
                     <p className="text-xs text-ink-muted mt-1">Transfere atandığında otomatik yazılır; o iş için değiştirilebilir.</p>
                   </div>

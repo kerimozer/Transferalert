@@ -130,7 +130,7 @@ export default function DashboardPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Transfer ara — yolcu, uçuş no, PNR, şoför"
           className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-white border focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
-            q ? 'border-brand-600' : 'border-surface-borderstrong'
+            q ? 'border-brand-600' : 'border-surface-inputborder'
           }`}
         />
         {query && (

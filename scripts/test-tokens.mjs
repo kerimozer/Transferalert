@@ -24,6 +24,9 @@ function check(name, ok, detail = '') {
 const CANON = {
   bg: '#FAF8F5', surface: '#FFFFFF', surfaceAlt: '#F3EFE9',
   border: '#E9E4DC', borderStrong: '#D8D1C6',
+  // Girdi sınırı — WCAG 1.4.11 (≥3:1). AYRI token: ikincil butonlar
+  // `borderStrong`de kalır, yoksa "sert border yok" ilkesi bozulur.
+  inputBorder: '#918676',
   ink: '#211E1B', inkSoft: '#5B554E', inkMuted: '#6E675E',
   primary: '#0F5D6B', primaryDark: '#0A424D', primarySoft: '#E3EFF1',
   accent: '#AC5B34', accentSoft: '#F7EBE1', accentText: '#8F4E24',
@@ -57,6 +60,7 @@ const CANON = {
 const MAP = {
   'surface.bg': 'bg', 'surface.DEFAULT': 'surface', 'surface.alt': 'surfaceAlt',
   'surface.border': 'border', 'surface.borderstrong': 'borderStrong',
+  'surface.inputborder': 'inputBorder',
   'surface.neutral': 'neutralSoft', 'surface.quiet': 'stripQuiet', 'surface.dangerborder': 'dangerBorder',
   'strip.air': 'stripAir', 'strip.landed': 'stripLanded',
   'strip.cancelled': 'stripCancelled', 'strip.diverted': 'stripDiverted',
@@ -191,6 +195,64 @@ for (let i = 0; i < adlar.length; i++) {
 // L* 36–43, sayfa zemini L* 97.7 → göz satırları değil BANTLARI okuyor).
 // Yukarıdaki ΔE kapısı doygun bir paleti sorunsuz geçirir; dolu banda dönüşü
 // YAKALAYAMAZ. Bu kontrol tam olarak onun için var. Mobil ikizinde de aynısı.
+// GİRDİ SINIRI — WCAG 1.4.11, metin DEĞİL bileşen sınırı kuralı: bir girdiyi
+// TANIMLAYAN kenarlık komşu renkten ≥3:1 ayrılmalı. `borderstrong` beyaz kartta
+// 1.52 veriyordu ve girdinin zemini de beyaz olduğu için alanı gösteren başka
+// hiçbir işaret yoktu — form alanı fiilen görünmüyordu (denetçi B11).
+// HER zeminde ölçülür: "beyazda geçiyor mu" yetmez.
+console.log('\n[3b] Girdi sınırı görünür (WCAG 1.4.11, ≥3:1)');
+for (const [ad, zemin] of [['kart', CANON.surface], ['sayfa', CANON.bg], ['surfaceAlt', CANON.surfaceAlt]]) {
+  const r = ratio(CANON.inputBorder, zemin);
+  check(`girdi sınırı / ${ad} = ${r.toFixed(2)}`, r >= 3, 'WCAG 1.4.11 eşiği 3.0');
+}
+// Ve girdiler bu tokenı GERÇEKTEN kullanmalı — tanım var ≠ kullanılıyor.
+{
+  const walkSrc = (d) => readdirSync(d).flatMap((n) => {
+    const p = join(d, n);
+    return statSync(p).isDirectory() ? walkSrc(p) : (/\.jsx?$/.test(n) ? [p] : []);
+  });
+  // YORUMLAR SOYULUR — bu turda BEŞİNCİ kez: ilk hâli ham metinde arıyordu ve
+  // bir girdinin içine "eskiden borderstrong idi" diye AÇIKLAMA yazmak CI'ı
+  // kırıyordu. Metin tarayan her kapı önce yorumları atmalı (CLAUDE.md).
+  const kodu = (s) => s
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    .replace(/(^|[^:])\/\/[^\n]*/g, (m, p) => p + ' '.repeat(Math.max(0, m.length - p.length)));
+
+  const kacak = [];
+  for (const f of walkSrc(join(root, 'src'))) {
+    const ad = f.split(/[\\/]/).pop();
+    const s = kodu(readFileSync(f, 'utf8'));
+
+    // (a) Doğrudan etiket üzerinde yazılmış sınıf.
+    for (const m of s.matchAll(/border-surface-borderstrong/g)) {
+      const tagBas = s.lastIndexOf('<', m.index);
+      const tag = tagBas === -1 ? '' : (s.slice(tagBas, tagBas + 12).match(/^<\s*([A-Za-z]+)/)?.[1] || '');
+      if (['input', 'textarea', 'select'].includes(tag.toLowerCase())) {
+        kacak.push(`${ad}:${s.slice(0, m.index).split('\n').length}`);
+      }
+    }
+
+    // (b) PAYLAŞILAN SINIF SABİTİ — kapının en büyük kör noktası buydu.
+    // Denetimde `Field.jsx` + `RequestPage` + `PartnerPortalPage` içindeki
+    // `inputCls` sabitleri eski tokena döndürüldü ve kapı 161/161 YEŞİL
+    // kaldı; oysa o üç sabit 33 girdiyi besliyor (ortak `<Field>`in 19 çağrı
+    // yeri dahil). Sabitin önündeki `<` ilgisiz bir etiket olduğu için
+    // etiket komşuluğuna bakan kontrol onu göremiyordu.
+    //
+    // Sabiti ADIYLA değil ŞEKLİYLE yakala: değeri girdi reçetesi gibi duran
+    // (`w-full` + `border`) her sınıf sabiti bir girdi sınıfı sayılır.
+    for (const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*(['"`])([\s\S]*?)\2/g)) {
+      const [, isim, , deger] = m;
+      if (!deger.includes('border-surface-borderstrong')) continue;
+      const girdiReceti = /\bw-full\b/.test(deger) || /input/i.test(isim);
+      if (girdiReceti) {
+        kacak.push(`${ad}:${s.slice(0, m.index).split('\n').length} (${isim} sabiti)`);
+      }
+    }
+  }
+  check('hiçbir girdi eski (görünmez) sınırı kullanmıyor', kacak.length === 0, kacak.join(', '));
+}
+
 console.log('\n[4] Şerit AĞIRLIĞI — sayfa zemini üstünde sakin');
 for (const [ad, hex] of Object.entries(SERIT)) {
   const r = ratio(hex, CANON.bg);

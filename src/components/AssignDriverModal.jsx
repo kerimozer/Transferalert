@@ -102,7 +102,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
             Şimdi çalışma linkini gönderin — şoför bu linke dokunduğunda işini görür, hesap açması gerekmez.
           </p>
           <div className="flex items-center gap-2 mb-3">
-            <input readOnly value={sendStep.driver_link} className="flex-1 min-w-0 border border-surface-borderstrong rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
+            <input readOnly value={sendStep.driver_link} className="flex-1 min-w-0 border border-surface-inputborder rounded-card px-3 py-2.5 text-xs text-ink-muted bg-surface-bg" />
             <button
               onClick={() => { navigator.clipboard.writeText(sendStep.driver_link); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); }}
               className="shrink-0 text-xs font-semibold px-3 py-2.5 bg-surface-alt text-ink-soft rounded-control"

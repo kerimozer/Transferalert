@@ -24,6 +24,14 @@ export default {
         surface: {
           DEFAULT: '#FFFFFF', bg: '#FAF8F5', alt: '#F3EFE9',
           border: '#E9E4DC', borderstrong: '#D8D1C6',
+          // GİRDİ SINIRI AYRI (2026-09-11, denetçi B11). WCAG 1.4.11 bir
+          // bileşeni tanımlayan sınırdan ≥3:1 ister; `borderstrong` beyaz
+          // kartta 1.52 veriyordu ve girdinin zemini de beyaz olduğu için
+          // alanı gösteren başka işaret yoktu. `borderstrong` KOYULAŞTIRILMADI
+          // çünkü ikincil butonlarda da kullanılıyor ve "sert border yok"
+          // ilkesini bozardı. Üç zeminde de geçen en açık ton:
+          // beyaz 3.57 · sayfa 3.37 · surfaceAlt 3.12.
+          inputborder: '#918676',
           // Tür şeridi (canlı uçuş verisi gelmeden önce) — durum rengi DEĞİL.
           // #EFF1EF idi ve `alt` ile arası ΔE 3.0'dı: "Havalimanı" ile
           // "Transfer" gözle ayrılmıyordu. Artık İKİ TÜR DE bu tonu kullanıyor

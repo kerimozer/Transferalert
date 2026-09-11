@@ -277,7 +277,7 @@ export default function PartnerPortalPage() {
   );
 }
 
-const inputCls = 'w-full border border-surface-borderstrong rounded-card px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30';
+const inputCls = 'w-full border border-surface-inputborder rounded-card px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30';
 
 function Field({ label, required, children }) {
   return (

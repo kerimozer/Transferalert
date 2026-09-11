@@ -104,7 +104,7 @@ export default function PlatformAdminPage() {
                     value={edits[p.key]?.price ?? ''}
                     onChange={e => setEdits(s => ({ ...s, [p.key]: { ...s[p.key], price: e.target.value } }))}
                     placeholder={p.is_purchasable ? '' : 'satılmıyor'}
-                    className="w-28 border border-surface-borderstrong rounded-control px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-28 border border-surface-inputborder rounded-control px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </td>
                 <td className="px-4 py-3">
@@ -112,7 +112,7 @@ export default function PlatformAdminPage() {
                     type="number"
                     value={edits[p.key]?.driver_limit ?? ''}
                     onChange={e => setEdits(s => ({ ...s, [p.key]: { ...s[p.key], driver_limit: e.target.value } }))}
-                    className="w-20 border border-surface-borderstrong rounded-control px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-20 border border-surface-inputborder rounded-control px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </td>
                 <td className="px-4 py-3">

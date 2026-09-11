@@ -398,7 +398,7 @@ export default function ReservationsPage() {
                       handleFlightSearch(val);
                     }}
                     placeholder="TK123, PC456..."
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono font-semibold tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm font-mono font-semibold tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     required autoFocus
                   />
                   {searching && <p className="text-xs text-ink-muted mt-1">Uçuş aranıyor...</p>}
@@ -436,7 +436,7 @@ export default function ReservationsPage() {
                     value={form.passenger_name}
                     onChange={e => setForm(f => ({ ...f, passenger_name: e.target.value }))}
                     placeholder="Anna Schmidt"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                     // Uçuşsuzda kaydın TEK etiketi yolcu adıdır (uçuş numarası
                     // yok). Boş bırakılırsa liste adsız bir satır gösterir ve
                     // aramada bulunamaz — backend de 400 döner, kapıyı burada
@@ -451,7 +451,7 @@ export default function ReservationsPage() {
                     value={form.passenger_phone}
                     onChange={e => setForm(f => ({ ...f, passenger_phone: e.target.value }))}
                     placeholder="0532 111 22 33"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </div>
               </div>
@@ -462,7 +462,7 @@ export default function ReservationsPage() {
                   value={form.meeting_point}
                   onChange={e => setForm(f => ({ ...f, meeting_point: e.target.value }))}
                   placeholder={isFlight ? 'Dış Hatlar Çıkış · 4 numaralı kapı' : 'Hilton Bomonti · Lobi'}
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
 
@@ -477,7 +477,7 @@ export default function ReservationsPage() {
                   value={form.scheduled_pickup}
                   onChange={e => setForm(f => ({ ...f, scheduled_pickup: e.target.value }))}
                   min={nowLocal()}
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   required
                 />
                 {/* Vaat türe göre DEĞİŞİR. Uçuşsuz transferde uçuş takibi
@@ -502,7 +502,7 @@ export default function ReservationsPage() {
                     value={form.pnr}
                     onChange={e => setForm(f => ({ ...f, pnr: e.target.value.toUpperCase().replace(/\s/g, '') }))}
                     placeholder="ABC123"
-                    className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                   />
                 </div>
               )}
@@ -517,7 +517,7 @@ export default function ReservationsPage() {
                   onChange={e => setForm(f => ({ ...f, dropoff_point: e.target.value }))}
                   placeholder="Rixos Downtown, Konyaaltı"
                   maxLength={200}
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
 
@@ -528,7 +528,7 @@ export default function ReservationsPage() {
                   value={form.scheduled_dropoff}
                   onChange={e => setForm(f => ({ ...f, scheduled_dropoff: e.target.value }))}
                   min={form.scheduled_pickup || nowLocal()}
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
 
@@ -539,7 +539,7 @@ export default function ReservationsPage() {
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   placeholder="Ahmet Yılmaz, Oda 204..."
-                  className="w-full border border-surface-borderstrong rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                  className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
                 />
               </div>
 

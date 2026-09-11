@@ -52,7 +52,7 @@ export default function ProfilePage() {
             <input
               value={form.full_name}
               onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
-              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className="w-full border border-surface-inputborder rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="Mehmet Demir"
             />
           </div>
@@ -62,7 +62,7 @@ export default function ProfilePage() {
             <input
               value={form.company_name}
               onChange={e => setForm(f => ({ ...f, company_name: e.target.value }))}
-              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className="w-full border border-surface-inputborder rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="Transfer Co."
             />
           </div>
@@ -77,7 +77,7 @@ export default function ProfilePage() {
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               type="tel"
-              className="w-full border border-surface-borderstrong rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className="w-full border border-surface-inputborder rounded-card px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               placeholder="0532 000 00 00"
               required
             />
