@@ -513,6 +513,67 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
       kacak.join(', ') + ' — sabit 33 girdiyi besliyor, odak halkası olmadan');
   }
 
+  // ── ORTAK TARAYICILAR ──────────────────────────────────────────────────
+  //
+  // AÇILIŞ ETİKETİNİN SONU TIRNAK-FARKINDA BULUNUR. İlk hâl yalnız süslü
+  // parantez derinliği sayıyordu; `title="İleri > geri"` gibi düz dizeli bir
+  // nitelikteki `>` etiketi erken bitiriyordu ve o elemanın className'i
+  // taramanın DIŞINDA kalıyordu. Denetimde tek karakterlik bu fark, reçetesiz
+  // yeni bir dolu marka butonunu kapıdan geçirdi.
+  const acilisSonu = (s, bas) => {
+    let derinlik = 0, tirnak = null;
+    for (let j = bas; j < s.length; j++) {
+      const c = s[j];
+      if (tirnak) { if (c === tirnak) tirnak = null; continue; }
+      if (c === '"' || c === "'") { tirnak = c; continue; }
+      if (c === '{') derinlik++;
+      else if (c === '}') derinlik--;
+      else if (c === '>' && derinlik === 0) return j;
+    }
+    return s.length;
+  };
+
+  // ODAKLANABİLİR ETİKETLER. `NavLink` listede YOKTU ve uygulamanın ANA
+  // GEZİNMESİ tam olarak o etiket (`components/Layout.jsx`) — yani panelin en
+  // çok Tab'lanan kontrol kümesi kapının dışındaydı.
+  const ODAK_ETIKET = ['button', 'a', 'Link', 'NavLink', 'input', 'select', 'textarea'];
+
+  // DOLU ZEMİN — yalnız `brand-600` değil. Kural ilk hâlinde markaya çiviliydi
+  // ve turun kendi ölçütünü ıskalıyordu: "İçe Aktar" (toplu içe aktarmanın tek
+  // asıl eylemi) ve "Onayla" `bg-ok-600` taşıdığı için kapsam dışında kalmış,
+  // tarayıcının turuncu halkasında bırakılmıştı. Ölçüt "dolu bir yüzey",
+  // "marka rengi" değil.
+  const DOLU = /(^|[\s"'`{(])bg-(brand|ok|bad|warn|accent)-(600|700)(?![\w-])/;
+
+  // SINIF SABİTLERİ ÇÖZÜLÜR, KOMŞULUĞA BAKILMAZ. `inputCls` dersinin (B11)
+  // birebir tekrarı denetimde yine yaşandı: sınıf bir `const` sabitindeyse
+  // etiket taraması onu göremiyordu. Tek düzey yeter — bu kod tabanında sabit
+  // sabite referans vermiyor.
+  const sabitHarita = (s) => {
+    const h = new Map();
+    for (const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*((?:'[^']*'|"[^"]*"|`[^`]*`)(?:\s*\+\s*(?:'[^']*'|"[^"]*"|`[^`]*`))*)\s*;/g)) {
+      h.set(m[1], m[2]);
+    }
+    return h;
+  };
+  const sinifCoz = (metin, h) => metin.replace(/\b([A-Za-z_$][\w$]*)\b/g,
+    (ad) => (h.has(ad) ? ` ${h.get(ad)} ` : ad));
+
+  // Reçetenin SAYILABİLECEĞİ bölgeler: odaklanabilir bir etiketin açılışı ya
+  // da bir sınıf sabitinin değeri.
+  const gecerliBolgeler = (s) => {
+    const bolge = [];
+    for (const etiket of ODAK_ETIKET) {
+      for (const m of s.matchAll(new RegExp(`<${etiket}(?=[\\s>])`, 'g'))) {
+        bolge.push([m.index, acilisSonu(s, m.index)]);
+      }
+    }
+    for (const m of s.matchAll(/(?:const|let|var)\s+\w+\s*=\s*(?:'[^']*'|"[^"]*"|`[^`]*`)(?:\s*\+\s*(?:'[^']*'|"[^"]*"|`[^`]*`))*\s*;/g)) {
+      bolge.push([m.index, m.index + m[0].length]);
+    }
+    return bolge;
+  };
+
   // ── ÇAĞRI YERLERİ: SAYIM + KENDİ ZEMİNİNE KARŞI ÖLÇÜM ──────────────────
   //
   // ÜÇ KÖR NOKTA BURADA KAPANIYOR (üçü de denetimde MUTASYONLA kanıtlandı —
@@ -555,19 +616,19 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
     // koymuyordu.
     const TABAN = {
       'src/components/AssignDriverModal.jsx': 2,
-      'src/components/BulkImportModal.jsx': 1,
+      'src/components/BulkImportModal.jsx': 2,
       'src/components/PaymentLinkModal.jsx': 3,
       'src/components/TransferTypeToggle.jsx': 1,
       'src/components/WelcomeSignModal.jsx': 1,
       'src/components/ui/Button.jsx': 2, 'src/components/ui/Field.jsx': 1,
       'src/components/ui/StatRow.jsx': 1, 'src/pages/DashboardPage.jsx': 4,
       'src/pages/DriverPortalPage.jsx': 4, 'src/pages/InvitePage.jsx': 5,
-      'src/pages/JobPage.jsx': 2, 'src/pages/LandingPage.jsx': 3,
+      'src/pages/JobPage.jsx': 2, 'src/pages/LandingPage.jsx': 4,
       'src/pages/LoginPage.jsx': 6, 'src/pages/NightWatchPage.jsx': 1,
       'src/pages/OrganizationPage.jsx': 20,
       'src/pages/PartnerPortalPage.jsx': 2,
       'src/pages/PlatformAdminPage.jsx': 3, 'src/pages/ProfilePage.jsx': 5,
-      'src/pages/RequestPage.jsx': 2, 'src/pages/ReservationsPage.jsx': 12,
+      'src/pages/RequestPage.jsx': 2, 'src/pages/ReservationsPage.jsx': 13,
     };
     const sayim = {};
     const cagriYerleri = [];
@@ -581,7 +642,15 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
       const govde = s.replace(/import\s*\{[^}]*\}\s*from\s*['"][^'"]*focus['"];?/g,
         (m) => ' '.repeat(m.length));
 
+      // SAYIM, REÇETENİN ODAKLANABİLİR BİR ŞEYE İNDİĞİNİ DOĞRULAR.
+      // Denetimde `<div className={`h-0 ${FOCUS}`} />` eklenerek bir girdiden
+      // silinen reçete telafi edildi ve kapı 388/0 yeşil kaldı — yani sayım
+      // "reçete bu dosyada geçiyor mu" diye soruyordu, "bir kontrole iniyor
+      // mu" diye değil. Geçerli yer: odaklanabilir bir etiketin AÇILIŞ
+      // bölgesi, ya da bir kontrole beslenen sınıf SABİTİ.
+      const gecerli = gecerliBolgeler(govde);
       for (const m of govde.matchAll(/\bFOCUS(_INSET)?\b/g)) {
+        if (!gecerli.some(([a, b]) => m.index >= a && m.index < b)) continue;
         sayim[rel] = (sayim[rel] || 0) + 1;
         // KENDİ ŞABLONUNU BUL. Çağrı yeri bir şablon dizesinin içindeyse
         // (kod tabanının yerleşik deseni) zeminini oradan okuruz; değilse
@@ -623,39 +692,91 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
     // turuncu halkası) gösteriyordu. Aynı formda iki ayrı odak dili.
     //
     // Kapsam ŞEKİLDEN türetiliyor — dosya adı listesi DEĞİL: "dinlenme
-    // zemininde `bg-brand-600` taşıyan odaklanabilir eleman". Yarın eklenecek
+    // zemininde dolu bir yüzey taşıyan odaklanabilir eleman". Yarın eklenecek
     // buton da kendiliğinden kapsama girer. `hover:bg-brand-600/25` gibi
     // varyant önekli olan SAYILMAZ; o dinlenme zemini değil.
+    //
+    // MUAFİYET YOK. İlk hâlde `type="checkbox"|"radio"` muafiyeti vardı ve
+    // denetim ikisini birden gösterdi: (1) muafiyet ÖLÜYDÜ — `src/` altında
+    // dolu zemin taşıyan tek bir checkbox yok, nöbet kutusu kuraldan zaten
+    // `bg-*` taşımadığı için düşüyor, yani muafiyet "kapı neyi koruyor"
+    // sorusuna YANLIŞ cevap veriyordu; (2) canlandığı senaryoda YANLIŞ olurdu —
+    // Tailwind'de checkbox özelleştirmenin standart yolu `appearance-none` +
+    // `bg-*` ve orada `box-shadow` halkası pekâlâ çizilir.
     {
-      // MUAFİYET ŞEKİLDE, DOSYADA DEĞİL: native `checkbox`/`radio` kutusunda
-      // `box-shadow` halkası Safari'de çizilmiyor ve `@tailwindcss/forms` da
-      // kurulu değil — reçete eklemek yerel göstergeyi KALDIRIP yerine hiçbir
-      // şey koymuyordu.
-      const ODAK_ETIKET = ['button', 'a', 'Link', 'input', 'select', 'textarea'];
       const eksik = [];
       for (const f of walkSrc(join(root, 'src'))) {
         const rel = relative(root, f).split(/[\\/]/).join('/');
         const s = stripComments(readFileSync(f, 'utf8'));
+        const h = sabitHarita(s);
         for (const etiket of ODAK_ETIKET) {
           for (const m of s.matchAll(new RegExp(`<${etiket}(?=[\\s>])`, 'g'))) {
-            let derinlik = 0, son = s.length;
-            for (let j = m.index; j < s.length; j++) {
-              const c = s[j];
-              if (c === '{') derinlik++;
-              else if (c === '}') derinlik--;
-              else if (c === '>' && derinlik === 0) { son = j; break; }
-            }
-            const acilis = s.slice(m.index, son);
-            if (!/(^|[\s"'`{(])bg-brand-600(?![\w-])/.test(acilis)) continue;
+            // SINIF ÇÖZÜLÜR: sabit üzerinden gelen reçete de, sabit üzerinden
+            // gelen dolu zemin de görünür olmalı.
+            const acilis = sinifCoz(s.slice(m.index, acilisSonu(s, m.index)), h);
+            if (!DOLU.test(acilis)) continue;
             if (/FOCUS/.test(acilis)) continue;
-            if (/type=["']?(checkbox|radio)/.test(acilis)) continue;
             eksik.push(`${rel}:${s.slice(0, m.index).split('\n').length} <${etiket}>`);
           }
         }
       }
-      check('dolu marka zeminli her kontrol reçeteyi taşıyor', eksik.length === 0,
+      check('dolu zeminli her kontrol reçeteyi taşıyor', eksik.length === 0,
         '\n      ' + eksik.join('\n      ') +
         '\n      (tarayıcı halkasına düşüyor — aynı formda iki ayrı odak dili)');
+    }
+
+    // DOLU BİR KABIN İÇİNDEKİ KONTROL DIŞA ÇİZİLEN HALKAYI KULLANAMAZ.
+    //
+    // Denetimde bulunan GERİLEME: landing'in vurgulu plan kartı
+    // `bg-brand-600`, içindeki CTA `bg-surface`. Dışa çizilen yığın
+    // dolgu(surface) → boşluk(surface) → halka(brand-600) → kart(brand-600)
+    // olunca halka KARTIN İÇİNDE ERİYOR (kontrast 1.00) ve odakta görülen tek
+    // şey butonun kendi renginde 2px büyümesi oluyor. Üstelik bu bir gerileme:
+    // reçeteden ÖNCE o buton tarayıcının kendi halkasını gösteriyordu.
+    //
+    // Kapı bunu göremiyordu çünkü ölçüm yalnız kontrolün KENDİ şablonundaki
+    // zeminleri okuyor, KABI hiç okumuyor — ve o şablonda iki dal birden
+    // olduğu için var olmayan bir çifti (boşluk/brand-600 = 7.50) ölçüp güven
+    // verici bir sayı basıyordu.
+    {
+      const ihlal = [];
+      for (const f of walkSrc(join(root, 'src'))) {
+        const rel = relative(root, f).split(/[\\/]/).join('/');
+        const s = stripComments(readFileSync(f, 'utf8'));
+        for (const m of s.matchAll(/<([A-Za-z][\w.]*)(?=[\s>])/g)) {
+          const etiketAdi = m[1];
+          const sonu = acilisSonu(s, m.index);
+          if (!DOLU.test(s.slice(m.index, sonu))) continue;
+          if (s[sonu - 1] === '/') continue;              // kendi kendine kapanan
+          // Alt ağacın sonunu bul: iç içe aynı etiketleri say.
+          let derinlik = 1, i = sonu + 1, kapanis = -1;
+          const re = new RegExp(`<${etiketAdi}(?=[\\s>])|</${etiketAdi}\\s*>`, 'g');
+          re.lastIndex = i;
+          let t;
+          while ((t = re.exec(s))) {
+            if (t[0][1] === '/') { if (--derinlik === 0) { kapanis = t.index; break; } }
+            else if (s[acilisSonu(s, t.index) - 1] !== '/') derinlik++;
+          }
+          if (kapanis < 0) continue;
+          const govde = s.slice(sonu, kapanis);
+          // MUAFİYET DAR: elemanın kendisi inset varyantı DA taşıyorsa dalları
+          // ayırmış demektir (landing'in koşullu kartı böyle). Hiç taşımıyorsa
+          // dolu kabın içinde dışa çizilen halka kalmış demektir.
+          for (const g of govde.matchAll(/\bFOCUS\b(?!_INSET)/g)) {
+            // MUAFİYET BİRİMİ ELEMANIN AÇILIŞ ETİKETİ — iç şablon DEĞİL.
+            // Koşullu sınıfta iki dal iki AYRI şablonda durur; iç şablona
+            // bakmak, dalları doğru ayırmış bir elemanı ihlal sayardı.
+            const mutlak = sonu + g.index;
+            const etiketBas = s.lastIndexOf('<', mutlak);
+            const acilis = etiketBas < 0 ? '' : s.slice(etiketBas, acilisSonu(s, etiketBas));
+            if (/FOCUS_INSET/.test(acilis)) continue;
+            ihlal.push(`${rel}:${s.slice(0, mutlak).split('\n').length} ` +
+              `(<${etiketAdi}> dolu kabının içinde dışa çizilen halka)`);
+          }
+        }
+      }
+      check('dolu kabın içindeki kontrol halkayı kabında eritmiyor', ihlal.length === 0,
+        '\n      ' + ihlal.join('\n      '));
     }
 
     {

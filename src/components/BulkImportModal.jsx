@@ -265,7 +265,7 @@ export default function BulkImportModal({ onClose, onDone }) {
                   <button
                     onClick={handleImport}
                     disabled={importing || !validRows.length}
-                    className="w-full mt-4 bg-ok-600 hover:bg-ok-800 disabled:opacity-50 text-onfill rounded-card px-4 py-3 text-sm font-semibold transition-colors"
+                    className={`w-full mt-4 bg-ok-600 hover:bg-ok-800 disabled:opacity-50 text-onfill rounded-card px-4 py-3 text-sm font-semibold transition-colors ${FOCUS}`}
                   >
                     {importing ? 'İçe aktarılıyor...' : `${validRows.length} transferi içe aktar`}
                   </button>

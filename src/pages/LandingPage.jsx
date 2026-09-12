@@ -1,4 +1,4 @@
-import { FOCUS } from '../lib/focus';
+import { FOCUS, FOCUS_INSET } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plane, Bell, MessageCircle, CheckCircle, Zap } from 'lucide-react';
@@ -164,13 +164,20 @@ export default function LandingPage() {
                   ))}
                 </ul>
 
+                {/* ODAK HALKASI DALA GÖRE DEĞİŞİR — tek reçete İKİSİNİ BİRDEN
+                    karşılayamaz. Vurgulu plan KARTI `bg-brand-600`: dışa
+                    çizilen halka da marka tonunda olduğu için kartın içinde
+                    ERİR (kontrast 1.00) ve gösterge fiilen yok olur. O dalda
+                    halka butonun KENDİ açık zeminine içeriden çizilir (7.50).
+                    Sade dalda ise buton dolu, kart açık — dışa çizilen halka
+                    doğru olan. */}
                 <button
                   onClick={() => navigate('/app/login')}
                   className={`w-full rounded-card py-2.5 text-sm font-semibold transition-colors ${
                     plan.highlight
-                      ? 'bg-surface text-brand-600 hover:bg-brand-50'
-                      : 'bg-brand-600 text-onfill hover:bg-brand-700'
-                  } ${FOCUS}`}
+                      ? `bg-surface text-brand-600 hover:bg-brand-50 ${FOCUS_INSET}`
+                      : `bg-brand-600 text-onfill hover:bg-brand-700 ${FOCUS}`
+                  }`}
                 >
                   {plan.cta}
                 </button>

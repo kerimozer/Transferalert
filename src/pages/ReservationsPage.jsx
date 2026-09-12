@@ -347,7 +347,7 @@ export default function ReservationsPage() {
                   </div>
                   {r.notes && <p className="text-xs text-ink-muted mt-0.5">{r.notes}</p>}
                 </div>
-                <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-ok-600 hover:bg-ok-800 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold">
+                <button onClick={() => handleApprove(r.id)} className={`flex items-center gap-1 bg-ok-600 hover:bg-ok-800 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold ${FOCUS}`}>
                   <Check size={14} /> Onayla
                 </button>
                 <button onClick={() => handleReject(r.id)} aria-label="Reddet" title="Reddet" className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control">
