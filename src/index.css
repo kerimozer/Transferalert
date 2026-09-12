@@ -90,6 +90,72 @@
   }
 }
 
+/* GECE PALETİ — ARTIK `prefers-color-scheme` DEĞİL, `<html data-theme>` DAMGASI
+ * (2026-09-12, A6). Sebep keşfedilebilirlik: gece modu canlıya çıktı ve
+ * kullanıcı İKİ TUR boyunca bulamadı, çünkü açmanın tek yolu işletim
+ * sisteminin ayarıydı ve uygulamanın içinde ondan bahseden hiçbir şey yoktu.
+ *
+ * TEK BLOK, İKİ YOL: damgayı `index.html`teki satır içi betik ilk boyadan
+ * ÖNCE basıyor (tercih yoksa `prefers-color-scheme`e bakarak), sonra
+ * `src/lib/theme.js` elle seçimde ve sistem teması değiştiğinde güncelliyor.
+ * Üç durumlu CSS (`:root` + `@media dark` + `[data-theme=dark]`) da
+ * çalışırdı ama gece paletini İKİ KEZ yazmayı gerektirirdi — bu projede
+ * kopyalanan her tanım er geç ayrıştı ve ayrıştığını kimse görmedi.
+ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --c-brand-50: 27 58 64;
+  --c-brand-600: 86 184 204;
+  --c-brand-700: 127 206 221;
+  --c-accent-50: 64 50 43;
+  --c-accent-600: 224 138 94;
+  --c-accent-800: 240 168 127;
+  --c-surface: 30 38 43;
+  --c-surface-bg: 20 25 28;
+  --c-surface-alt: 37 46 51;
+  --c-surface-border: 43 52 58;
+  --c-surface-borderstrong: 58 69 76;
+  --c-surface-inputborder: 110 124 133;
+  --c-surface-neutral: 47 49 51;
+  --c-surface-quiet: 73 64 41;
+  --c-surface-dangerborder: 110 59 49;
+  --c-strip-air: 12 70 88;
+  --c-strip-landed: 42 67 27;
+  --c-strip-cancelled: 76 37 29;
+  --c-strip-diverted: 85 59 9;
+  --c-strip-oliveink: 169 206 138;
+  --c-strip-amberink: 232 190 116;
+  --c-strip-sandink: 235 210 146;
+  --c-done-scheduled: 42 41 39;
+  --c-done-air: 8 49 61;
+  --c-done-airink: 157 188 198;
+  --c-done-landed: 31 51 18;
+  --c-done-landedink: 156 188 130;
+  --c-done-cancelled: 62 33 27;
+  --c-done-cancelledink: 223 162 148;
+  --c-done-diverted: 59 42 9;
+  --c-done-divertedink: 217 184 122;
+  --c-ink: 233 237 239;
+  --c-ink-soft: 183 194 200;
+  --c-ink-muted: 139 153 162;
+  --c-wa-50: 40 47 43;
+  --c-wa-700: 93 201 141;
+  --c-sms-50: 33 47 64;
+  --c-sms-700: 120 173 238;
+  --c-ok-50: 32 59 46;
+  --c-ok-600: 95 185 140;
+  --c-ok-800: 143 211 174;
+  --c-warn-50: 66 47 21;
+  --c-warn-600: 215 154 70;
+  --c-warn-800: 237 187 114;
+  --c-bad-50: 82 41 33;
+  --c-bad-600: 224 112 92;
+  --c-bad-800: 240 161 146;
+  --c-onfill: 11 20 23;
+  --c-segmentactive: 47 57 64;
+  --c-shadow: 0 0 0;
+}
+
 /* YAZDIRMA HER ZAMAN GÜNDÜZ PALETİYLE. Karşılama tabelası (`WelcomeSignModal`)
  * `window.print()` ile KAĞIDA basılıyor ve kağıt her zaman beyazdır: gece
  * paletiyle yolcu adı (#E9EDEF) kağıda karşı 1.18 kontrast verir, yani
@@ -99,9 +165,15 @@
  *
  * Mobil ikizi aynı kararı verdi (`WelcomeSignScreen` gündüz paletine çivili):
  * o ekranın işi kontrast değil, AYDINLIK BİR ORTAMDA uzaktan okunmak.
- * Blok TÜM yazdırılabilir yüzeyleri kapsıyor — ileride eklenecek olanı da. */
+ * Blok TÜM yazdırılabilir yüzeyleri kapsıyor — ileride eklenecek olanı da.
+ *
+ * SEÇİCİ `:root[data-theme]` DE İÇERİR ve blok gece paletinden SONRA durur
+ * (A6): gece artık `:root[data-theme="dark"]` ile geliyor ve tek başına
+ * `:root` onu ÖZGÜLLÜKTE yenemez. Damga eklenmeseydi yazdırma düzeltmesi
+ * sessizce geçersizleşir, tabela yine boş kağıt basardı. */
 @media print {
-  :root {
+  :root,
+  :root[data-theme] {
     color-scheme: light;
     --c-surface: 255 255 255;
     --c-surface-bg: 255 255 255;
@@ -113,61 +185,5 @@
     --c-brand-600: 15 93 107;
     --c-brand-700: 10 66 77;
     --c-onfill: 255 255 255;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --c-brand-50: 27 58 64;
-    --c-brand-600: 86 184 204;
-    --c-brand-700: 127 206 221;
-    --c-accent-50: 64 50 43;
-    --c-accent-600: 224 138 94;
-    --c-accent-800: 240 168 127;
-    --c-surface: 30 38 43;
-    --c-surface-bg: 20 25 28;
-    --c-surface-alt: 37 46 51;
-    --c-surface-border: 43 52 58;
-    --c-surface-borderstrong: 58 69 76;
-    --c-surface-inputborder: 110 124 133;
-    --c-surface-neutral: 47 49 51;
-    --c-surface-quiet: 73 64 41;
-    --c-surface-dangerborder: 110 59 49;
-    --c-strip-air: 12 70 88;
-    --c-strip-landed: 42 67 27;
-    --c-strip-cancelled: 76 37 29;
-    --c-strip-diverted: 85 59 9;
-    --c-strip-oliveink: 169 206 138;
-    --c-strip-amberink: 232 190 116;
-    --c-strip-sandink: 235 210 146;
-    --c-done-scheduled: 42 41 39;
-    --c-done-air: 8 49 61;
-    --c-done-airink: 157 188 198;
-    --c-done-landed: 31 51 18;
-    --c-done-landedink: 156 188 130;
-    --c-done-cancelled: 62 33 27;
-    --c-done-cancelledink: 223 162 148;
-    --c-done-diverted: 59 42 9;
-    --c-done-divertedink: 217 184 122;
-    --c-ink: 233 237 239;
-    --c-ink-soft: 183 194 200;
-    --c-ink-muted: 139 153 162;
-    --c-wa-50: 40 47 43;
-    --c-wa-700: 93 201 141;
-    --c-sms-50: 33 47 64;
-    --c-sms-700: 120 173 238;
-    --c-ok-50: 32 59 46;
-    --c-ok-600: 95 185 140;
-    --c-ok-800: 143 211 174;
-    --c-warn-50: 66 47 21;
-    --c-warn-600: 215 154 70;
-    --c-warn-800: 237 187 114;
-    --c-bad-50: 82 41 33;
-    --c-bad-600: 224 112 92;
-    --c-bad-800: 240 161 146;
-    --c-onfill: 11 20 23;
-    --c-segmentactive: 47 57 64;
-    --c-shadow: 0 0 0;
   }
 }

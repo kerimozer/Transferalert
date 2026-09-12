@@ -5,7 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#116173" />
+    <!-- Marka tonu — eski teal #116173 A2 turunda emekliye ayrıldı.
+         TEK meta ve `media` KOŞULU YOK: `prefers-color-scheme`e çivilenseydi
+         işletim sistemi açık modda ve kullanıcı "Koyu" seçmişken sayfa koyu,
+         tarayıcı çubuğu marka teal'inde kalırdı — "ayarım uygulandı mı"
+         ailesinden bir çelişki, yani tam bu turun konusu. Değeri seçim
+         değiştikçe `temaUygula` günceller (paletten okur, hex kopyalamaz). -->
+    <meta name="theme-color" content="#0F5D6B" />
+
+    <!-- TEMA İLK BOYADAN ÖNCE DAMGALANIR (A6, 2026-09-12).
+         React mount olana kadar beklenirse koyu temadaki kullanıcı bir kare
+         BEYAZ görür; bu betik `<head>` ayrıştırılırken senkron koşar.
+         Damganın tek tüketicisi `src/index.css` → `:root[data-theme="dark"]`;
+         aynı kararı `src/lib/theme.js` elle seçimde tekrar uygular.
+         Tercih yoksa ("system") karar yine işletim sistemine ait. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('app_theme');
+          var koyu = t === 'dark' || (t !== 'light' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', koyu ? 'dark' : 'light');
+        } catch (e) {
+          // localStorage erişimi engellenmiş olabilir (site verisi kapalı
+          // Chrome, bazı gömülü webview'lar). Bu, "kullanıcı açık tema
+          // istiyor" demek DEĞİL: sisteme sormaya devam et, yoksa gece
+          // OS'undaki kullanıcı her yüklemede beyaz çakma yer.
+          var k = false;
+          try { k = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e2) {}
+          document.documentElement.setAttribute('data-theme', k ? 'dark' : 'light');
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />

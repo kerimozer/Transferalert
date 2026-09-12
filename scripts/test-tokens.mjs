@@ -133,7 +133,19 @@ const blokAl = (bas) => {
   }
   return '';
 };
-const geceBlok = blokAl('@media (prefers-color-scheme: dark)');
+// GECE BLOĞU ARTIK `@media (prefers-color-scheme: dark)` DEĞİL (A6):
+// elle seçim eklenince palet `<html data-theme>` damgasına bağlandı. Tek
+// blok, tek tanım — üç durumlu CSS gece paletini İKİ KEZ yazmayı
+// gerektirirdi ve bu projede kopyalanan her tanım er geç ayrıştı.
+const geceBlok = blokAl(':root[data-theme="dark"]');
+// HIZLI DURUŞ: blok bulunamazsa aşağıdaki 50 kontrol `undefined` üzerinde
+// koşup anlamsız bir TypeError'la çöküyor. Kapının kırılma SEBEBİ okunabilir
+// olmalı — "neden kırıldı" sorusuna cevap vermeyen bir kapı, kırıldığında da
+// yardımcı olmaz.
+if (!geceBlok) {
+  console.log('  ✗ gece paleti bloğu yok (:root[data-theme="dark"]) — A6 damgası kaldırılmış');
+  process.exit(1);
+}
 const yazdirBlok = blokAl('@media print');
 const GUNDUZ_CSS = paletOku(blokAl(':root'));
 const GECE_CSS = paletOku(geceBlok);
@@ -689,5 +701,176 @@ check('@media print bloğu var', yazdirBlok.length > 0,
     kullanilmayan.join(', ') + ' — tanımlı ama hiçbir ekranda yok');
 }
 
+
+// ── [A6] TEMA SEÇİCİ — KULLANICI GECE MODUNA ULAŞABİLİYOR MU ─────────────
+//
+// NEDEN AYRI: yukarısı paletin DEĞERLERİNİ ölçüyor. Bu bölüm kullanıcının
+// ona ULAŞABİLDİĞİNİ ölçer ve bunlar farklı sorular — 2026-09-12'de gece
+// modu canlıya çıktı, iki depoda kapılar yeşildi ve kullanıcı özelliği İKİ
+// TUR boyunca bulamadı. Ölçüsü yeşil ama bulunma yolu olmayan bir özellik
+// yapılmamış sayılır. Mobil ikizi: mobile/scripts/test-tokens.mjs [9].
+console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
+{
+  const { temaSemasi, temaOku, temaYaz, temaUygula, temaIzle, TEMA_DEGERLERI } =
+    await import(new URL('../src/lib/theme.js', import.meta.url));
+
+  // Saf çözücü — MOBİLLE BİREBİR AYNI davranmak zorunda: aynı kullanıcı
+  // telefonunda ve tarayıcısında aynı ayarı görüyor.
+  check('temaSemasi("dark", "light") = dark', temaSemasi('dark', 'light') === 'dark',
+    'elle seçim sistem ayarını ezmiyor: seçici görünür ama işlevsiz');
+  check('temaSemasi("light", "dark") = light', temaSemasi('light', 'dark') === 'light');
+  check('temaSemasi("system", "dark") = dark', temaSemasi('system', 'dark') === 'dark');
+  check('bilinmeyen tercih sisteme düşüyor', temaSemasi('mor', 'dark') === 'dark');
+  check('üç değer tanımlı', Array.isArray(TEMA_DEGERLERI) && TEMA_DEGERLERI.length === 3 &&
+    ['system', 'light', 'dark'].every((v) => TEMA_DEGERLERI.includes(v)),
+    JSON.stringify(TEMA_DEGERLERI));
+
+  // KALICILIK — saf çözücüyü ölçmek yetmez, o bozulamaz; bozulabilen
+  // tercihin yazılıp geri okunabilmesi.
+  {
+    const kutu = {};
+    const depo = { oku: () => kutu.v ?? null, yaz: (v) => { kutu.v = v; } };
+    check('yaz → oku gidiş-dönüşü', temaYaz('dark', depo) === true && temaOku(depo) === 'dark');
+    check('geçersiz değer reddediliyor', temaYaz('mor', depo) === false && kutu.v === 'dark');
+    check('boş depo system döner', temaOku({ oku: () => null, yaz: () => {} }) === 'system');
+    // `localStorage.setItem` bazı gömülü tarayıcılarda atmadan SESSİZCE
+    // hiçbir şey yapmaz; geri okunmasaydı ekran "seçildi" der, kullanıcı
+    // sayfayı yenilediğinde eski paleti bulurdu.
+    check('yutulan yazma false döner',
+      temaYaz('light', { oku: () => null, yaz: () => {} }) === false);
+    check('atan depo false döner',
+      temaYaz('light', { oku: () => { throw new Error('kota'); }, yaz: () => {} }) === false);
+  }
+
+  // DAMGA ZİNCİRİ. Üç halkanın biri kopsa gece modu erişilemez olur ve
+  // palet ölçümlerinin hepsi yeşil kalır.
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  // 1) İLK BOYADAN ÖNCE: React mount'una bırakılsaydı koyu temadaki
+  //    kullanıcı her yüklemede bir kare BEYAZ görürdü.
+  check('damga index.html\'de ilk boyadan önce basılıyor',
+    /data-theme/.test(html) && /prefers-color-scheme: dark/.test(html) && /localStorage/.test(html),
+    'tema ancak React mount olduktan sonra uygulanır — beyaz çakma');
+  // 2) CSS o damgayı tüketiyor mu.
+  check('gece paleti damgaya bağlı', css.includes(':root[data-theme="dark"]'),
+    'damga basılıyor ama hiçbir kural onu okumuyor');
+  // 3) YAZDIRMA ÖZGÜLLÜK YARIŞINI KAYBETMESİN. `:root` (0,1,0) tek başına
+  //    `:root[data-theme="dark"]`ı (0,2,0) EZEMEZ: damgaya geçince yazdırma
+  //    düzeltmesi sessizce geçersizleşir ve karşılama tabelası yine BOŞ
+  //    KAĞIT basar — ekranda hiçbir uyarı olmadan.
+  check('yazdırma bloğu damgalı seçiciyi de kapsıyor',
+    /@media print \{\s*:root,\s*:root\[data-theme\]/.test(css),
+    'gece damgası yazdırmayı eziyor — tabela boş kağıt basar');
+  check('yazdırma bloğu gece paletinden SONRA duruyor',
+    css.indexOf('@media print') > css.indexOf(':root[data-theme="dark"]'),
+    'eşit özgüllükte kaynak sırası kazanır — önce gelen ezilir');
+
+  // ── UÇTAN UCA: DAMGA BASILIYOR MU, DEĞERİ TUTUYOR MU ─────────────────
+  // Denetim mutasyonları: (a) `temaUygula`daki `setAttribute` satırının
+  // silinmesi, (b) damga değerinin 'dark' → 'night' yapılması, (c)
+  // `index.html`teki depo anahtarının değiştirilmesi, (d) `temaIzle`nin
+  // aboneliğinin kaldırılması — DÖRDÜ DE 348/348 yeşil geçiyordu. Kapı üç
+  // ayrı şeyi ayrı ayrı soruyordu (html'de `data-theme` geçiyor mu, CSS'te
+  // seçici var mı, `temaUygula(` çağrılıyor mu) ama ARALARINDAKİ BAĞI hiç
+  // sormuyordu: üçü de doğru olup değerler tutmayabilir ve gece modunun 50
+  // token'ı tanımlı, ölçülü ve ERİŞİLEMEZ kalır (A1'deki `C = GUNDUZ`
+  // mutasyonunun web ikizi).
+  {
+    const cssDeger = (css.match(/:root\[data-theme="(\w+)"\]/) || [])[1];
+    check('CSS gece damgasının değeri okunabiliyor', !!cssDeger);
+
+    // 1) SATIR İÇİ BETİĞİ GERÇEKTEN KOŞTUR. Sahte depo YALNIZ `app_theme`e
+    //    cevap verir ve sahte sistem AÇIK moddadır: anahtar ayrışırsa betik
+    //    `null` okur, sisteme düşer ve 'light' basar — yani depo anahtarının
+    //    iki dosyada aynı olduğu bu testin İÇİNDE ölçülüyor.
+    const betik = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] || '';
+    let basilan = null;
+    new Function('localStorage', 'window', 'document', betik)(
+      { getItem: (k) => (k === 'app_theme' ? 'dark' : null) },
+      { matchMedia: () => ({ matches: false }) },
+      { documentElement: { setAttribute: (k, v) => { basilan = [k, v]; } } },
+    );
+    check('satır içi betik damgayı basıyor', basilan && basilan[0] === 'data-theme',
+      JSON.stringify(basilan));
+    check('betiğin bastığı değer CSS seçicisiyle aynı', basilan && basilan[1] === cssDeger,
+      `${basilan && basilan[1]} ≠ ${cssDeger} — damga değeri ya da depo anahtarı ayrışmış`);
+
+    // 2) `temaUygula` DAVRANIŞI: aynı damgayı basıyor mu, tarayıcı çubuğunu
+    //    paletten mi okuyor. Çağrı yerini metinle görmek YETMEZ — gövde
+    //    boşaltıldığında kullanıcı seçeneğe basar, düğme işaretlenir ve
+    //    sayfa dönmez: bu turun var olma sebebi olan şikâyetin kendisi.
+    const yedek = { d: globalThis.document, w: globalThis.window, g: globalThis.getComputedStyle };
+    let uygulanan = null, meta = null, abone = 0;
+    globalThis.document = {
+      documentElement: { setAttribute: (k, v) => { uygulanan = [k, v]; } },
+      querySelector: () => ({ setAttribute: (k, v) => { meta = v; } }),
+    };
+    globalThis.window = {
+      matchMedia: () => ({ matches: false, addEventListener: () => { abone++; }, removeEventListener: () => {} }),
+    };
+    globalThis.getComputedStyle = () => ({ getPropertyValue: () => ' 20 25 28 ' });
+    let donen, izleDondu;
+    try {
+      donen = temaUygula('dark');
+      izleDondu = temaIzle();
+    } finally {
+      globalThis.document = yedek.d; globalThis.window = yedek.w; globalThis.getComputedStyle = yedek.g;
+    }
+    check('temaUygula damgayı GERÇEKTEN basıyor', uygulanan && uygulanan[0] === 'data-theme',
+      'seçime basılıyor, tercih kaydediliyor ve sayfa dönmüyor');
+    check('temaUygula ile CSS aynı değerde buluşuyor', uygulanan && uygulanan[1] === cssDeger,
+      `${uygulanan && uygulanan[1]} ≠ ${cssDeger}`);
+    check('temaUygula geçerli şemayı döndürüyor', donen === cssDeger);
+    check('tarayıcı çubuğu paletten güncelleniyor', meta === 'rgb(20 25 28)', String(meta));
+    // 3) SİSTEM DEĞİŞİMİNE ABONELİK — yalnız `temaIzle()` çağrısının metinde
+    //    bulunması, aboneliğin KURULDUĞU anlamına gelmez.
+    check('temaIzle gerçekten abone oluyor', abone === 1, `abone sayısı ${abone}`);
+    check('temaIzle abonelik iptalini döndürüyor', typeof izleDondu === 'function');
+  }
+
+  // TEK `theme-color` META: `prefers-color-scheme`e çivili bir çift,
+  // sistem açık modda + kullanıcı "Koyu" seçmişken sayfayı koyu, tarayıcı
+  // çubuğunu marka teal'inde bırakırdı.
+  check('theme-color tek meta ve media koşulsuz',
+    (html.match(/name="theme-color"/g) || []).length === 1 &&
+    !/name="theme-color"[^>]*media=/.test(html),
+    'çubuk rengi seçimi değil sistemi izliyor');
+  // SEÇİCİ GERÇEKTEN BİR SAYFADA BASILIYOR MU — kapı DOSYA ADINA
+  // ÇİVİLENMEZ (bu proje aynı hatayı beş kez yaptı) ve kaynak YORUMLARDAN
+  // SOYULUR (yorumdaki bir örnek kod kapıyı yanlış sebepten yeşil geçirir).
+  const secici = walkSrc(join(root, 'src'))
+    .map((f) => [f, stripComments(readFileSync(f, 'utf8'))])
+    // Tanımın kendisi muaf: `lib/theme.js` adı taşır, ÇAĞIRMAZ.
+    .filter(([, k]) => /temaYaz\s*\(/.test(k) && !/export function temaYaz/.test(k));
+  check('tema seçici bir sayfada basılıyor', secici.length === 1,
+    `bulunan ${secici.length} dosya — 0 ise özellik yine görünmez`);
+  const [yol, kod] = secici[0] || ['-', ''];
+  const ad = String(yol).split(/[\\/]/).pop();
+  check(`seçenekler TEMA_DEGERLERI'nden üretiliyor (${ad})`, /TEMA_DEGERLERI\.map\(/.test(kod),
+    'elle yazılan liste tek kaynaktan sessizce ayrışır');
+  check('seçeneğe tıklamak tercihi değiştiriyor', /onClick=\{\(\) => secTema\(/.test(kod),
+    'düğmeler ölü — görünen seçici, işlemeyen seçim');
+  check('seçim ANINDA uygulanıyor', /temaUygula\(/.test(kod),
+    'tercih kaydediliyor ama sayfa dönmüyor — dokunup hiçbir şey olmuyor');
+  check('ölü JSX kapısı yok', !/\{\s*false\s*(&&|\?)/.test(kod),
+    'bölüm sabit-yanlış bir koşulun altında — dosyada var, ekranda yok');
+  check('yazma hatası ekrana basılıyor', /setTemaHata\('[^']+'\)/.test(kod) && /\{temaHata &&/.test(kod),
+    'hata state\'e yazılıyor ama hiçbir yere basılmıyor');
+  check('seçili değer her mount\'ta depodan okunuyor', /useState\(temaOku\)/.test(kod),
+    'bayat değer yanlış seçeneği işaretler');
+  // FORMUN İÇİNE KONMASIN: `<button>` varsayılanı `submit`tir ve profil
+  // kaydını tetiklerdi.
+  check('seçenekler type="button"', /type="button"/.test(kod));
+
+  // SİSTEM TEMASI DEĞİŞİMİNE ABONELİK. Olmasaydı "Sistem" seçiliyken
+  // kullanıcı işletim sistemi temasını değiştirir, sekmeye döner ve hiçbir
+  // şey olmazdı.
+  const giris = readFileSync(join(root, 'src', 'main.jsx'), 'utf8');
+  check('sistem teması değişimine abone olunuyor', /temaIzle\(\)/.test(stripComments(giris)),
+    '"Sistem" seçiliyken tema değişimi sayfaya yansımaz');
+  // AÇILIŞTA DA UYGULANMALI: satır içi betik birincil yol, bu satır emniyet
+  // kemeri (CSP, önbellekteki eski HTML). Ölçülmezse sessizce silinir ve
+  // kemerin yokluğu ancak gerçek arıza gününde fark edilir.
+  check('açılışta tema uygulanıyor', /temaUygula\(temaOku\(\)\)/.test(stripComments(giris)));
+}
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);
