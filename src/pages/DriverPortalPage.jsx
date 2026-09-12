@@ -305,7 +305,7 @@ export default function DriverPortalPage() {
         <XCircle size={32} className="text-ink-muted mx-auto mb-3" />
         <p className="text-ink-soft font-semibold mb-4">{stale || 'Bilgiler yüklenemedi.'}</p>
         <button onClick={() => { setLoading(true); load(); }}
-                className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors">
+                className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors ${FOCUS}`}>
           Tekrar dene
         </button>
       </div>

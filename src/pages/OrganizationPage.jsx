@@ -265,7 +265,7 @@ export default function OrganizationPage() {
           </div>
           <p className="text-ink-soft font-semibold mb-1">Henüz firmanız yok</p>
           <p className="text-sm text-ink-muted mb-5">Firma oluşturup ekip üyelerinizi davet edin.</p>
-          <button onClick={() => { setShowCreate(true); setError(''); }} className="bg-brand-600 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700">
+          <button onClick={() => { setShowCreate(true); setError(''); }} className={`bg-brand-600 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700 ${FOCUS}`}>
             Firma Oluştur
           </button>
         </div>
@@ -307,7 +307,7 @@ export default function OrganizationPage() {
                 </div>
                 <div className="flex gap-3">
                   <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-                  <button type="submit" disabled={saving} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
+                  <button type="submit" disabled={saving} className={`flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold ${FOCUS}`}>
                     {saving ? 'Oluşturuluyor...' : 'Oluştur'}
                   </button>
                 </div>
@@ -333,7 +333,7 @@ export default function OrganizationPage() {
         {canManage && (
           <button
             onClick={() => { setShowInvite(true); setError(''); }}
-            className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold transition-colors"
+            className={`flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold transition-colors ${FOCUS}`}
           >
             <UserPlus size={16} /> Üye Davet Et
           </button>
@@ -359,7 +359,7 @@ export default function OrganizationPage() {
                 required autoFocus
               />
               <button type="submit" disabled={nameSaving}
-                className="shrink-0 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold">
+                className={`shrink-0 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold ${FOCUS}`}>
                 {nameSaving ? '...' : 'Kaydet'}
               </button>
               <button type="button" onClick={() => { setEditingName(false); setNameError(''); }}
@@ -413,7 +413,7 @@ export default function OrganizationPage() {
                   <button
                     onClick={() => handleUpgrade(p.key)}
                     disabled={upgrading === p.key}
-                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-3.5 py-2 text-sm font-semibold transition-colors shrink-0"
+                    className={`flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-3.5 py-2 text-sm font-semibold transition-colors shrink-0 ${FOCUS}`}
                   >
                     <ArrowUpCircle size={15} /> {upgrading === p.key ? 'Yönlendiriliyor...' : 'Yükselt'}
                   </button>
@@ -690,7 +690,7 @@ export default function OrganizationPage() {
                   </div>
                 </div>
 
-                <button onClick={closeInviteModal} className="w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
+                <button onClick={closeInviteModal} className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold ${FOCUS}`}>
                   Tamam
                 </button>
               </div>
@@ -763,7 +763,7 @@ export default function OrganizationPage() {
                 <p className="text-xs text-ink-muted">Davet linki oluşturulacak, WhatsApp ile gönderebilirsiniz. Üye mobil uygulamadan katılır.</p>
                 <div className="flex gap-3">
                   <button type="button" onClick={closeInviteModal} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-                  <button type="submit" disabled={saving} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
+                  <button type="submit" disabled={saving} className={`flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold ${FOCUS}`}>
                     {saving ? 'Gönderiliyor...' : 'Davet Gönder'}
                   </button>
                 </div>

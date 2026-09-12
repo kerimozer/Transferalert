@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plane, Bell, MessageCircle, CheckCircle, Zap } from 'lucide-react';
@@ -53,7 +54,7 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/app/login')} className="text-sm text-ink-soft hover:text-ink">Giriş Yap</button>
-          <button onClick={() => navigate('/app/login')} className="bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2 text-sm font-semibold transition-colors">
+          <button onClick={() => navigate('/app/login')} className={`bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2 text-sm font-semibold transition-colors ${FOCUS}`}>
             Ücretsiz Dene
           </button>
         </div>
@@ -74,7 +75,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => navigate('/app/login')}
-            className="bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-3 text-base font-semibold transition-colors shadow-sm"
+            className={`bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-3 text-base font-semibold transition-colors shadow-sm ${FOCUS}`}
           >
             Ücretsiz Başla
           </button>
@@ -169,7 +170,7 @@ export default function LandingPage() {
                     plan.highlight
                       ? 'bg-surface text-brand-600 hover:bg-brand-50'
                       : 'bg-brand-600 text-onfill hover:bg-brand-700'
-                  }`}
+                  } ${FOCUS}`}
                 >
                   {plan.cta}
                 </button>

@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { X, Printer, Plane } from 'lucide-react';
 
 export default function WelcomeSignModal({ reservation, onClose }) {
@@ -7,7 +8,7 @@ export default function WelcomeSignModal({ reservation, onClose }) {
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border print:hidden">
           <h2 className="font-semibold text-ink">Karşılama Tabelası</h2>
           <div className="flex items-center gap-2">
-            <button onClick={() => window.print()} className="flex items-center gap-1.5 text-sm bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-3 py-1.5">
+            <button onClick={() => window.print()} className={`flex items-center gap-1.5 text-sm bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-3 py-1.5 ${FOCUS}`}>
               <Printer size={14} /> Yazdır
             </button>
             <button onClick={onClose} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>

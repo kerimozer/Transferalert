@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { formatPickup } from '../lib/format';
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
@@ -170,7 +171,7 @@ export default function BulkImportModal({ onClose, onDone }) {
               <CheckCircle size={48} className="text-ok-600 mx-auto mb-4" />
               <p className="text-lg font-semibold text-ink">{result.inserted} transfer eklendi</p>
               {result.skipped > 0 && <p className="text-sm text-warn-600 mt-1">{result.skipped} satır atlandı (eksik/hatalı)</p>}
-              <button onClick={onClose} className="mt-6 bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-2.5 text-sm font-semibold">Kapat</button>
+              <button onClick={onClose} className={`mt-6 bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-2.5 text-sm font-semibold ${FOCUS}`}>Kapat</button>
             </div>
           ) : (
             <>

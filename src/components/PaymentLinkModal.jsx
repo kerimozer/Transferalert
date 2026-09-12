@@ -56,7 +56,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
                 {copied ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
               </button>
             </div>
-            <button onClick={onClose} className="w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
+            <button onClick={onClose} className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold ${FOCUS}`}>
               Tamam
             </button>
           </div>
@@ -76,7 +76,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-              <button type="submit" disabled={loading} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
+              <button type="submit" disabled={loading} className={`flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold ${FOCUS}`}>
                 {loading ? 'Oluşturuluyor...' : 'Link Oluştur'}
               </button>
             </div>

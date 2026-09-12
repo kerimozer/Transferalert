@@ -10,6 +10,7 @@
 // olmadığı. İkisi de /driver-options ucundan gelir. Çakışmayı göstermemek,
 // aynı şoförü iki transfere yazmayı sessizce mümkün kılıyordu; bedeli
 // havalimanında bekleyen yolcudur.
+import { FOCUS } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { X, UserCheck, AlertCircle, AlertTriangle, Shield, Headset, Truck, Send, Car } from 'lucide-react';
@@ -112,7 +113,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
           </div>
           {wa && (
             <a href={wa} target="_blank" rel="noreferrer"
-               className="w-full flex items-center justify-center gap-2 py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors mb-2">
+               className={`w-full flex items-center justify-center gap-2 py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors mb-2 ${FOCUS}`}>
               <Send size={16} /> WhatsApp ile gönder
             </a>
           )}
@@ -229,7 +230,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
             <button
               onClick={() => assign(picked, false)}
               disabled={!!saving || !picked || picked === current}
-              className="w-full py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors disabled:opacity-50"
+              className={`w-full py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors disabled:opacity-50 ${FOCUS}`}
             >
               {saving === picked ? 'Atanıyor...' : picked === current ? 'Zaten atanmış' : `${pickedDriver?.name || 'Şoföre'} ata`}
             </button>

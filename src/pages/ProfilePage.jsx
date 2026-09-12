@@ -162,7 +162,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold transition-colors"
+          className={`flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold transition-colors ${FOCUS}`}
         >
           {saved
             ? <><CheckCircle size={15} /> Kaydedildi</>

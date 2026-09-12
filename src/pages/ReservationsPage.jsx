@@ -546,7 +546,7 @@ export default function ReservationsPage() {
 
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-                <button type="submit" disabled={submitting} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold transition-colors">
+                <button type="submit" disabled={submitting} className={`flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold transition-colors ${FOCUS}`}>
                   {submitting ? 'Ekleniyor...' : 'Takibe Al'}
                 </button>
               </div>
@@ -590,7 +590,7 @@ export default function ReservationsPage() {
           </div>
           <p className="text-ink-soft font-semibold mb-1">Henüz uçuş yok</p>
           <p className="text-sm text-ink-muted mb-5">Gelecekteki uçuşları önceden ekleyin.</p>
-          <button onClick={openForm} className="bg-brand-600 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700 transition-colors">İlk Uçuşu Ekle</button>
+          <button onClick={openForm} className={`bg-brand-600 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700 transition-colors ${FOCUS}`}>İlk Uçuşu Ekle</button>
         </div>
       )}
     </div>

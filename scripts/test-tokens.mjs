@@ -548,18 +548,26 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
     // 48 → 47'ye düştü ve taban 47 olduğu için kapı yeşil kaldı.)
     // BÜYÜME serbest, KÜÇÜLME kapıyı kırar — yeni kontrol eklemek CI'ı
     // kırmamalı ama bir kontrolün göstergesini bırakması bir KARARDIR.
+    // A7-2'den sonra (2026-09-12): dolu marka zeminli 32 kontrol daha reçeteyi
+    // aldı — 48 → 81. Nöbet checkbox'ı BİLİNÇLİ olarak dışarıda
+    // (`OrganizationPage` 20, 21 değil): `box-shadow` halkası Safari'de native
+    // kutuya çizilmiyor, reçete yerel göstergeyi kaldırıp yerine hiçbir şey
+    // koymuyordu.
     const TABAN = {
-      'src/components/PaymentLinkModal.jsx': 1, 'src/components/TransferTypeToggle.jsx': 1,
+      'src/components/AssignDriverModal.jsx': 2,
+      'src/components/BulkImportModal.jsx': 1,
+      'src/components/PaymentLinkModal.jsx': 3,
+      'src/components/TransferTypeToggle.jsx': 1,
+      'src/components/WelcomeSignModal.jsx': 1,
       'src/components/ui/Button.jsx': 2, 'src/components/ui/Field.jsx': 1,
-      'src/components/ui/StatRow.jsx': 1, 'src/pages/DashboardPage.jsx': 2,
-      'src/pages/DriverPortalPage.jsx': 3, 'src/pages/JobPage.jsx': 2,
-      'src/pages/LoginPage.jsx': 4, 'src/pages/NightWatchPage.jsx': 1,
-      // 13, 14 DEĞİL: nöbet checkbox'ı reçeteyi BİLİNÇLİ olarak almıyor —
-      // `box-shadow` halkası Safari'de native kutuya çizilmiyor, reçete
-      // eklemek yerel göstergeyi kaldırıp yerine hiçbir şey koymuyordu.
-      'src/pages/OrganizationPage.jsx': 13, 'src/pages/PartnerPortalPage.jsx': 1,
-      'src/pages/PlatformAdminPage.jsx': 2, 'src/pages/ProfilePage.jsx': 4,
-      'src/pages/RequestPage.jsx': 1, 'src/pages/ReservationsPage.jsx': 10,
+      'src/components/ui/StatRow.jsx': 1, 'src/pages/DashboardPage.jsx': 4,
+      'src/pages/DriverPortalPage.jsx': 4, 'src/pages/InvitePage.jsx': 5,
+      'src/pages/JobPage.jsx': 2, 'src/pages/LandingPage.jsx': 3,
+      'src/pages/LoginPage.jsx': 6, 'src/pages/NightWatchPage.jsx': 1,
+      'src/pages/OrganizationPage.jsx': 20,
+      'src/pages/PartnerPortalPage.jsx': 2,
+      'src/pages/PlatformAdminPage.jsx': 3, 'src/pages/ProfilePage.jsx': 5,
+      'src/pages/RequestPage.jsx': 2, 'src/pages/ReservationsPage.jsx': 12,
     };
     const sayim = {};
     const cagriYerleri = [];
@@ -604,6 +612,51 @@ console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
     check(`reçete ${Object.keys(sayim).length} dosyada, ` +
       `${Object.values(sayim).reduce((a, b) => a + b, 0)} kontrolde kullanılıyor`,
       eksilen.length === 0, eksilen.join(' · ') + ' — kontrol reçeteyi bırakmış');
+
+    // DOLU MARKA ZEMİNLİ HER ODAKLANABİLİR KONTROL REÇETEYİ ALMALI (A7-2).
+    //
+    // NEDEN AYRI BİR KURAL: yukarıdaki kontroller yalnız "göstergeyi BASTIRAN"
+    // kontrolü yakalıyor. Hiç odak sınıfı yazmayan bir buton tarayıcının kendi
+    // halkasına düşer ve bu WCAG'ı GEÇER — ama canlıda ölçüldü: giriş formunun
+    // üç girdisi bizim teal halkamızı gösterirken bir Tab aşağısındaki
+    // "Giriş Yap" düğmesi `outline: rgb(229,151,0) auto 0.8px` (tarayıcının
+    // turuncu halkası) gösteriyordu. Aynı formda iki ayrı odak dili.
+    //
+    // Kapsam ŞEKİLDEN türetiliyor — dosya adı listesi DEĞİL: "dinlenme
+    // zemininde `bg-brand-600` taşıyan odaklanabilir eleman". Yarın eklenecek
+    // buton da kendiliğinden kapsama girer. `hover:bg-brand-600/25` gibi
+    // varyant önekli olan SAYILMAZ; o dinlenme zemini değil.
+    {
+      // MUAFİYET ŞEKİLDE, DOSYADA DEĞİL: native `checkbox`/`radio` kutusunda
+      // `box-shadow` halkası Safari'de çizilmiyor ve `@tailwindcss/forms` da
+      // kurulu değil — reçete eklemek yerel göstergeyi KALDIRIP yerine hiçbir
+      // şey koymuyordu.
+      const ODAK_ETIKET = ['button', 'a', 'Link', 'input', 'select', 'textarea'];
+      const eksik = [];
+      for (const f of walkSrc(join(root, 'src'))) {
+        const rel = relative(root, f).split(/[\\/]/).join('/');
+        const s = stripComments(readFileSync(f, 'utf8'));
+        for (const etiket of ODAK_ETIKET) {
+          for (const m of s.matchAll(new RegExp(`<${etiket}(?=[\\s>])`, 'g'))) {
+            let derinlik = 0, son = s.length;
+            for (let j = m.index; j < s.length; j++) {
+              const c = s[j];
+              if (c === '{') derinlik++;
+              else if (c === '}') derinlik--;
+              else if (c === '>' && derinlik === 0) { son = j; break; }
+            }
+            const acilis = s.slice(m.index, son);
+            if (!/(^|[\s"'`{(])bg-brand-600(?![\w-])/.test(acilis)) continue;
+            if (/FOCUS/.test(acilis)) continue;
+            if (/type=["']?(checkbox|radio)/.test(acilis)) continue;
+            eksik.push(`${rel}:${s.slice(0, m.index).split('\n').length} <${etiket}>`);
+          }
+        }
+      }
+      check('dolu marka zeminli her kontrol reçeteyi taşıyor', eksik.length === 0,
+        '\n      ' + eksik.join('\n      ') +
+        '\n      (tarayıcı halkasına düşüyor — aynı formda iki ayrı odak dili)');
+    }
 
     {
       const kirpilan = cagriYerleri.filter((c) => c.kenarda && !c.inset)

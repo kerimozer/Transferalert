@@ -120,7 +120,7 @@ export default function PlatformAdminPage() {
                   <button
                     onClick={() => handleSavePlan(p.key)}
                     disabled={saving === p.key}
-                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold transition-colors"
+                    className={`flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold transition-colors ${FOCUS}`}
                   >
                     <Save size={13} /> {saving === p.key ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>

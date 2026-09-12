@@ -70,7 +70,7 @@ export default function LoginPage() {
             </p>
             <button
               onClick={() => { setAwaitingConfirm(false); setMode('login'); setPassword(''); }}
-              className="w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
+              className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors ${FOCUS}`}
             >
               Onayladım, giriş yap
             </button>
@@ -153,7 +153,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
+            className={`w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors ${FOCUS}`}
           >
             {loading
               ? (mode === 'login' ? 'Giriş yapılıyor...' : 'Kaydediliyor...')

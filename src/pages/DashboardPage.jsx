@@ -260,7 +260,7 @@ export default function DashboardPage() {
                 ? (looksLikeFlightNumber(q) && (
                     <Link
                       to={`/app/reservations?flight=${encodeURIComponent(q.toUpperCase().replace(/\s+/g, ''))}`}
-                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors"
+                      className={`inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors ${FOCUS}`}
                     >
                       <Plane size={16} aria-hidden="true" />
                       {q.toUpperCase().replace(/\s+/g, '')} uçuşunu canlı ara
@@ -275,7 +275,7 @@ export default function DashboardPage() {
                 : (
                     <Link
                       to="/app/reservations"
-                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors"
+                      className={`inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors ${FOCUS}`}
                     >
                       <Plus size={16} aria-hidden="true" />
                       Transfer ekle

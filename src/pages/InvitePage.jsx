@@ -8,6 +8,7 @@
 //
 // Çözüm https bir sayfa: her mesajlaşma uygulamasında tıklanır, uygulama kurulu
 // olmasa da açılır, katılma işlemini burada bitirir.
+import { FOCUS } from '../lib/focus';
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -119,7 +120,7 @@ export default function InvitePage() {
                 akışın kurtarmaya çalıştığı zincire geri sokuyordu. */}
             {invite.driver_link && (
               <a href={invite.driver_link}
-                 className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3">
+                 className={`block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3 ${FOCUS}`}>
                 İşlerimi Göster
               </a>
             )}
@@ -129,7 +130,7 @@ export default function InvitePage() {
             </div>
           </>
         ) : (
-          <button onClick={() => navigate('/app')} className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors">
+          <button onClick={() => navigate('/app')} className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors ${FOCUS}`}>
             Panele git
           </button>
         )}
@@ -152,7 +153,7 @@ export default function InvitePage() {
         </p>
         <a
           href={invite.driver_link}
-          className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3"
+          className={`block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3 ${FOCUS}`}
         >
           İşlerimi Göster
         </a>
@@ -215,7 +216,7 @@ export default function InvitePage() {
           <button
             onClick={accept}
             disabled={joining}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill font-semibold rounded-control py-3 transition-colors"
+            className={`w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill font-semibold rounded-control py-3 transition-colors ${FOCUS}`}
           >
             {joining ? 'Katılınıyor...' : 'Tekrar dene'}
           </button>
@@ -229,7 +230,7 @@ export default function InvitePage() {
               zorluyordu — akışın en çok takılan yeri burasıydı. */}
           <button
             onClick={() => navigate(`/app/login?mode=register&next=${encodeURIComponent(`/davet/${token}`)}`)}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors mb-2"
+            className={`w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors mb-2 ${FOCUS}`}
           >
             Devam et
           </button>
