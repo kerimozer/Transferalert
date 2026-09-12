@@ -1,3 +1,4 @@
+import { FOCUS_INSET } from '../lib/focus';
 // Transfer türü seçimi — ORTAK bileşen.
 //
 // Üç ayrı formda görünüyor (panel içindeki transfer ekleme, otel talep
@@ -33,7 +34,7 @@ export default function TransferTypeToggle({ value, onChange, label = 'Transfer 
               role="radio"
               aria-checked={active}
               onClick={() => onChange(key)}
-              className={`flex flex-col items-center gap-0.5 rounded-control px-3 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+              className={`flex flex-col items-center gap-0.5 rounded-control px-3 py-2.5 transition-colors ${FOCUS_INSET} ${
                 // SEÇİLİ SEKME `segmentactive` KULLANIR, `surface` DEĞİL.
                 // Gündüzde ikisi de beyaz, yani fark görünmüyordu; gecede
                 // `surface` (#1E262B) raydan (#252E33) DAHA KOYU, yani

@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 // Ana Sayfa — ARTIK BİR ÖZET DEĞİL, çalışma ekranı.
 //
 // Önceden burada "son 5 rezervasyon" duruyordu ve arama hiç yoktu: dispatcher
@@ -129,7 +130,7 @@ export default function DashboardPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Transfer ara — yolcu, uçuş no, PNR, şoför"
-          className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-surface border focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+          className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-surface border ${FOCUS} ${
             q ? 'border-brand-600' : 'border-surface-inputborder'
           }`}
         />
@@ -181,7 +182,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => setDriverlessOnly(v => !v)}
-              className="w-full flex items-center gap-2.5 min-h-[44px] px-3.5 py-2.5 text-left bg-bad-50 border border-surface-dangerborder rounded-control hover:bg-bad-50/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-bad-600/40"
+              className={`w-full flex items-center gap-2.5 min-h-[44px] px-3.5 py-2.5 text-left bg-bad-50 border border-surface-dangerborder rounded-control hover:bg-bad-50/70 ${FOCUS}`}
               aria-pressed={showDriverlessOnly}
             >
               <AlertTriangle size={16} className="text-bad-800 shrink-0" aria-hidden="true" />

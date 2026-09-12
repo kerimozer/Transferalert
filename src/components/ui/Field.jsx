@@ -1,3 +1,4 @@
+import { FOCUS } from '../../lib/focus';
 import { useId } from 'react';
 
 // Form alanı — etiket/girdi/hata/ipucu kablolaması TEK yerde.
@@ -12,7 +13,7 @@ import { useId } from 'react';
 
 export const inputCls =
   'w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-sm text-ink ' +
-  'placeholder:text-ink-muted focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none ' +
+  `placeholder:text-ink-muted focus:border-brand-600 ${FOCUS} ` +
   'disabled:bg-surface-alt disabled:text-ink-muted';
 
 export function Input({ className = '', ...rest }) {

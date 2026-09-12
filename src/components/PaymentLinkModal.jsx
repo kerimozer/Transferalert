@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useState } from 'react';
 import { X, CreditCard, Copy, CheckCircle, AlertCircle } from 'lucide-react';
 import { api } from '../lib/api';
@@ -68,7 +69,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
                 value={amount}
                 onChange={e => setAmount(e.target.value)}
                 placeholder="500"
-                className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                 required autoFocus
               />
               <p className="text-xs text-ink-muted mt-1">Yolcudan alınacak transfer ücretini girin, iyzico ödeme linki oluşturulacak.</p>

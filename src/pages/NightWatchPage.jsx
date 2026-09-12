@@ -13,6 +13,7 @@
 // Yetki SÜRELİDİR: pencere dışında sunucu 403 döner ve burada bilgi ekranı
 // gösterilir. İstemci "nöbetteyim" kararını KENDİ vermez (sunucu söyler) —
 // aksi halde saati yanlış olan bir bilgisayar firmanın işlerini açardı.
+import { FOCUS_INSET } from '../lib/focus';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Moon, RefreshCw, AlertCircle, Phone, MapPin, User, FileText, Tag, Hourglass, Navigation, Car, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { api } from '../lib/api';
@@ -74,11 +75,13 @@ function WatchCard({ res, onOpen }) {
           ait olduğunu söylemiyor. */}
       <StatusStrip r={res} />
 
+      {/* İÇE ÇİZİLEN ODAK HALKASI: kart `overflow-hidden` ve bu düğme kartın
+          tam genişliğinde — dışa çizilen halka üç kenardan KIRPILIRDI. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-alt transition-colors"
+        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-alt transition-colors ${FOCUS_INSET}`}
       >
         <span className="w-9 h-9 rounded-full bg-surface-alt flex items-center justify-center shrink-0">
           <span className="text-xs font-bold text-ink-soft">{initials(res.passenger_name)}</span>

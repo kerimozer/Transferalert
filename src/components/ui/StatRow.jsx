@@ -1,3 +1,4 @@
+import { FOCUS_INSET } from '../../lib/focus';
 import { Fragment } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -25,7 +26,7 @@ export default function StatRow({ items }) {
           {i > 0 && <div className="w-px my-[11px] bg-surface-border shrink-0" aria-hidden="true" />}
           <Link
             to={it.to}
-            className="flex-1 min-w-0 px-1 py-[13px] text-center hover:bg-surface-alt focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600/40"
+            className={`flex-1 min-w-0 px-1 py-[13px] text-center hover:bg-surface-alt ${FOCUS_INSET}`}
             // Sayı ve etiket ayrı iki düğüm: ekran okuyucu ikisini kopuk okur.
             // Tek etikette birleştir.
             aria-label={`${it.label}: ${it.value}`}

@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -100,7 +101,7 @@ export default function LoginPage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                className="w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600"
+                className={`w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:border-brand-600 ${FOCUS}`}
                 placeholder="Mehmet Demir"
                 required
                 autoFocus
@@ -114,7 +115,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600"
+              className={`w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:border-brand-600 ${FOCUS}`}
               placeholder="firma@ornek.com"
               required
               autoFocus={mode === 'login'}
@@ -127,7 +128,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              className="w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600"
+              className={`w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:border-brand-600 ${FOCUS}`}
               required
             />
           </div>
@@ -142,7 +143,7 @@ export default function LoginPage() {
                 type="tel"
                 value={phone}
                 onChange={e => setPhone(e.target.value)}
-                className="w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30 focus:border-brand-600"
+                className={`w-full border border-surface-inputborder rounded-control px-3 py-2 text-sm focus:border-brand-600 ${FOCUS}`}
                 placeholder="0532 000 00 00"
                 required
               />

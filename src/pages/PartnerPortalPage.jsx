@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Send, Clock, RefreshCw, ExternalLink, AlertCircle } from 'lucide-react';
@@ -277,7 +278,7 @@ export default function PartnerPortalPage() {
   );
 }
 
-const inputCls = 'w-full border border-surface-inputborder rounded-card px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30';
+const inputCls = `w-full border border-surface-inputborder rounded-card px-3.5 py-2.5 text-sm ${FOCUS}`;
 
 function Field({ label, required, children }) {
   return (

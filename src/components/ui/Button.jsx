@@ -1,3 +1,4 @@
+import { FOCUS } from '../../lib/focus';
 import { Loader2 } from 'lucide-react';
 
 // Tasarım sisteminin TEK buton kaynağı. Sayfalarda çıplak buton sınıfı yazmak
@@ -40,7 +41,7 @@ export default function Button({
       aria-busy={loading || undefined}
       className={[
         'inline-flex items-center justify-center gap-2 font-semibold rounded-control transition-colors',
-        'focus:outline-none focus:ring-2 focus:ring-brand-600/30',
+        FOCUS,
         'disabled:opacity-60 disabled:cursor-not-allowed',
         VARIANTS[variant] || VARIANTS.primary,
         SIZES[size] || SIZES.md,
@@ -69,7 +70,7 @@ export function IconButton({ label, icon: Icon, tone = 'muted', className = '', 
       aria-label={label}
       title={label}
       className={[
-        'p-1.5 rounded-control transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/30',
+        `p-1.5 rounded-control transition-colors ${FOCUS}`,
         tones[tone] || tones.muted,
         className,
       ].join(' ')}

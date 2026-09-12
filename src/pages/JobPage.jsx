@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 // Taşeron şoförün girişsiz iş kartı — /job/:token
 //
 // Bu sayfayı direksiyon başındaki bir insan, tek eliyle, çoğu zaman gece ve
@@ -203,7 +204,7 @@ export default function JobPage() {
             <button
               onClick={() => advance(job.next_statuses[0])}
               disabled={!!saving}
-              className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-onfill transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className={`w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-onfill transition-colors disabled:opacity-60 ${FOCUS}`}
             >
               {saving === job.next_statuses[0] ? 'Kaydediliyor...' : jobAction(job.next_statuses[0], job)}
             </button>
@@ -216,7 +217,7 @@ export default function JobPage() {
                     key={s}
                     onClick={() => advance(s)}
                     disabled={!!saving}
-                    className={`min-h-[44px] rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+                    className={`min-h-[44px] rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${FOCUS} ${
                         s === 'completed'
                           /* Nötr ama VURGULU: kalın kenarlık, zemin yok. Yeşil
                              kullanılmıştı ama bu üründe yeşil "tamamlandı"

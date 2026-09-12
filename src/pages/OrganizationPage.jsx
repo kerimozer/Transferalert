@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Building2, UserPlus, Trash2, Phone, Mail, Copy, CheckCircle, X, AlertCircle, Clock, Shield, Truck, Headset, ArrowUpCircle, Moon, Pencil, Send, RefreshCw, XCircle, Car } from 'lucide-react';
@@ -288,7 +289,7 @@ export default function OrganizationPage() {
                     value={createForm.name}
                     onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Örnek Transfer Ltd."
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                     required autoFocus
                   />
                 </div>
@@ -297,7 +298,7 @@ export default function OrganizationPage() {
                   <select
                     value={createForm.plan}
                     onChange={e => setCreateForm(f => ({ ...f, plan: e.target.value }))}
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                   >
                     {plans.map(p => (
                       <option key={p.key} value={p.key}>{p.label} ({p.driver_limit} kişi)</option>
@@ -353,7 +354,7 @@ export default function OrganizationPage() {
               <input
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
-                className="flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                className={`flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-sm font-semibold ${FOCUS}`}
                 maxLength={100}
                 required autoFocus
               />
@@ -441,7 +442,13 @@ export default function OrganizationPage() {
                 type="checkbox"
                 checked={nw.enabled}
                 onChange={(e) => setNw({ ...nw, enabled: e.target.checked })}
-                className="w-4 h-4 rounded border-surface-inputborder text-brand-600 focus:ring-2 focus:ring-brand-600/30"
+                /* REÇETE BİLİNÇLİ OLARAK YOK: bu native bir checkbox ve
+                   `box-shadow` halkası Safari'de native kutuya çizilmiyor
+                   (`@tailwindcss/forms` da kurulu değil). Reçete eklemek
+                   yerel göstergeyi KALDIRIR ve yerine hiçbir şey koymaz.
+                   Kapı buna izin verir: `outline-none` yazılmadığı sürece
+                   tarayıcının kendi halkası meşru bir göstergedir. */
+                className="w-4 h-4 rounded border-surface-inputborder text-brand-600"
               />
               <span className="text-sm font-semibold text-ink-soft">{nw.enabled ? 'Açık' : 'Kapalı'}</span>
             </label>
@@ -454,7 +461,7 @@ export default function OrganizationPage() {
                 id="nw-user"
                 value={nw.user_id}
                 onChange={(e) => setNw({ ...nw, user_id: e.target.value })}
-                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className={`w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 ${FOCUS}`}
               >
                 <option value="">Seçiniz</option>
                 {members.filter(m => m.status === 'active' && m.user_id).map(m => (
@@ -469,7 +476,7 @@ export default function OrganizationPage() {
               <input
                 id="nw-start" type="time" value={nw.start}
                 onChange={(e) => setNw({ ...nw, start: e.target.value })}
-                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className={`w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 ${FOCUS}`}
               />
             </div>
             <div>
@@ -477,7 +484,7 @@ export default function OrganizationPage() {
               <input
                 id="nw-end" type="time" value={nw.end}
                 onChange={(e) => setNw({ ...nw, end: e.target.value })}
-                className="w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 focus:outline-none"
+                className={`w-full rounded-control border border-surface-inputborder bg-surface px-4 py-2.5 text-ink focus:border-brand-600 ${FOCUS}`}
               />
             </div>
           </div>
@@ -497,7 +504,7 @@ export default function OrganizationPage() {
             <button
               type="submit"
               disabled={nwSaving}
-              className="bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill font-semibold rounded-control px-5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className={`bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill font-semibold rounded-control px-5 py-2.5 text-sm transition-colors ${FOCUS}`}
             >
               {nwSaving ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
@@ -558,7 +565,7 @@ export default function OrganizationPage() {
                       defaultValue={m.vehicle_plate || ''}
                       onBlur={(e) => handlePlate(m.id, e.target.value, m.vehicle_plate)}
                       placeholder="07 ABC 123"
-                      className="flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-xs tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                      className={`flex-1 min-w-0 border border-surface-inputborder rounded-control px-3 py-1.5 text-xs tabular-nums ${FOCUS}`}
                     />
                     {plateSaved === m.id && (
                       <span className="flex items-center gap-1 text-xs font-semibold text-ok-800 shrink-0">
@@ -698,7 +705,7 @@ export default function OrganizationPage() {
                     value={inviteForm.name}
                     onChange={e => setInviteForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Ali Kaya"
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                     required autoFocus
                   />
                 </div>
@@ -709,7 +716,7 @@ export default function OrganizationPage() {
                     onChange={e => setInviteForm(f => ({ ...f, phone: e.target.value }))}
                     placeholder="0532 000 00 00"
                     type="tel"
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                     required
                   />
                 </div>
@@ -720,7 +727,7 @@ export default function OrganizationPage() {
                     onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))}
                     placeholder="ornek@sirket.com"
                     type="email"
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                   />
                 </div>
                 <div>
@@ -728,7 +735,7 @@ export default function OrganizationPage() {
                   <select
                     value={inviteForm.role}
                     onChange={e => setInviteForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                    className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`}
                   >
                     <option value="driver">Sürücü</option>
                     <option value="dispatcher">Operasyon</option>
@@ -748,7 +755,7 @@ export default function OrganizationPage() {
                       value={inviteForm.vehicle_plate}
                       onChange={e => setInviteForm(f => ({ ...f, vehicle_plate: e.target.value.toUpperCase() }))}
                       placeholder="07 ABC 123"
-                      className="w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                      className={`w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm tabular-nums ${FOCUS}`}
                     />
                     <p className="text-xs text-ink-muted mt-1">Transfere atandığında otomatik yazılır; o iş için değiştirilebilir.</p>
                   </div>

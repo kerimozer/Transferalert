@@ -330,6 +330,343 @@ for (const [ad, zemin] of [['kart', CANON.surface], ['sayfa', CANON.bg], ['surfa
   check('hiçbir girdi eski (görünmez) sınırı kullanmıyor', kacak.length === 0, kacak.join(', '));
 }
 
+// ── [3c] ODAK HALKASI — WCAG 2.4.11 / 1.4.11 (A7, 2026-09-12) ─────────────
+//
+// NEDEN VAR: `src/` altında 47 yerde elle kopyalanmış reçete marka tonunun
+// %30 saydam hâlini kullanıyordu ve kart zeminine karşı GÜNDÜZ 1.64, GECE
+// 1.81 veriyordu (eşik 3.0). Yanındaki `outline-none` tarayıcının kendi
+// göstergesini de kaldırdığı için klavyeyle gezen kullanıcıya HİÇBİR işaret
+// kalmıyordu. B11 turunda girdi kenarlığı ölçülüp düzeltilirken bu çifte
+// hiç bakılmadı — çünkü odak halkasını ölçen bir kapı YOKTU.
+//
+// KAPININ BELKEMİĞİ: reçete metninden rengi çözerken OPAKLIK SON EKİ de
+// okunur ve varsa zeminle KARIŞTIRILIR. Yalnız token adına bakan bir kontrol,
+// biri `/30`i geri yazdığı gün opak değeri ölçüp yeşil kalırdı — bu projenin
+// `placeholderTextColor` turunda düştüğü hatanın birebir aynısı ("prop var mı"
+// diye sorup DEĞERİNE bakmamak).
+console.log('\n[3c] Odak halkası görünür (WCAG 2.4.11 / 1.4.11, ≥3:1)');
+{
+  const { FOCUS, FOCUS_INSET } = await import(new URL('../src/lib/focus.js', import.meta.url));
+
+  // ZEMİN OLABİLEN HER TOKEN. Üç yüzeyle yetinmek, "beyazda geçiyor mu"
+  // sorusunun ikizi olurdu: kontroller yumuşak rozet zeminlerinin, segment
+  // rayının ve şeritlerin üstünde de duruyor. `*border*` token'ları zemin
+  // DEĞİL (çizgi) — onlar ayrıca aşağıda boşluk kuralıyla ele alınıyor.
+  const zeminMi = (k) => !/border/.test(k) && (
+    /^(surface|segmentactive)/.test(k) || /-50$/.test(k) ||
+    (/^(strip|done)-/.test(k) && !/ink$/.test(k)));
+
+  const karistir = (on, arka, a) => {
+    const oku = (h) => [1, 3, 5].map((i) => parseInt(h.substr(i, 2), 16));
+    const [f, b] = [oku(on), oku(arka)];
+    return '#' + f.map((v, i) => Math.round(a * v + (1 - a) * b[i])
+      .toString(16).padStart(2, '0')).join('').toUpperCase();
+  };
+
+  // Reçeteyi ÇÖZÜMLE: genişlik, renk (+opaklık), boşluk, içe-çizim.
+  const coz = (recete) => {
+    const t = recete.trim().split(/\s+/);
+    const bul = (re) => t.map((x) => re.exec(x)).find(Boolean);
+    const en = bul(/^focus(?:-visible)?:ring-(\d+)$/);
+    const renk = bul(/^focus(?:-visible)?:ring-((?!inset$|offset-)[a-z]+(?:-\d+)?)(?:\/(\d+))?$/);
+    const bosEn = bul(/^focus(?:-visible)?:ring-offset-(\d+)$/);
+    const bosRenk = bul(/^focus(?:-visible)?:ring-offset-((?![0-9])[a-z]+(?:-\d+)?)$/);
+    return {
+      tokens: t,
+      outlineNone: t.includes('focus:outline-none'),
+      en: en ? Number(en[1]) : 0,
+      renk: renk ? renk[1] : null,
+      opaklik: renk && renk[2] ? Number(renk[2]) / 100 : 1,
+      bosEn: bosEn ? Number(bosEn[1]) : 0,
+      bosRenk: bosRenk ? bosRenk[1] : null,
+      inset: t.some((x) => /^focus(?:-visible)?:ring-inset$/.test(x)),
+      // Fare tıklamasında patlamaması için halka `focus-visible` olmalı.
+      gorunurVaryant: t.filter((x) => /:ring/.test(x)).every((x) => x.startsWith('focus-visible:')),
+    };
+  };
+
+  const R = { FOCUS: coz(FOCUS), FOCUS_INSET: coz(FOCUS_INSET) };
+
+  for (const [ad, r] of Object.entries(R)) {
+    // YERİNE KOYULANIN VARLIĞINI DA ÖLÇ: `outline-none` yasağı tek başına
+    // ölçülürse, halkası silinmiş bir reçete "yasak yok" diye yeşil geçer ve
+    // sonuç eskisinden DAHA sessiz bir ekran olur.
+    check(`${ad}: yerel göstergeyi kaldırıyor (outline-none)`, r.outlineNone);
+    check(`${ad}: halka genişliği ≥2px (${r.en})`, r.en >= 2,
+      'genişlik sınıfı yoksa Tailwind hiç gölge üretmez — gösterge YOK');
+    check(`${ad}: halka rengi tanımlı (${r.renk})`, !!r.renk,
+      'renk sınıfı yok — halka Tailwind varsayılanına düşer');
+    check(`${ad}: halka focus-visible varyantında`, r.gorunurVaryant,
+      'opak halka her FARE tıklamasında patlar');
+  }
+  check('FOCUS dışa çizilir ve BOŞLUK taşır',
+    !R.FOCUS.inset && R.FOCUS.bosEn >= 2 && !!R.FOCUS.bosRenk,
+    'boşluk yoksa dolu marka butonunda halka dolguyla AYNI renk olur (1.00)');
+  check('FOCUS_INSET içe çizilir ve boşluk taşımaz',
+    R.FOCUS_INSET.inset && R.FOCUS_INSET.bosEn === 0,
+    'içe çizilen halkada boşluk anlamsız');
+
+  for (const [paletAd, P] of [['gündüz', GUNDUZ_CSS], ['gece', GECE_CSS]]) {
+    const zeminler = Object.keys(P).filter(zeminMi);
+    check(`${paletAd}: ölçülecek zemin bulundu (${zeminler.length})`, zeminler.length >= 20,
+      'zemin listesi boşaldı — aşağıdaki ölçümlerin hepsi anlamsız olur');
+
+    for (const [ad, r] of Object.entries(R)) {
+      if (!r.renk || !P[r.renk]) { check(`${paletAd} ${ad}: renk palete çözülüyor`, false, r.renk); continue; }
+      // EN KÖTÜ ZEMİN raporlanır; hepsini tek tek basmak 100 satır ekler.
+      let enKotu = null;
+      for (const z of zeminler) {
+        // OPAKLIK VARSA KARIŞTIR. Kapı tam olarak bu yüzden `/30`i yakalar.
+        const halka = r.opaklik < 1 ? karistir(P[r.renk], P[z], r.opaklik) : P[r.renk];
+        const o = ratio(halka, P[z]);
+        if (!enKotu || o < enKotu[1]) enKotu = [z, o];
+      }
+      check(`${paletAd} ${ad}: en kötü zemin ${enKotu[0]} = ${enKotu[1].toFixed(2)}`,
+        enKotu[1] >= 3, 'WCAG 2.4.11 eşiği 3.0 — klavye kullanıcısı nerede olduğunu görmüyor');
+    }
+
+    // BOŞLUK YIĞINI: dolu marka butonunda halka dolguyla aynı renktir
+    // (kontrast 1.00). Görünürlüğü boşluk sağlıyor — ölçülmezse biri boşluğu
+    // "gereksiz" diye kaldırır ve birincil butonun odağı yok olur.
+    const bos = P[R.FOCUS.bosRenk];
+    check(`${paletAd}: boşluk / dolu marka butonu = ${ratio(bos, P['brand-600']).toFixed(2)}`,
+      ratio(bos, P['brand-600']) >= 3, 'dolu butonda halka görünmez');
+    check(`${paletAd}: halka / boşluk = ${ratio(P[R.FOCUS.renk], bos).toFixed(2)}`,
+      ratio(P[R.FOCUS.renk], bos) >= 3, 'halka boşluktan ayrılmıyor');
+    // Boşluğun KENDİ ZEMİNİNDEN sapması aşağıda, ÇAĞRI YERLERİNDEN türetilerek
+    // ölçülüyor. Burada elle yazılmış iki zeminle yetinmek ("dosya adına
+    // çivileme" hatasının renk ikizi) yarın `warn-50` üstüne konan bir
+    // kontrolü göremezdi.
+  }
+
+  // ── KULLANIM SÖZLEŞMESİ ────────────────────────────────────────────────
+  // Değeri ölçmek YETMEZ: reçete doğru olup 47 çağrı yeri eski dizeyi
+  // taşımaya devam edebilir. Kural ŞEKLE bakıyor, dosya adına DEĞİL —
+  // "yarın eklenecek sayfa bunu geçer mi?" sorusunun cevabı EVET olmalı.
+  //
+  // Değişmez: YEREL ODAK GÖSTERGESİNİ BASTIRAN HİÇBİR KONTROL, ÖLÇÜLMÜŞ
+  // REÇETEYİ ALMADAN BUNU YAPAMAZ.
+  {
+    const ihlal = [];
+    for (const f of walkSrc(join(root, 'src'))) {
+      const rel = relative(root, f).split(/[\\/]/).join('/');
+      if (rel.endsWith('src/lib/focus.js')) continue;   // tanımın kendisi
+      const s = stripComments(readFileSync(f, 'utf8'));
+
+      // (a) Odak sınıfı ELLE yazılmış. Tek kaynak dışında hiçbir yerde
+      //     `focus:ring-*` / `focus:outline-*` olamaz.
+      for (const m of s.matchAll(/focus(?:-visible)?:(?:ring|outline)-[\w./[\]-]+/g)) {
+        ihlal.push(`${rel}:${s.slice(0, m.index).split('\n').length} elle yazılmış "${m[0]}"`);
+      }
+
+      // (b) `outline-none` ÖNEKSİZ de yazılabilir ve kuralı atlar. Muafiyet
+      //     EN DAR birimde ve GEREKÇEYE bağlı: yalnız klavyeyle gezilemeyen,
+      //     programla odaklanan kapsayıcı (`tabIndex={-1}` — modal paneli).
+      //     Dosya adıyla muafiyet vermek kalıcı serbest bölge açardı.
+      for (const m of s.matchAll(/(?<![\w:-])outline-none\b/g)) {
+        const bas = s.lastIndexOf('<', m.index);
+        const etiket = bas < 0 ? '' : s.slice(bas, m.index + 200);
+        if (/tabIndex=\{-1\}/.test(etiket)) continue;
+        ihlal.push(`${rel}:${s.slice(0, m.index).split('\n').length} çıplak "outline-none"`);
+      }
+
+      // (c) `outline: none` / `outline-0` YASAK: Tailwind'in `outline-none`u
+      //     saydam bir 2px kenar bırakıyor ve `forced-colors` modunda sistem
+      //     rengine boyanıyor. Bu ikisi o emniyeti yok eder ve Yüksek
+      //     Kontrast kullanıcısını göstergesiz bırakır.
+      for (const m of s.matchAll(/outline:\s*none|(?<![\w:-])outline-0\b/g)) {
+        ihlal.push(`${rel}:${s.slice(0, m.index).split('\n').length} "${m[0]}" (forced-colors emniyetini siler)`);
+      }
+    }
+    check('odak göstergesini bastıran her kontrol ölçülmüş reçeteyi kullanıyor',
+      ihlal.length === 0, '\n      ' + ihlal.join('\n      '));
+  }
+
+  // TÜKETİCİ DE OKUNUR. Paylaşılan girdi sınıfı sabitleri (ortak `<Field>`in
+  // 19 çağrı yeri dahil 33 girdiyi besliyorlar) reçeteyi GERÇEKTEN
+  // enterpolasyon ediyor mu? `[3b]`nin acı dersi: sabitin içine bakmayan bir
+  // kapı, 33 girdi korumasız kalırken 161/161 yeşil kaldı.
+  {
+    const kacak = [];
+    for (const f of walkSrc(join(root, 'src'))) {
+      const rel = relative(root, f).split(/[\\/]/).join('/');
+      if (rel.endsWith('src/lib/focus.js')) continue;
+      const s = stripComments(readFileSync(f, 'utf8'));
+      // ATAMANIN TAMAMI OKUNUR, İLK DİZE PARÇASI DEĞİL. İlk hâli tek bir dize
+      // sabiti yakalıyordu ve `Field.jsx`in ÜÇ PARÇALI birleştirmesinde
+      // yalnız birinci parçayı görüp reçeteyi kaçırdı — yani kapı yanlış
+      // sebepten KIRMIZI yandı. Bir sınıf sabitinin değeri birden fazla
+      // parçadan oluşabilir.
+      //
+      // `<` ya da `=>` taşıyan atamalar elenir: onlar JSX/fonksiyon, sınıf
+      // sabiti değil — yoksa `[^;]*` bir bileşeni yutup yanlış alarm verirdi.
+      for (const m of s.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*([^;]*);/g)) {
+        const [, isim, deger] = m;
+        if (/<|=>/.test(deger)) continue;
+        // Girdi reçetesi şekli — `[3b]` ile aynı ölçüt.
+        if (!/\bw-full\b/.test(deger) || !/\bborder\b/.test(deger)) continue;
+        if (/\$\{FOCUS(?:_INSET)?\}/.test(deger)) continue;
+        kacak.push(`${rel}:${s.slice(0, m.index).split('\n').length} (${isim})`);
+      }
+    }
+    check('paylaşılan girdi sınıfı sabitleri reçeteyi taşıyor', kacak.length === 0,
+      kacak.join(', ') + ' — sabit 33 girdiyi besliyor, odak halkası olmadan');
+  }
+
+  // ── ÇAĞRI YERLERİ: SAYIM + KENDİ ZEMİNİNE KARŞI ÖLÇÜM ──────────────────
+  //
+  // ÜÇ KÖR NOKTA BURADA KAPANIYOR (üçü de denetimde MUTASYONLA kanıtlandı —
+  // kapı her birinde 386/0 YEŞİL kalmıştı):
+  //
+  // (1) ÖZELLİĞİN TAMAMI SİLİNEBİLİYORDU. Yukarıdaki kontrollerin hepsi bir
+  //     YASAK ölçüyor ("elle reçete yazma", "göstergeyi bastırma"). Biri her
+  //     çağrı yerinden `${FOCUS}`u ve importunu silse ortada ihlal KALMAZDI:
+  //     reçete tanımlı, ölçülü ve hiçbir kontrolde kullanılmıyor olurdu.
+  //     (A1'in `C = GUNDUZ` dersinin birebir ikizi.)
+  // (2) HANGİ REÇETEYİ ALDIĞI HİÇ SORULMUYORDU. `${FOCUS}` → `${FOCUS_INSET}`
+  //     takası yapıldığında şoför panosundaki ve iş kartındaki DOLU marka
+  //     butonlarında içe çizilen halka dolguyla aynı renge düşüyor —
+  //     kontrast 1.00, gösterge fiilen YOK. Dolu butonu kurtaran tek şey
+  //     `ring-offset`ti ve inset'e geçildiği an o da yok oluyordu.
+  // (3) TERS YÖN — KIRPILMA. `overflow-hidden` bir kabın kenarına dayalı
+  //     kontrolde dışa çizilen halka üç kenardan kırpılır. Kural
+  //     `focus.js`in yorumunda YAZILIYDI, ölçülmüyordu.
+  //
+  // Çözüm tek çözümleme: her çağrı yerinin className ŞABLONUNDAN kendi
+  // `bg-*` tokenını çıkar ve REÇETEYE GÖRE ölç —
+  //   FOCUS_INSET → halka, kontrolün KENDİ dolgusundan ≥3 ayrılmalı.
+  //   FOCUS       → boşluk ya dolgudan NET ayrılmalı (≥3: dolu kontrol,
+  //                 yığın dolgu→boşluk→halka) ya da GÖZLE FARK EDİLMEMELİ
+  //                 (≤1.35: kontrol zaten yüzey renginde duruyor). Aradaki
+  //                 bant yasak: orada boşluk ayırıcı olarak okunmaz, yanlış
+  //                 renkte bir çerçeve gibi durur.
+  // Sayım da aynı taramadan çıkıyor, yani taban ile ölçüm AYNI kümeyi görür.
+  {
+    // DOSYA BAZLI TABAN, tek bir toplam DEĞİL: toplam taban, bir dosyadan
+    // silinen çağrının başka bir dosyaya eklenenle kapanmasına izin verir.
+    // (Denetimde tam bu oldu: `ProfilePage`ten bir tanesi silindi, toplam
+    // 48 → 47'ye düştü ve taban 47 olduğu için kapı yeşil kaldı.)
+    // BÜYÜME serbest, KÜÇÜLME kapıyı kırar — yeni kontrol eklemek CI'ı
+    // kırmamalı ama bir kontrolün göstergesini bırakması bir KARARDIR.
+    const TABAN = {
+      'src/components/PaymentLinkModal.jsx': 1, 'src/components/TransferTypeToggle.jsx': 1,
+      'src/components/ui/Button.jsx': 2, 'src/components/ui/Field.jsx': 1,
+      'src/components/ui/StatRow.jsx': 1, 'src/pages/DashboardPage.jsx': 2,
+      'src/pages/DriverPortalPage.jsx': 3, 'src/pages/JobPage.jsx': 2,
+      'src/pages/LoginPage.jsx': 4, 'src/pages/NightWatchPage.jsx': 1,
+      // 13, 14 DEĞİL: nöbet checkbox'ı reçeteyi BİLİNÇLİ olarak almıyor —
+      // `box-shadow` halkası Safari'de native kutuya çizilmiyor, reçete
+      // eklemek yerel göstergeyi kaldırıp yerine hiçbir şey koymuyordu.
+      'src/pages/OrganizationPage.jsx': 13, 'src/pages/PartnerPortalPage.jsx': 1,
+      'src/pages/PlatformAdminPage.jsx': 2, 'src/pages/ProfilePage.jsx': 4,
+      'src/pages/RequestPage.jsx': 1, 'src/pages/ReservationsPage.jsx': 10,
+    };
+    const sayim = {};
+    const cagriYerleri = [];
+
+    for (const f of walkSrc(join(root, 'src'))) {
+      const rel = relative(root, f).split(/[\\/]/).join('/');
+      if (rel.endsWith('src/lib/focus.js')) continue;
+      const s = stripComments(readFileSync(f, 'utf8'));
+      // İMPORT SATIRI SAYILMAZ — "tanımlı ama kullanılmıyor" tam olarak
+      // yakalamak istediğimiz hâl.
+      const govde = s.replace(/import\s*\{[^}]*\}\s*from\s*['"][^'"]*focus['"];?/g,
+        (m) => ' '.repeat(m.length));
+
+      for (const m of govde.matchAll(/\bFOCUS(_INSET)?\b/g)) {
+        sayim[rel] = (sayim[rel] || 0) + 1;
+        // KENDİ ŞABLONUNU BUL. Çağrı yeri bir şablon dizesinin içindeyse
+        // (kod tabanının yerleşik deseni) zeminini oradan okuruz; değilse
+        // (`Button.jsx`in dizisi) zemin ayrı bir haritada durur ve bu tarama
+        // onu GÖREMEZ — pencere açıp tahmin etmektense ölçmemek yeğdir:
+        // yanlış zeminle yeşil yanan bir kontrol, ölçülmemişten daha kötüdür.
+        const bas = govde.lastIndexOf('`', m.index);
+        const son = bas < 0 ? -1 : govde.indexOf('`', m.index);
+        if (bas < 0 || son < 0) continue;
+        const sablon = govde.slice(bas, son);
+        const zeminler = [...new Set(
+          [...sablon.matchAll(/(^|[\s'"`{(])bg-([a-z]+(?:-[a-z0-9]+)?)(?:\/\d+)?(?![\w-])/g)]
+            .map((z) => z[2]))];
+        cagriYerleri.push({
+          rel, satir: govde.slice(0, m.index).split('\n').length,
+          inset: !!m[1], zeminler,
+          // KENARA DAYALI MI? Tam genişlikte, köşesi yuvarlatılmamış bir
+          // kontrol kabının kenarına oturur. Yuvarlatılmış kontrol dayanmaz.
+          kenarda: /\b(?:w-full|flex-1)\b/.test(sablon) && !/\brounded-/.test(sablon)
+            && /overflow-hidden/.test(govde),
+        });
+      }
+    }
+
+    const eksilen = Object.entries(TABAN)
+      .filter(([f, n]) => (sayim[f] || 0) < n)
+      .map(([f, n]) => `${f}: ${sayim[f] || 0} < ${n}`);
+    check(`reçete ${Object.keys(sayim).length} dosyada, ` +
+      `${Object.values(sayim).reduce((a, b) => a + b, 0)} kontrolde kullanılıyor`,
+      eksilen.length === 0, eksilen.join(' · ') + ' — kontrol reçeteyi bırakmış');
+
+    {
+      const kirpilan = cagriYerleri.filter((c) => c.kenarda && !c.inset)
+        .map((c) => `${c.rel}:${c.satir}`);
+      check(`kenara dayalı kontroller içe çizilen halkayı kullanıyor ` +
+        `(${cagriYerleri.filter((c) => c.kenarda).length})`,
+        kirpilan.length === 0,
+        kirpilan.join(' · ') + ' — `overflow-hidden` kapta dışa çizilen halka kırpılır');
+    }
+
+    // ÖLÇÜLECEK ÇAĞRI YERİ BULUNAMAZSA BU BÖLÜM SESSİZCE HİÇBİR ŞEY ÖLÇMEZ.
+    const olculen = cagriYerleri.filter((c) => c.zeminler.length);
+    check(`kendi zemini okunabilen çağrı yeri (${olculen.length})`, olculen.length >= 10,
+      'şablon taraması boşaldı — aşağıdaki ölçümlerin hepsi anlamsız');
+
+    for (const [paletAd, P] of [['gündüz', GUNDUZ_CSS], ['gece', GECE_CSS]]) {
+      const bos = P[R.FOCUS.bosRenk];
+      const kotu = [];
+      for (const c of olculen) {
+        for (const z of c.zeminler) {
+          if (!P[z]) continue;      // palet dışı (`bg-white`, `bg-black/60`…)
+          if (c.inset) {
+            const halka = R.FOCUS_INSET.opaklik < 1
+              ? karistir(P[R.FOCUS_INSET.renk], P[z], R.FOCUS_INSET.opaklik)
+              : P[R.FOCUS_INSET.renk];
+            const o = ratio(halka, P[z]);
+            if (o < 3) kotu.push(`${c.rel}:${c.satir} içe halka / bg-${z} = ${o.toFixed(2)}`);
+          } else {
+            const o = ratio(bos, P[z]);
+            if (o > 1.35 && o < 3) {
+              kotu.push(`${c.rel}:${c.satir} boşluk / bg-${z} = ${o.toFixed(2)} (yasak bant)`);
+            }
+          }
+        }
+      }
+      check(`${paletAd}: her çağrı yeri kendi zemininde ölçüldü (${olculen.length})`,
+        kotu.length === 0, '\n      ' + kotu.join('\n      '));
+    }
+  }
+
+  // STİL SAYFASI DA TARANIR. Yukarıdaki yasaklar yalnız `.jsx` içinde
+  // aranıyordu; `index.css`e tek bir
+  // `*:focus-visible { outline: none !important }` eklemek uygulamadaki HER
+  // odak göstergesini siliyor ve kapı 386/0 yeşil kalıyordu (denetçi D3).
+  // Palet zaten bu dosyadan okunuyor — ihlali okumaması tutarsızdı.
+  {
+    const ihlal = [];
+    const cssler = readdirSync(join(root, 'src'), { recursive: true })
+      .filter((n) => typeof n === 'string' && n.endsWith('.css'));
+    for (const n of cssler) {
+      const metin = readFileSync(join(root, 'src', n), 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+      for (const m of metin.matchAll(/:focus(?:-visible)?[^{}]*\{[^}]*\}/g)) {
+        if (/(?:outline|box-shadow)\s*:\s*(?:none|0)\b/.test(m[0])) {
+          ihlal.push(`src/${n}: ${m[0].replace(/\s+/g, ' ').slice(0, 80)}`);
+        }
+      }
+    }
+    check(`stil sayfası odak göstergesini söndürmüyor (${cssler.length} dosya)`,
+      ihlal.length === 0 && cssler.length >= 1, ihlal.join(' · '));
+  }
+}
+
 console.log('\n[4] Şerit AĞIRLIĞI — sayfa zemini üstünde sakin');
 for (const [ad, hex] of Object.entries(SERIT)) {
   const r = ratio(hex, CANON.bg);

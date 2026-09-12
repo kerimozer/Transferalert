@@ -1,3 +1,4 @@
+import { FOCUS } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plane, CheckCircle, XCircle, Calendar, Send } from 'lucide-react';
@@ -174,7 +175,7 @@ export default function RequestPage() {
   );
 }
 
-const inputCls = 'w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600/30';
+const inputCls = `w-full border border-surface-inputborder rounded-card px-4 py-3 text-sm ${FOCUS}`;
 
 function Field({ label, required, children }) {
   return (
