@@ -83,9 +83,9 @@ export default function InvitePage() {
 
   const Shell = ({ children }) => (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-7 max-w-sm w-full">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-7 max-w-sm w-full">
         <div className="flex items-center gap-2 mb-6">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control"><Plane size={16} /></div>
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control"><Plane size={16} /></div>
           <span className="font-bold text-ink">TransferAlert</span>
         </div>
         {children}
@@ -119,7 +119,7 @@ export default function InvitePage() {
                 akışın kurtarmaya çalıştığı zincire geri sokuyordu. */}
             {invite.driver_link && (
               <a href={invite.driver_link}
-                 className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3.5 transition-colors mb-3">
+                 className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3">
                 İşlerimi Göster
               </a>
             )}
@@ -129,7 +129,7 @@ export default function InvitePage() {
             </div>
           </>
         ) : (
-          <button onClick={() => navigate('/app')} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3 transition-colors">
+          <button onClick={() => navigate('/app')} className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors">
             Panele git
           </button>
         )}
@@ -152,7 +152,7 @@ export default function InvitePage() {
         </p>
         <a
           href={invite.driver_link}
-          className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3.5 transition-colors mb-3"
+          className="block w-full text-center bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3.5 transition-colors mb-3"
         >
           İşlerimi Göster
         </a>
@@ -165,7 +165,7 @@ export default function InvitePage() {
           </p>
           <button
             onClick={() => navigate(`/app/login?mode=register&next=${encodeURIComponent(`/davet/${token}`)}`)}
-            className="w-full bg-white border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-2.5 text-sm hover:bg-surface-alt transition-colors"
+            className="w-full bg-surface border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-2.5 text-sm hover:bg-surface-alt transition-colors"
           >
             Hesap oluştur
           </button>
@@ -183,7 +183,7 @@ export default function InvitePage() {
       <h1 className="text-xl font-bold text-ink mb-5">{invite.company}</h1>
 
       <div className="flex items-start gap-3 p-3.5 bg-surface-bg rounded-control mb-5">
-        <div className="w-9 h-9 rounded-control bg-white border border-surface-border flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-control bg-surface border border-surface-border flex items-center justify-center shrink-0">
           <RoleIcon size={16} className="text-brand-600" />
         </div>
         <div>
@@ -215,7 +215,7 @@ export default function InvitePage() {
           <button
             onClick={accept}
             disabled={joining}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white font-semibold rounded-control py-3 transition-colors"
+            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill font-semibold rounded-control py-3 transition-colors"
           >
             {joining ? 'Katılınıyor...' : 'Tekrar dene'}
           </button>
@@ -229,7 +229,7 @@ export default function InvitePage() {
               zorluyordu — akışın en çok takılan yeri burasıydı. */}
           <button
             onClick={() => navigate(`/app/login?mode=register&next=${encodeURIComponent(`/davet/${token}`)}`)}
-            className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3 transition-colors mb-2"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors mb-2"
           >
             Devam et
           </button>

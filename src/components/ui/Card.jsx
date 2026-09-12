@@ -6,7 +6,7 @@ export default function Card({ padding = 'md', className = '', children, ...rest
   return (
     <div
       className={[
-        'bg-white border border-surface-border rounded-card shadow-card',
+        'bg-surface border border-surface-border rounded-card shadow-card',
         PADDINGS[padding] ?? PADDINGS.md,
         className,
       ].join(' ')}

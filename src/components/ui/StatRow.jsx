@@ -17,7 +17,7 @@ import { Link } from 'react-router-dom';
 // sayı hiyerarşiyi yeniden eşitler.
 export default function StatRow({ items }) {
   return (
-    <div className="flex bg-white border border-surface-border rounded-card overflow-hidden">
+    <div className="flex bg-surface border border-surface-border rounded-card overflow-hidden">
       {items.map((it, i) => (
         <Fragment key={it.label}>
           {/* Ayraç kartın üst/alt kenarına DEĞMEZ: değdiğinde satır dört ayrı

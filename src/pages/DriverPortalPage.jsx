@@ -52,7 +52,7 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
   const next = job.next_statuses || [];
 
   return (
-    <div className={`bg-white border rounded-card shadow-card overflow-hidden ${done ? 'border-surface-border opacity-75' : 'border-surface-border'}`}>
+    <div className={`bg-surface border rounded-card shadow-card overflow-hidden ${done ? 'border-surface-border opacity-75' : 'border-surface-border'}`}>
       {/* DURUM ŞERİDİ — "Kart C" anatomisi, üç sayfada ORTAK bileşen.
           Şoförün panosu bugünün ve sonraki günlerin işlerini birlikte
           listeliyor; şeridin tarihi bu yüzden burada özellikle kritik. */}
@@ -114,7 +114,7 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
               işlerin telefon listesi şoförün elinde kalıcı bir rehber olmasın. */}
           {job.passenger_phone && (
             <a href={`tel:${job.passenger_phone}`}
-               className="mt-3 flex items-center justify-center gap-2 bg-white border border-surface-borderstrong text-ink font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
+               className="mt-3 flex items-center justify-center gap-2 bg-surface border border-surface-borderstrong text-ink font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
               <Phone size={17} /> Yolcuyu Ara
             </a>
           )}
@@ -134,7 +134,7 @@ function JobCard({ job, open, onToggle, onAdvance, saving, flash }) {
               <button
                 onClick={() => onAdvance(job, next[0])}
                 disabled={!!saving}
-                className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-white transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+                className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-onfill transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
               >
                 {saving === next[0] ? 'Kaydediliyor...' : jobAction(next[0], job)}
               </button>
@@ -289,7 +289,7 @@ export default function DriverPortalPage() {
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
         <XCircle size={32} className="text-bad-600 mx-auto mb-3" />
         <p className="text-ink-soft font-semibold">{error}</p>
       </div>
@@ -300,11 +300,11 @@ export default function DriverPortalPage() {
   // hâlde boş ekran görüp yola çıkmayabilir. Ayrımı açıkça söyle.
   if (!data) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
         <XCircle size={32} className="text-ink-muted mx-auto mb-3" />
         <p className="text-ink-soft font-semibold mb-4">{stale || 'Bilgiler yüklenemedi.'}</p>
         <button onClick={() => { setLoading(true); load(); }}
-                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control py-3 transition-colors">
+                className="w-full bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control py-3 transition-colors">
           Tekrar dene
         </button>
       </div>
@@ -318,7 +318,7 @@ export default function DriverPortalPage() {
       <div className="max-w-md mx-auto p-4 pb-10">
 
         <div className="flex items-center gap-2 mb-1">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control"><Plane size={16} /></div>
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control"><Plane size={16} /></div>
           <span className="font-bold text-ink">{data?.company}</span>
         </div>
         <p className="text-sm text-ink-muted mb-4">
@@ -333,7 +333,7 @@ export default function DriverPortalPage() {
         )}
 
         {jobs.length === 0 ? (
-          <div className="bg-white border border-surface-border rounded-card shadow-card p-8 text-center">
+          <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 text-center">
             <CalendarClock size={30} className="text-ink-muted mx-auto mb-3" />
             <p className="font-semibold text-ink mb-1">Şu an size atanmış iş yok</p>
             <p className="text-sm text-ink-soft">
@@ -361,7 +361,7 @@ export default function DriverPortalPage() {
             Sunucu bu alanı yalnız iş penceresindeyken doldurur. */}
         {data?.company_phone && (
           <a href={`tel:${data.company_phone}`}
-             className="mt-4 flex items-center justify-center gap-2 bg-white border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
+             className="mt-4 flex items-center justify-center gap-2 bg-surface border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
             <Building2 size={17} /> Firmayı Ara
           </a>
         )}

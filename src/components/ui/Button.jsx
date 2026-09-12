@@ -9,8 +9,8 @@ import { Loader2 } from 'lucide-react';
 //   (genişlik zıplamasın diye spinner metnin YANINA gelir).
 // - İkon-tek buton kullanacaksan children yerine aria-label ZORUNLU.
 const VARIANTS = {
-  primary:   'bg-brand-600 hover:bg-brand-700 text-white',
-  secondary: 'bg-white border border-surface-borderstrong text-ink hover:bg-surface-alt',
+  primary:   'bg-brand-600 hover:bg-brand-700 text-onfill',
+  secondary: 'bg-surface border border-surface-borderstrong text-ink hover:bg-surface-alt',
   // Dolu kırmızı yalnız onay diyaloglarında — sayfa içi tehlikeli eylem soft'tur
   danger:    'bg-bad-50 text-bad-800 hover:bg-bad-50/70 border border-bad-600/20',
   ghost:     'text-ink-soft hover:bg-surface-alt',

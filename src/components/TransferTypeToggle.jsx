@@ -34,7 +34,16 @@ export default function TransferTypeToggle({ value, onChange, label = 'Transfer 
               aria-checked={active}
               onClick={() => onChange(key)}
               className={`flex flex-col items-center gap-0.5 rounded-control px-3 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
-                active ? 'bg-white text-brand-700 shadow-card' : 'text-ink-soft hover:text-ink'
+                // SEÇİLİ SEKME `segmentactive` KULLANIR, `surface` DEĞİL.
+                // Gündüzde ikisi de beyaz, yani fark görünmüyordu; gecede
+                // `surface` (#1E262B) raydan (#252E33) DAHA KOYU, yani
+                // "yükseltilmiş" işareti tersine dönüp sekmeyi ÇUKUR
+                // gösteriyordu. `shadow-card` da gecede siyah gölge olduğu
+                // için koyu kartta hiçbir şey çizmiyor — kenarlık o yüzden
+                // eklendi, yükseklik iddiası tek başına gölgeye dayanamaz.
+                active
+                  ? 'bg-segmentactive text-brand-700 border border-surface-borderstrong'
+                  : 'border border-transparent text-ink-soft hover:text-ink'
               }`}
             >
               <span className="flex items-center gap-1.5 text-sm font-semibold">

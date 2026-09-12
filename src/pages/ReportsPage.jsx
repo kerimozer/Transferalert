@@ -81,7 +81,7 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Son 30 Gün */}
-        <div className="bg-white border border-surface-border rounded-card p-6">
+        <div className="bg-surface border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
             <TrendingUp size={16} className="text-brand-600" /> Son 30 Gün
           </h2>
@@ -105,7 +105,7 @@ export default function ReportsPage() {
         </div>
 
         {/* En Çok Takip */}
-        <div className="bg-white border border-surface-border rounded-card p-6">
+        <div className="bg-surface border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4 flex items-center gap-2">
             <Plane size={16} className="text-brand-600" /> En Çok Takip Edilen
           </h2>
@@ -132,7 +132,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Tamamlanma Oranı */}
-        <div className="bg-white border border-surface-border rounded-card p-6">
+        <div className="bg-surface border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Tamamlanma Oranı</h2>
           {total === 0 ? (loadError ? null : 
             <EmptyState size="sm" title="Henüz veri yok" />
@@ -155,7 +155,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Bildirim Başarı Oranı */}
-        <div className="bg-white border border-surface-border rounded-card p-6">
+        <div className="bg-surface border border-surface-border rounded-card p-6">
           <h2 className="font-semibold text-ink mb-4">Bildirim Başarı Oranı</h2>
           {notifications.length === 0 ? (loadError ? null : 
             <EmptyState size="sm" title="Henüz bildirim yok" />
@@ -193,7 +193,7 @@ function StatCard({ icon: Icon, color, label, value }) {
     purple: 'bg-accent-50 text-accent-600',
   };
   return (
-    <div className="bg-white border border-surface-border rounded-card p-5">
+    <div className="bg-surface border border-surface-border rounded-card p-5">
       <div className={`w-9 h-9 rounded-card flex items-center justify-center mb-3 ${colors[color]}`}>
         <Icon size={18} />
       </div>

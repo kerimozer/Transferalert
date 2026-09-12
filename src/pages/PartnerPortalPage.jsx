@@ -111,7 +111,7 @@ export default function PartnerPortalPage() {
 
   if (loadErr) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
         <XCircle size={32} className="text-bad-600 mx-auto mb-3" />
         <p className="text-ink-soft font-semibold">{loadErr}</p>
       </div>
@@ -123,7 +123,7 @@ export default function PartnerPortalPage() {
       <div className="max-w-3xl mx-auto">
         <header className="flex items-center gap-3 mb-6">
           <div className="w-11 h-11 bg-brand-600 rounded-card flex items-center justify-center shrink-0">
-            <Plane size={20} className="text-white" />
+            <Plane size={20} className="text-onfill" />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-ink truncate">{info.company}</h1>
@@ -133,7 +133,7 @@ export default function PartnerPortalPage() {
 
         <div className="grid md:grid-cols-2 gap-5">
           {/* Talep formu */}
-          <section className="bg-white border border-surface-border rounded-card shadow-sm p-5">
+          <section className="bg-surface border border-surface-border rounded-card shadow-sm p-5">
             <h2 className="font-semibold text-ink mb-4">Yeni transfer talebi</h2>
 
             {sent && (
@@ -180,7 +180,7 @@ export default function PartnerPortalPage() {
               </Field>
 
               <button type="submit" disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-3 text-sm font-semibold transition-colors">
+                className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-3 text-sm font-semibold transition-colors">
                 <Send size={15} /> {submitting ? 'Gönderiliyor...' : 'Transfer Talep Et'}
               </button>
 
@@ -194,7 +194,7 @@ export default function PartnerPortalPage() {
           </section>
 
           {/* Talep geçmişi */}
-          <section className="bg-white border border-surface-border rounded-card shadow-sm p-5">
+          <section className="bg-surface border border-surface-border rounded-card shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-ink">Talepleriniz</h2>
               <button onClick={handleRefresh} disabled={refreshing}

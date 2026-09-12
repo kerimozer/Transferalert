@@ -51,7 +51,7 @@ export default function PlatformAdminPage() {
 
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-3">
+          <div className="bg-surface border border-surface-border rounded-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
               <Building2 size={18} className="text-brand-600" />
             </div>
@@ -60,7 +60,7 @@ export default function PlatformAdminPage() {
               <p className="text-xs text-ink-muted">Firma</p>
             </div>
           </div>
-          <div className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-3">
+          <div className="bg-surface border border-surface-border rounded-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
               <Users size={18} className="text-brand-600" />
             </div>
@@ -69,7 +69,7 @@ export default function PlatformAdminPage() {
               <p className="text-xs text-ink-muted">Aktif Üye</p>
             </div>
           </div>
-          <div className="bg-white border border-surface-border rounded-card p-4 flex items-center gap-3">
+          <div className="bg-surface border border-surface-border rounded-card p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center shrink-0">
               <Layers size={18} className="text-brand-600" />
             </div>
@@ -84,7 +84,7 @@ export default function PlatformAdminPage() {
       )}
 
       <h2 className="text-lg font-semibold text-ink mb-3">Planlar</h2>
-      <div className="bg-white border border-surface-border rounded-card overflow-hidden mb-8">
+      <div className="bg-surface border border-surface-border rounded-card overflow-hidden mb-8">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-border text-left text-ink-muted">
@@ -119,7 +119,7 @@ export default function PlatformAdminPage() {
                   <button
                     onClick={() => handleSavePlan(p.key)}
                     disabled={saving === p.key}
-                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-control px-3 py-1.5 text-xs font-semibold transition-colors"
+                    className="flex items-center gap-1.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold transition-colors"
                   >
                     <Save size={13} /> {saving === p.key ? 'Kaydediliyor...' : 'Kaydet'}
                   </button>
@@ -132,11 +132,11 @@ export default function PlatformAdminPage() {
 
       <h2 className="text-lg font-semibold text-ink mb-3">Firmalar</h2>
       {orgs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-surface-border rounded-card">
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-surface-border rounded-card">
           <p className="text-ink-soft font-semibold mb-1">Henüz kayıtlı firma yok</p>
         </div>
       ) : (
-        <div className="bg-white border border-surface-border rounded-card overflow-hidden">
+        <div className="bg-surface border border-surface-border rounded-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-border text-left text-ink-muted">

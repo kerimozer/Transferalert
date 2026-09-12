@@ -158,7 +158,7 @@ export default function BulkImportModal({ onClose, onDone }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div className="bg-surface rounded-card shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
           <h2 className="font-semibold text-ink flex items-center gap-2"><FileSpreadsheet size={18} className="text-ok-600" /> Toplu İçe Aktar (Excel / CSV)</h2>
           <button onClick={onClose} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
@@ -170,7 +170,7 @@ export default function BulkImportModal({ onClose, onDone }) {
               <CheckCircle size={48} className="text-ok-600 mx-auto mb-4" />
               <p className="text-lg font-semibold text-ink">{result.inserted} transfer eklendi</p>
               {result.skipped > 0 && <p className="text-sm text-warn-600 mt-1">{result.skipped} satır atlandı (eksik/hatalı)</p>}
-              <button onClick={onClose} className="mt-6 bg-brand-600 hover:bg-brand-700 text-white rounded-card px-6 py-2.5 text-sm font-semibold">Kapat</button>
+              <button onClick={onClose} className="mt-6 bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-2.5 text-sm font-semibold">Kapat</button>
             </div>
           ) : (
             <>
@@ -264,7 +264,7 @@ export default function BulkImportModal({ onClose, onDone }) {
                   <button
                     onClick={handleImport}
                     disabled={importing || !validRows.length}
-                    className="w-full mt-4 bg-ok-600 hover:bg-ok-800 disabled:opacity-50 text-white rounded-card px-4 py-3 text-sm font-semibold transition-colors"
+                    className="w-full mt-4 bg-ok-600 hover:bg-ok-800 disabled:opacity-50 text-onfill rounded-card px-4 py-3 text-sm font-semibold transition-colors"
                   >
                     {importing ? 'İçe aktarılıyor...' : `${validRows.length} transferi içe aktar`}
                   </button>

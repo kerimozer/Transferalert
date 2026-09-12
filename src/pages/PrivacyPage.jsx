@@ -15,7 +15,7 @@ export default function PrivacyPage() {
           <ArrowLeft size={16} /> Ana sayfa
         </button>
         <div className="flex items-center gap-2">
-          <div className="bg-brand-600 text-white p-1 rounded-md">
+          <div className="bg-brand-600 text-onfill p-1 rounded-md">
             <Plane size={14} />
           </div>
           <span className="font-semibold text-ink-soft text-sm">TransferAlert</span>

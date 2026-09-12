@@ -1,3 +1,173 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* TASARIM TOKEN'LARI — CSS DEĞİŞKENİ OLARAK (2026-09-12, A1 gece modu).
+ *
+ * NEDEN BURAYA TAŞINDI: gece modu, mobilde 602 stil referansına dokunmadan
+ * çözülebiliyordu (palet modül yüklenirken seçiliyor). Webde daha ucuzu var:
+ * token'lar CSS değişkenine bağlanınca HİÇBİR sayfanın sınıfına dokunmadan
+ * çalışıyor — `bg-surface` aynı kalıyor, altındaki değişken değişiyor.
+ *
+ * NEDEN HEX DEĞİL "R G B" ÜÇLÜSÜ: bu kod tabanında opaklık son eki 99 yerde
+ * kullanılıyor (`ring-brand-600/30`, `bg-bad-50/70`…). `var(--x)` doğrudan
+ * bir renk olarak yazılırsa Tailwind'in `/30` sözdizimi SESSİZCE çalışmaz —
+ * hata vermez, sadece opaklık uygulanmaz. Kanal üçlüsü + `rgb(… / <alpha>)`
+ * ikisini birden tutar.
+ *
+ * TETİKLEME `prefers-color-scheme` — mobildeki `Appearance.getColorScheme()`
+ * ile aynı kaynak, yani iki platform aynı anda dönüyor. Webde mobildeki
+ * "yeniden başlat" kısıtı YOK: değişken değişince sayfa anında dönüyor.
+ *
+ * MOBİLLE İKİZ: `mobile/src/theme.js` → GUNDUZ / GECE. Bir token değiştirirken
+ * DÖRDÜNÜ birden güncelle (bu dosya, iki depodaki test-tokens.mjs, KARAR.md).
+ */
+:root {
+  color-scheme: light;
+  --c-brand-50: 227 239 241;
+  --c-brand-600: 15 93 107;
+  --c-brand-700: 10 66 77;
+  --c-accent-50: 247 235 225;
+  --c-accent-600: 172 91 52;
+  --c-accent-800: 143 78 36;
+  --c-surface: 255 255 255;
+  --c-surface-bg: 250 248 245;
+  --c-surface-alt: 243 239 233;
+  --c-surface-border: 233 228 220;
+  --c-surface-borderstrong: 216 209 198;
+  --c-surface-inputborder: 145 134 118;
+  --c-surface-neutral: 241 238 233;
+  --c-surface-quiet: 247 230 188;
+  --c-surface-dangerborder: 241 217 211;
+  --c-strip-air: 194 223 230;
+  --c-strip-landed: 201 226 178;
+  --c-strip-cancelled: 247 204 187;
+  --c-strip-diverted: 245 200 143;
+  --c-strip-oliveink: 49 82 26;
+  --c-strip-amberink: 107 62 8;
+  --c-strip-sandink: 107 74 8;
+  --c-done-scheduled: 234 224 198;
+  --c-done-air: 220 234 239;
+  --c-done-airink: 51 82 92;
+  --c-done-landed: 212 229 193;
+  --c-done-landedink: 63 85 48;
+  --c-done-cancelled: 243 214 202;
+  --c-done-cancelledink: 126 74 64;
+  --c-done-diverted: 245 218 171;
+  --c-done-divertedink: 107 80 38;
+  --c-ink: 33 30 27;
+  --c-ink-soft: 91 85 78;
+  --c-ink-muted: 110 103 94;
+  --c-wa-50: 230 246 236;
+  --c-wa-700: 15 122 66;
+  --c-sms-50: 228 238 251;
+  --c-sms-700: 27 95 184;
+  --c-ok-50: 229 240 234;
+  --c-ok-600: 46 111 82;
+  --c-ok-800: 30 82 60;
+  --c-warn-50: 250 238 219;
+  --c-warn-600: 150 88 15;
+  --c-warn-800: 122 70 10;
+  --c-bad-50: 248 231 227;
+  --c-bad-600: 169 59 41;
+  --c-bad-800: 138 46 32;
+  --c-onfill: 255 255 255;
+  --c-segmentactive: 255 255 255;
+  /* Gölge gündüzde SICAK bir kahverengiden düşer (saf siyah, sıcak nötr
+     zeminde grileşip soğuk bir hâl üretiyor); gecede siyah, çünkü aynı
+     gerekçe koyu zeminde tersine döner. */
+  --c-shadow: 90 80 70;
+}
+
+/* GÖVDE ZEMİNİ TOKEN'DAN. Sınıfsız bırakılırsa soğuk açılışta ve her lazy
+ * rota geçişinde tarayıcının kendi canvas'ı boyanıyor (gündüz saf beyaz,
+ * gecede Chrome'un #121212'si) — yani ilk boya ve "Yükleniyor…" ekranları
+ * temanın dışında kalıyordu. */
+@layer base {
+  body {
+    background-color: rgb(var(--c-surface-bg));
+    color: rgb(var(--c-ink));
+  }
+}
+
+/* YAZDIRMA HER ZAMAN GÜNDÜZ PALETİYLE. Karşılama tabelası (`WelcomeSignModal`)
+ * `window.print()` ile KAĞIDA basılıyor ve kağıt her zaman beyazdır: gece
+ * paletiyle yolcu adı (#E9EDEF) kağıda karşı 1.18 kontrast verir, yani
+ * DİSPATCHER BOŞ SAYFA ALIR. Ekranda hiçbir uyarı yoktur çünkü önizleme koyu
+ * kartı doğru gösterir. `print:bg-surface` gibi sınıflar bunu çözmez —
+ * tarayıcı arka planları varsayılan olarak atar.
+ *
+ * Mobil ikizi aynı kararı verdi (`WelcomeSignScreen` gündüz paletine çivili):
+ * o ekranın işi kontrast değil, AYDINLIK BİR ORTAMDA uzaktan okunmak.
+ * Blok TÜM yazdırılabilir yüzeyleri kapsıyor — ileride eklenecek olanı da. */
+@media print {
+  :root {
+    color-scheme: light;
+    --c-surface: 255 255 255;
+    --c-surface-bg: 255 255 255;
+    --c-surface-alt: 243 239 233;
+    --c-surface-border: 233 228 220;
+    --c-ink: 33 30 27;
+    --c-ink-soft: 91 85 78;
+    --c-ink-muted: 110 103 94;
+    --c-brand-600: 15 93 107;
+    --c-brand-700: 10 66 77;
+    --c-onfill: 255 255 255;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --c-brand-50: 27 58 64;
+    --c-brand-600: 86 184 204;
+    --c-brand-700: 127 206 221;
+    --c-accent-50: 64 50 43;
+    --c-accent-600: 224 138 94;
+    --c-accent-800: 240 168 127;
+    --c-surface: 30 38 43;
+    --c-surface-bg: 20 25 28;
+    --c-surface-alt: 37 46 51;
+    --c-surface-border: 43 52 58;
+    --c-surface-borderstrong: 58 69 76;
+    --c-surface-inputborder: 110 124 133;
+    --c-surface-neutral: 47 49 51;
+    --c-surface-quiet: 73 64 41;
+    --c-surface-dangerborder: 110 59 49;
+    --c-strip-air: 12 70 88;
+    --c-strip-landed: 42 67 27;
+    --c-strip-cancelled: 76 37 29;
+    --c-strip-diverted: 85 59 9;
+    --c-strip-oliveink: 169 206 138;
+    --c-strip-amberink: 232 190 116;
+    --c-strip-sandink: 235 210 146;
+    --c-done-scheduled: 42 41 39;
+    --c-done-air: 8 49 61;
+    --c-done-airink: 157 188 198;
+    --c-done-landed: 31 51 18;
+    --c-done-landedink: 156 188 130;
+    --c-done-cancelled: 62 33 27;
+    --c-done-cancelledink: 223 162 148;
+    --c-done-diverted: 59 42 9;
+    --c-done-divertedink: 217 184 122;
+    --c-ink: 233 237 239;
+    --c-ink-soft: 183 194 200;
+    --c-ink-muted: 139 153 162;
+    --c-wa-50: 40 47 43;
+    --c-wa-700: 93 201 141;
+    --c-sms-50: 33 47 64;
+    --c-sms-700: 120 173 238;
+    --c-ok-50: 32 59 46;
+    --c-ok-600: 95 185 140;
+    --c-ok-800: 143 211 174;
+    --c-warn-50: 66 47 21;
+    --c-warn-600: 215 154 70;
+    --c-warn-800: 237 187 114;
+    --c-bad-50: 82 41 33;
+    --c-bad-600: 224 112 92;
+    --c-bad-800: 240 161 146;
+    --c-onfill: 11 20 23;
+    --c-segmentactive: 47 57 64;
+    --c-shadow: 0 0 0;
+  }
+}

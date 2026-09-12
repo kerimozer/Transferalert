@@ -32,7 +32,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-card shadow-xl w-full max-w-sm">
+      <div className="bg-surface rounded-card shadow-xl w-full max-w-sm">
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
           <h2 className="font-semibold text-ink flex items-center gap-2"><CreditCard size={17} /> Ödeme Linki</h2>
           <button onClick={onClose} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
@@ -55,7 +55,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
                 {copied ? <><CheckCircle size={12} className="text-ok-600" /> Kopyalandı</> : <><Copy size={12} /> Kopyala</>}
               </button>
             </div>
-            <button onClick={onClose} className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
+            <button onClick={onClose} className="w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
               Tamam
             </button>
           </div>
@@ -75,7 +75,7 @@ export default function PaymentLinkModal({ reservation, onClose, onPaid }) {
             </div>
             <div className="flex gap-3">
               <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-              <button type="submit" disabled={loading} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-2.5 text-sm font-semibold">
+              <button type="submit" disabled={loading} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold">
                 {loading ? 'Oluşturuluyor...' : 'Link Oluştur'}
               </button>
             </div>

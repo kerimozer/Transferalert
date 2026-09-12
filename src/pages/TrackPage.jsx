@@ -94,7 +94,7 @@ export default function TrackPage() {
   // tazelenemediği aşağıda küçük bir izle söylenir.
   if (error && !data) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
         <XCircle size={30} className="text-bad-600 mx-auto mb-3" aria-hidden="true" />
         <p className="text-ink-soft font-semibold">{tUi('tr', 'notFound')}</p>
       </div>
@@ -126,11 +126,11 @@ export default function TrackPage() {
       <div className="w-full max-w-sm">
 
         <div className="flex items-center gap-2 mb-4 px-1">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control"><Plane size={15} aria-hidden="true" /></div>
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control"><Plane size={15} aria-hidden="true" /></div>
           <span className="font-bold text-ink">TransferAlert</span>
         </div>
 
-        <div className="bg-white border border-surface-border rounded-card shadow-card overflow-hidden">
+        <div className="bg-surface border border-surface-border rounded-card shadow-card overflow-hidden">
           <div className={`flex items-center gap-2 px-4 py-2.5 ${stripCls}`}>
             <StripIcon size={15} aria-hidden="true" className="shrink-0" />
             <span className="text-xs font-bold truncate">{stripLabel}</span>

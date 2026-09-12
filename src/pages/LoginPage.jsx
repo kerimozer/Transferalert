@@ -51,10 +51,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg">
-      <div className="bg-white border border-surface-border rounded-card shadow-sm p-8 w-full max-w-sm">
+      <div className="bg-surface border border-surface-border rounded-card shadow-sm p-8 w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-7">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control">
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control">
             <Plane size={18} />
           </div>
           <span className="text-xl font-bold text-ink">TransferAlert</span>
@@ -69,7 +69,7 @@ export default function LoginPage() {
             </p>
             <button
               onClick={() => { setAwaitingConfirm(false); setMode('login'); setPassword(''); }}
-              className="w-full bg-brand-600 hover:bg-brand-700 text-white rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
+              className="w-full bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
             >
               Onayladım, giriş yap
             </button>
@@ -152,7 +152,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
+            className="w-full bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-control px-4 py-2.5 text-sm font-semibold transition-colors"
           >
             {loading
               ? (mode === 'login' ? 'Giriş yapılıyor...' : 'Kaydediliyor...')

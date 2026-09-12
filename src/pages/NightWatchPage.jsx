@@ -41,7 +41,7 @@ function InfoRow({ icon: Icon, label, value }) {
 function OffDuty({ title, text, onRetry }) {
   return (
     <div className="flex items-center justify-center py-20 px-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
         <Moon size={40} className="text-brand-600 mx-auto mb-3" aria-hidden="true" />
         <p className="font-semibold text-ink">{title}</p>
         {text && <p className="text-sm text-ink-muted mt-1">{text}</p>}
@@ -65,7 +65,7 @@ function WatchCard({ res, onOpen }) {
   const stage = jobBadge(res);
 
   return (
-    <div className={`bg-white border rounded-card shadow-card overflow-hidden ${
+    <div className={`bg-surface border rounded-card shadow-card overflow-hidden ${
       driverAssigned ? 'border-surface-border' : 'border-bad-600 border-l-4'
     }`}>
       {/* DURUM ŞERİDİ — ortak bileşen. Gece tahtası özellikle kazanıyor:

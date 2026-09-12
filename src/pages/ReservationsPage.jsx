@@ -330,7 +330,7 @@ export default function ReservationsPage() {
           </h2>
           <div className="space-y-2">
             {pending.map(r => (
-              <div key={r.id} className="bg-white border border-warn-600/20 rounded-card p-3 flex items-center gap-3">
+              <div key={r.id} className="bg-surface border border-warn-600/20 rounded-card p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* Başlık aynı kuraldan geçer: uçuşsuz talepte
@@ -346,7 +346,7 @@ export default function ReservationsPage() {
                   </div>
                   {r.notes && <p className="text-xs text-ink-muted mt-0.5">{r.notes}</p>}
                 </div>
-                <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-ok-600 hover:bg-ok-800 text-white rounded-control px-3 py-1.5 text-xs font-semibold">
+                <button onClick={() => handleApprove(r.id)} className="flex items-center gap-1 bg-ok-600 hover:bg-ok-800 text-onfill rounded-control px-3 py-1.5 text-xs font-semibold">
                   <Check size={14} /> Onayla
                 </button>
                 <button onClick={() => handleReject(r.id)} aria-label="Reddet" title="Reddet" className="p-1.5 text-ink-muted hover:text-bad-600 hover:bg-bad-50 rounded-control">
@@ -361,7 +361,7 @@ export default function ReservationsPage() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-card shadow-xl w-full max-w-sm">
+          <div className="bg-surface rounded-card shadow-xl w-full max-w-sm">
             <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
               <h2 className="font-semibold text-ink">{isFlight ? 'Uçuş Takibe Al' : 'Transfer Ekle'}</h2>
               <button onClick={() => setShowForm(false)} className="text-ink-muted hover:text-ink-soft"><X size={18} /></button>
@@ -545,7 +545,7 @@ export default function ReservationsPage() {
 
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-4 py-2.5 text-sm text-ink-soft hover:bg-surface-alt rounded-card transition-colors">İptal</button>
-                <button type="submit" disabled={submitting} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-2.5 text-sm font-semibold transition-colors">
+                <button type="submit" disabled={submitting} className="flex-1 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-2.5 text-sm font-semibold transition-colors">
                   {submitting ? 'Ekleniyor...' : 'Takibe Al'}
                 </button>
               </div>
@@ -589,7 +589,7 @@ export default function ReservationsPage() {
           </div>
           <p className="text-ink-soft font-semibold mb-1">Henüz uçuş yok</p>
           <p className="text-sm text-ink-muted mb-5">Gelecekteki uçuşları önceden ekleyin.</p>
-          <button onClick={openForm} className="bg-brand-600 text-white rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700 transition-colors">İlk Uçuşu Ekle</button>
+          <button onClick={openForm} className="bg-brand-600 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold hover:bg-brand-700 transition-colors">İlk Uçuşu Ekle</button>
         </div>
       )}
     </div>
@@ -680,7 +680,7 @@ function FlightCard({ r, onDelete, onComplete, onShowSign, onShowPay, onAssign, 
   const showFlight = showFlightLine(r);
 
   return (
-    <div className={`bg-white border rounded-card overflow-hidden transition-all ${
+    <div className={`bg-surface border rounded-card overflow-hidden transition-all ${
       isPast ? 'border-surface-border'
         : needsDriver ? 'border-bad-600 shadow-card'
         : isClose ? 'border-brand-600/40 shadow-card'

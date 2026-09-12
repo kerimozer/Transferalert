@@ -108,12 +108,12 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-surface-bg font-sans">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-60 shrink-0 bg-white border-r border-surface-border flex-col">
+      <aside className="hidden md:flex w-60 shrink-0 bg-surface border-r border-surface-border flex-col">
         {navContent}
       </aside>
 
       {/* Mobile: hamburger + drawer */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-surface-border flex items-center gap-3 px-4 py-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-surface border-b border-surface-border flex items-center gap-3 px-4 py-3">
         <button onClick={() => setOpen(true)} className="text-ink-soft">
           <Menu size={22} />
         </button>
@@ -126,7 +126,7 @@ export default function Layout() {
       {open && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <aside className="relative w-64 bg-white flex flex-col h-full shadow-xl">
+          <aside className="relative w-64 bg-surface flex flex-col h-full shadow-xl">
             <button onClick={() => setOpen(false)} className="absolute top-4 right-4 text-ink-muted">
               <X size={20} />
             </button>

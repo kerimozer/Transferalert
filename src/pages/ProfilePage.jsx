@@ -46,7 +46,7 @@ export default function ProfilePage() {
       )}
 
       <form onSubmit={handleSave} className="space-y-5">
-        <div className="bg-white border border-surface-border rounded-card p-6 space-y-4">
+        <div className="bg-surface border border-surface-border rounded-card p-6 space-y-4">
           <div>
             <label className="block text-sm font-semibold text-ink-soft mb-1">Ad Soyad</label>
             <input
@@ -84,7 +84,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <div className="bg-white border border-surface-border rounded-card p-6">
+        <div className="bg-surface border border-surface-border rounded-card p-6">
           <p className="text-sm font-semibold text-ink-soft mb-1">E-posta</p>
           <p className="text-sm text-ink-muted">{user.email}</p>
         </div>
@@ -92,7 +92,7 @@ export default function ProfilePage() {
         <button
           type="submit"
           disabled={saving}
-          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-5 py-2.5 text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-5 py-2.5 text-sm font-semibold transition-colors"
         >
           {saved
             ? <><CheckCircle size={15} /> Kaydedildi</>

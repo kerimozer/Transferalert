@@ -70,7 +70,7 @@ export default function RequestPage() {
 
   if (loadErr) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
         <XCircle size={32} className="text-bad-600 mx-auto mb-3" />
         <p className="text-ink-soft font-semibold">{loadErr}</p>
       </div>
@@ -79,7 +79,7 @@ export default function RequestPage() {
 
   if (done) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-sm p-8 max-w-sm text-center">
         <CheckCircle size={40} className="text-ok-600 mx-auto mb-4" />
         <h1 className="text-lg font-semibold text-ink mb-1">Talebiniz alındı</h1>
         <p className="text-sm text-ink-muted mb-6">{company} ekibi talebinizi en kısa sürede onaylayacak.</p>
@@ -93,13 +93,13 @@ export default function RequestPage() {
       <div className="max-w-md mx-auto">
         <div className="text-center mb-6">
           <div className="w-14 h-14 bg-brand-600 rounded-card flex items-center justify-center mx-auto mb-3">
-            <Plane size={26} className="text-white" />
+            <Plane size={26} className="text-onfill" />
           </div>
           <h1 className="text-xl font-bold text-ink">{company}</h1>
           <p className="text-sm text-ink-muted mt-0.5">Transfer Talep Formu</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-surface-border rounded-card shadow-sm p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-surface border border-surface-border rounded-card shadow-sm p-6 space-y-4">
           {error && (
             <div className="flex items-start gap-2 px-3 py-2.5 bg-bad-50 border border-bad-600/20 rounded-control text-sm text-bad-800">
               <XCircle size={15} className="mt-0.5 shrink-0" />{error}
@@ -156,7 +156,7 @@ export default function RequestPage() {
           </Field>
 
           <button type="submit" disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-white rounded-card px-4 py-3 text-sm font-semibold transition-colors">
+            className="w-full flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 text-onfill rounded-card px-4 py-3 text-sm font-semibold transition-colors">
             <Send size={15} /> {submitting ? 'Gönderiliyor...' : 'Transfer Talep Et'}
           </button>
 

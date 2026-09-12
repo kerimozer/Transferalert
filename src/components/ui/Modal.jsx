@@ -31,7 +31,7 @@ export default function Modal({ title, onClose, children, maxWidth = 'max-w-lg' 
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`bg-white rounded-card shadow-xl w-full ${maxWidth} outline-none max-h-[90vh] overflow-y-auto`}
+        className={`bg-surface rounded-card shadow-xl w-full ${maxWidth} outline-none max-h-[90vh] overflow-y-auto`}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-border">
           <h2 id="modal-title" className="font-semibold text-ink">{title}</h2>

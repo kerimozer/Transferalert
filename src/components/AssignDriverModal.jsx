@@ -94,7 +94,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
     const wa = waLink(sendStep.phone, msg);
     return (
       <div className="fixed inset-0 bg-ink/40 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-card shadow-card w-full max-w-md p-6">
+        <div className="bg-surface rounded-card shadow-card w-full max-w-md p-6">
           <div className="flex items-center gap-2 text-ok-800 font-semibold mb-1">
             <UserCheck size={18} /> {sendStep.name || 'Şoför'} atandı
           </div>
@@ -112,7 +112,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
           </div>
           {wa && (
             <a href={wa} target="_blank" rel="noreferrer"
-               className="w-full flex items-center justify-center gap-2 py-3 rounded-control font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors mb-2">
+               className="w-full flex items-center justify-center gap-2 py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors mb-2">
               <Send size={16} /> WhatsApp ile gönder
             </a>
           )}
@@ -126,7 +126,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-card shadow-card w-full max-w-md max-h-[85vh] flex flex-col">
+      <div className="bg-surface rounded-card shadow-card w-full max-w-md max-h-[85vh] flex flex-col">
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-surface-border">
           <div className="min-w-0">
             <h2 className="font-semibold text-ink">Şoför ata</h2>
@@ -171,7 +171,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
                   onClick={() => setPicked(d.member_id)}
                   disabled={!!saving}
                   className={`w-full flex items-center gap-3 p-3 rounded-control text-left transition-colors disabled:opacity-60 border-2 ${
-                    isPicked ? 'border-brand-600 bg-white' : 'border-transparent hover:bg-surface-alt'
+                    isPicked ? 'border-brand-600 bg-surface' : 'border-transparent hover:bg-surface-alt'
                   }`}
                 >
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isPicked ? 'bg-brand-50' : 'bg-surface-alt'}`}>
@@ -229,7 +229,7 @@ export default function AssignDriverModal({ reservation, onClose, onAssigned }) 
             <button
               onClick={() => assign(picked, false)}
               disabled={!!saving || !picked || picked === current}
-              className="w-full py-3 rounded-control font-semibold text-white bg-brand-600 hover:bg-brand-700 transition-colors disabled:opacity-50"
+              className="w-full py-3 rounded-control font-semibold text-onfill bg-brand-600 hover:bg-brand-700 transition-colors disabled:opacity-50"
             >
               {saving === picked ? 'Atanıyor...' : picked === current ? 'Zaten atanmış' : `${pickedDriver?.name || 'Şoföre'} ata`}
             </button>

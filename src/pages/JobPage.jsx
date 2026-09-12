@@ -94,7 +94,7 @@ export default function JobPage() {
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center bg-surface-bg p-4">
-      <div className="bg-white border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
+      <div className="bg-surface border border-surface-border rounded-card shadow-card p-8 max-w-sm text-center">
         <XCircle size={32} className="text-bad-600 mx-auto mb-3" />
         <p className="text-ink-soft font-semibold">{error}</p>
       </div>
@@ -108,11 +108,11 @@ export default function JobPage() {
       <div className="max-w-md mx-auto p-4 pb-10">
 
         <div className="flex items-center gap-2 mb-4">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control"><Plane size={16} /></div>
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control"><Plane size={16} /></div>
           <span className="font-bold text-ink">{job.company}</span>
         </div>
 
-        <div className="bg-white border border-surface-border rounded-card shadow-card overflow-hidden mb-4">
+        <div className="bg-surface border border-surface-border rounded-card shadow-card overflow-hidden mb-4">
           {/* DURUM ŞERİDİ — "Kart C" anatomisi, şoför panosu ve Transferlerim
               ile ORTAK bileşen. Bu sayfa tek işe özel olduğu için tarih önemsiz
               görünebilir; değil: taşeron şoför linki bir gün önceden gönderilir
@@ -172,13 +172,13 @@ export default function JobPage() {
           <div className="grid grid-cols-1 gap-2 mb-4">
             {job.passenger_phone && (
               <a href={`tel:${job.passenger_phone}`}
-                 className="flex items-center justify-center gap-2 bg-white border border-surface-borderstrong text-ink font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
+                 className="flex items-center justify-center gap-2 bg-surface border border-surface-borderstrong text-ink font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
                 <Phone size={17} /> Yolcuyu Ara
               </a>
             )}
             {job.company_phone && (
               <a href={`tel:${job.company_phone}`}
-                 className="flex items-center justify-center gap-2 bg-white border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
+                 className="flex items-center justify-center gap-2 bg-surface border border-surface-borderstrong text-ink-soft font-semibold rounded-control py-3.5 hover:bg-surface-alt transition-colors">
                 <Building2 size={17} /> Firmayı Ara
               </a>
             )}
@@ -203,7 +203,7 @@ export default function JobPage() {
             <button
               onClick={() => advance(job.next_statuses[0])}
               disabled={!!saving}
-              className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-white transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
+              className="w-full rounded-control py-4 font-semibold text-base bg-brand-600 hover:bg-brand-700 text-onfill transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-brand-600/30"
             >
               {saving === job.next_statuses[0] ? 'Kaydediliyor...' : jobAction(job.next_statuses[0], job)}
             </button>

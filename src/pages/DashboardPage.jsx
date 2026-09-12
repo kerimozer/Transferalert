@@ -129,7 +129,7 @@ export default function DashboardPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Transfer ara — yolcu, uçuş no, PNR, şoför"
-          className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-white border focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
+          className={`w-full rounded-card pl-11 pr-11 py-3 text-sm bg-surface border focus:outline-none focus:ring-2 focus:ring-brand-600/30 ${
             q ? 'border-brand-600' : 'border-surface-inputborder'
           }`}
         />
@@ -259,7 +259,7 @@ export default function DashboardPage() {
                 ? (looksLikeFlightNumber(q) && (
                     <Link
                       to={`/app/reservations?flight=${encodeURIComponent(q.toUpperCase().replace(/\s+/g, ''))}`}
-                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control px-5 py-2.5 transition-colors"
+                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors"
                     >
                       <Plane size={16} aria-hidden="true" />
                       {q.toUpperCase().replace(/\s+/g, '')} uçuşunu canlı ara
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                 : (
                     <Link
                       to="/app/reservations"
-                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-control px-5 py-2.5 transition-colors"
+                      className="inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-onfill font-semibold rounded-control px-5 py-2.5 transition-colors"
                     >
                       <Plus size={16} aria-hidden="true" />
                       Transfer ekle

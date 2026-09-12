@@ -39,8 +39,14 @@ const FAMILIES = Object.keys(COLORS);
 // Bir aile içinde geçerli olan son ekler. `DEFAULT` → eksiz kullanım
 // (`bg-surface`). Anahtarlar küçük harfe indirilir: Tailwind sınıf adında
 // `borderstrong` yazar, config'de de öyle duruyor.
+// BİR AİLE DÜZ DİZE DE OLABİLİR (`onfill: 'rgb(...)'`) — o zaman tonu yoktur
+// ve yalnız eksiz kullanım geçerlidir (`text-onfill`). `Object.keys` bir
+// dizede KARAKTER İNDEKSLERİ döndürür; ayrılmasaydı kapı "0,1,2…" adlı
+// tonlar tanımlı sanır ve `text-onfill` bilinmeyen sınıf diye düşerdi.
 const VALID = new Map(
-  FAMILIES.map((f) => [f, new Set(Object.keys(COLORS[f]).map((k) => k.toLowerCase()))]),
+  FAMILIES.map((f) => [f, typeof COLORS[f] === 'string'
+    ? new Set(['default'])
+    : new Set(Object.keys(COLORS[f]).map((k) => k.toLowerCase()))]),
 );
 
 // Renk alan yardımcı önekleri. `border` ve `divide` gibi olanlar renksiz de

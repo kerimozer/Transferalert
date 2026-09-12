@@ -42,18 +42,18 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-surface font-sans">
       {/* Navbar */}
       <nav className="border-b border-surface-border px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
-          <div className="bg-brand-600 text-white p-1.5 rounded-control">
+          <div className="bg-brand-600 text-onfill p-1.5 rounded-control">
             <Plane size={18} />
           </div>
           <span className="text-xl font-bold text-ink">TransferAlert</span>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => navigate('/app/login')} className="text-sm text-ink-soft hover:text-ink">Giriş Yap</button>
-          <button onClick={() => navigate('/app/login')} className="bg-brand-600 hover:bg-brand-700 text-white rounded-control px-4 py-2 text-sm font-semibold transition-colors">
+          <button onClick={() => navigate('/app/login')} className="bg-brand-600 hover:bg-brand-700 text-onfill rounded-control px-4 py-2 text-sm font-semibold transition-colors">
             Ücretsiz Dene
           </button>
         </div>
@@ -74,7 +74,7 @@ export default function LandingPage() {
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={() => navigate('/app/login')}
-            className="bg-brand-600 hover:bg-brand-700 text-white rounded-card px-6 py-3 text-base font-semibold transition-colors shadow-sm"
+            className="bg-brand-600 hover:bg-brand-700 text-onfill rounded-card px-6 py-3 text-base font-semibold transition-colors shadow-sm"
           >
             Ücretsiz Başla
           </button>
@@ -93,7 +93,7 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold text-ink text-center mb-10">Nasıl Çalışır?</h2>
           <div className="grid grid-cols-3 gap-6">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="bg-white rounded-card p-6 border border-surface-border">
+              <div key={title} className="bg-surface rounded-card p-6 border border-surface-border">
                 <div className="w-10 h-10 bg-brand-50 rounded-card flex items-center justify-center mb-4">
                   <Icon size={20} className="text-brand-600" />
                 </div>
@@ -115,7 +115,7 @@ export default function LandingPage() {
             { step: '3', title: 'Bildirimi Al', desc: 'Uçuş indiğinde telefonunuza mesaj gelir.' },
           ].map(({ step, title, desc }) => (
             <div key={step} className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-brand-600 text-white rounded-card flex items-center justify-center text-xl font-bold mb-3">{step}</div>
+              <div className="w-12 h-12 bg-brand-600 text-onfill rounded-card flex items-center justify-center text-xl font-bold mb-3">{step}</div>
               <h3 className="font-semibold text-ink mb-1">{title}</h3>
               <p className="text-sm text-ink-muted">{desc}</p>
             </div>
@@ -131,7 +131,7 @@ export default function LandingPage() {
           {!plans && (
             <div className="grid grid-cols-3 gap-6">
               {[0, 1, 2].map(i => (
-                <div key={i} className="rounded-card p-6 border border-surface-border bg-white h-56 animate-pulse" />
+                <div key={i} className="rounded-card p-6 border border-surface-border bg-surface h-56 animate-pulse" />
               ))}
             </div>
           )}
@@ -143,22 +143,22 @@ export default function LandingPage() {
             {plans.map(plan => (
               <div
                 key={plan.key}
-                className={`rounded-card p-6 border ${plan.highlight ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-surface-border'}`}
+                className={`rounded-card p-6 border ${plan.highlight ? 'bg-brand-600 border-brand-600 text-onfill' : 'bg-surface border-surface-border'}`}
               >
                 <div className="mb-4">
-                  <p className={`text-sm font-semibold mb-1 ${plan.highlight ? 'text-white/80' : 'text-ink-muted'}`}>{plan.name}</p>
+                  <p className={`text-sm font-semibold mb-1 ${plan.highlight ? 'text-onfill/80' : 'text-ink-muted'}`}>{plan.name}</p>
                   <div className="flex items-end gap-1">
                     <span className="text-3xl font-bold">{plan.price}</span>
-                    <span className={`text-sm mb-1 ${plan.highlight ? 'text-white/80' : 'text-ink-muted'}`}>{plan.period}</span>
+                    <span className={`text-sm mb-1 ${plan.highlight ? 'text-onfill/80' : 'text-ink-muted'}`}>{plan.period}</span>
                   </div>
-                  <p className={`text-xs mt-1 ${plan.highlight ? 'text-white/80' : 'text-ink-muted'}`}>{plan.desc}</p>
+                  <p className={`text-xs mt-1 ${plan.highlight ? 'text-onfill/80' : 'text-ink-muted'}`}>{plan.desc}</p>
                 </div>
 
                 <ul className="space-y-2.5 mb-6">
                   {plan.features.map(f => (
                     <li key={f} className="flex items-center gap-2 text-sm">
-                      <CheckCircle size={14} className={plan.highlight ? 'text-white/80' : 'text-brand-600'} />
-                      <span className={plan.highlight ? 'text-white/90' : 'text-ink-soft'}>{f}</span>
+                      <CheckCircle size={14} className={plan.highlight ? 'text-onfill/80' : 'text-brand-600'} />
+                      <span className={plan.highlight ? 'text-onfill/90' : 'text-ink-soft'}>{f}</span>
                     </li>
                   ))}
                 </ul>
@@ -167,8 +167,8 @@ export default function LandingPage() {
                   onClick={() => navigate('/app/login')}
                   className={`w-full rounded-card py-2.5 text-sm font-semibold transition-colors ${
                     plan.highlight
-                      ? 'bg-white text-brand-600 hover:bg-brand-50'
-                      : 'bg-brand-600 text-white hover:bg-brand-700'
+                      ? 'bg-surface text-brand-600 hover:bg-brand-50'
+                      : 'bg-brand-600 text-onfill hover:bg-brand-700'
                   }`}
                 >
                   {plan.cta}
@@ -183,7 +183,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-surface-border py-8 text-center text-sm text-ink-muted">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="bg-brand-600 text-white p-1 rounded-md">
+          <div className="bg-brand-600 text-onfill p-1 rounded-md">
             <Plane size={14} />
           </div>
           <span className="font-semibold text-ink-soft">TransferAlert</span>

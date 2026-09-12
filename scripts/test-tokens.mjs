@@ -10,8 +10,21 @@
 // Bir token'ı değiştirirken ÜÇÜNÜ birden güncelle: bu liste, mobil
 // scripts/test-tokens.mjs ve KARAR.md.
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Ağaç gezici ve yorum soyucu MODÜL SEVİYESİNDE: aynı iki yardımcının blok
+// içine gömülü kopyaları vardı ve üçüncü bir kullanıcı doğduğunda biri
+// unutulurdu.
+const walkSrc = (d) => readdirSync(d).flatMap((n) => {
+  const p = join(d, n);
+  return statSync(p).isDirectory() ? walkSrc(p) : (/\.jsx?$/.test(n) ? [p] : []);
+});
+// YORUMLAR SOYULUR — metin tarayan her kapı önce bunu yapmalı, yoksa kapı
+// KENDİ AÇIKLAMASINI ölçer (bu projede beş kez yaşandı).
+const stripComments = (s) => s
+  .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+  .replace(/(^|[^:])\/\/[^\n]*/g, (m, p) => p + ' '.repeat(Math.max(0, m.length - p.length)));
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0, failed = 0;
@@ -54,6 +67,7 @@ const CANON = {
   // `whatsappInk` markanın kendi yeşili DEĞİL: #25D366 açık zeminde 1.77.
   sms: '#1B5FB8', smsSoft: '#E4EEFB',
   whatsappInk: '#0F7A42', whatsappSoft: '#E6F6EC',
+  onFill: '#FFFFFF', segmentActive: '#FFFFFF',
 };
 
 // Tailwind adı → kanonik ad.
@@ -78,19 +92,70 @@ const MAP = {
   'ok.600': 'success', 'ok.50': 'successSoft', 'ok.800': 'successText',
   'warn.600': 'warning', 'warn.50': 'warningSoft', 'warn.800': 'warningText',
   'bad.600': 'danger', 'bad.50': 'dangerSoft', 'bad.800': 'dangerText',
+  // YENİ İKİLİ (2026-09-12, A1). Gündüz değerleri de ölçülür: ilk hâlde
+  // yalnız gece bölümü ölçüyordu ve denetimde `--c-onfill: 0 0 0` yapıldığında
+  // her birincil butonun yazısı 2.14 kontrasta düştüğü hâlde kapı 313/313
+  // yeşil kaldı.
+  'onfill.DEFAULT': 'onFill', 'segmentactive.DEFAULT': 'segmentActive',
 };
 
 const cfg = readFileSync(join(root, 'tailwind.config.js'), 'utf8');
 
-console.log('[1] Palet kanonik değerlerle aynı');
+// DEĞERLER ARTIK `src/index.css`TE (2026-09-12, A1 gece modu): tailwind.config
+// yalnız adı `rgb(var(--c-x) / <alpha-value>)`e bağlıyor. Kapı da kaynağı
+// oradan okur — config'i okumaya devam etseydi hex bulamayıp "tanımlı değil"
+// derdi ve paletin GERÇEK değerleri hiç ölçülmemiş olurdu.
+//
+// İKİ PALET BİRDEN: `:root` gündüz, `prefers-color-scheme: dark` bloğu gece.
+// Yalnız biri ölçülseydi diğeri kapıya görünmeden canlıya çıkardı.
+const css = readFileSync(join(root, 'src', 'index.css'), 'utf8');
+function paletOku(blok) {
+  const p = {};
+  for (const m of blok.matchAll(/--c-([\w-]+):\s*(\d+)\s+(\d+)\s+(\d+)\s*;/g)) {
+    p[m[1]] = '#' + [m[2], m[3], m[4]]
+      .map((v) => Number(v).toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+  return p;
+}
+// BLOKLAR AYRI AYRI OKUNUR, "şu noktaya kadar olan her şey" DEĞİL. İlk hâli
+// gündüzü "dark media query'sinden öncesi" diye tanımlıyordu; araya YAZDIRMA
+// bloğu girince (`--c-surface-bg: 255 255 255`) gündüz paleti sessizce onun
+// değerlerini aldı ve kapı sayfa zeminini beyaz sandı. Bir bloğu konumuyla
+// tanımlamak, araya üçüncü bir blok girdiği gün bozulur.
+const blokAl = (bas) => {
+  const i = css.indexOf(bas);
+  if (i < 0) return '';
+  const a = css.indexOf('{', i);
+  let derinlik = 0;
+  for (let j = a; j < css.length; j++) {
+    if (css[j] === '{') derinlik++;
+    else if (css[j] === '}' && --derinlik === 0) return css.slice(a, j);
+  }
+  return '';
+};
+const geceBlok = blokAl('@media (prefers-color-scheme: dark)');
+const yazdirBlok = blokAl('@media print');
+const GUNDUZ_CSS = paletOku(blokAl(':root'));
+const GECE_CSS = paletOku(geceBlok);
+
+// Tailwind ADI → CSS değişken adı. `surface.DEFAULT` → `--c-surface`.
+const cssAdi = (twPath) => {
+  const [g, k] = twPath.split('.');
+  return k === 'DEFAULT' ? g : `${g}-${k.toLowerCase()}`;
+};
+
+console.log('[1] Palet kanonik değerlerle aynı (gündüz, src/index.css)');
 for (const [twPath, canonKey] of Object.entries(MAP)) {
-  const [group, key] = twPath.split('.');
-  // Grubu bul, içinde anahtarı ara. Değerler tek satırda birden fazla olabilir.
-  const gm = cfg.match(new RegExp(`${group}:\\s*\\{[\\s\\S]*?\\}`));
-  const found = gm && gm[0].match(new RegExp(`${key}:\\s*'(#[0-9A-Fa-f]{6})'`));
+  const ad = cssAdi(twPath);
+  const found = GUNDUZ_CSS[ad];
   check(`${twPath} = ${CANON[canonKey]}`,
-    !!found && found[1].toUpperCase() === CANON[canonKey].toUpperCase(),
-    found ? `bulunan ${found[1]}` : 'tanımlı değil');
+    !!found && found.toUpperCase() === CANON[canonKey].toUpperCase(),
+    found ? `bulunan ${found}` : `--c-${ad} tanımlı değil`);
+  // VE TAILWIND O DEĞİŞKENE GERÇEKTEN BAĞLI OLMALI. Değişken doğru, config
+  // başka bir yere bakıyor olabilirdi — o zaman palet "doğru ama bağlantısız"
+  // olurdu ve hiçbir sayfa onu kullanmazdı.
+  check(`${twPath} → --c-${ad} bağlı`, cfg.includes(`t('${ad}')`),
+    'tailwind.config bu değişkene bağlamıyor');
 }
 
 console.log('\n[2] Font ve şekil');
@@ -350,12 +415,15 @@ console.log('\n[6] stripTone davranışı — biten iş susar');
   // karşılaştırdığı için aynı mutasyonu yakalamıştı.
   //
   // Artık sınıf adı palete çözülüyor: kapı ADA değil DEĞERE bakıyor.
+  //
+  // ÇÖZÜM ARTIK CSS DEĞİŞKENİNDEN: değerler tailwind.config'den `index.css`e
+  // taşındığı gün bu çözücü sessizce sınıf adına düşerdi — yani totoloji
+  // GERİ GELİRDİ. Çözücünün kendisinin çalıştığını doğrulayan alttaki
+  // kontrol tam bu yüzden var ve o gün kırıldı.
   const hexOf = (cls) => {
     const m = /bg-([a-z]+)-([a-z]+)/.exec(cls);
     if (!m) return cls;
-    const grup = cfg.match(new RegExp(`${m[1]}:\\s*\\{[\\s\\S]*?\\}`));
-    const bul = grup && grup[0].match(new RegExp(`${m[2]}:\\s*'(#[0-9A-Fa-f]{6})'`));
-    return bul ? bul[1].toUpperCase() : cls;
+    return GUNDUZ_CSS[`${m[1]}-${m[2]}`] || cls;
   };
   check('sınıf → renk çözücüsü çalışıyor',
     /^#[0-9A-F]{6}$/.test(hexOf(FLIGHT_STRIP_DONE.landed)),
@@ -436,6 +504,189 @@ for (const [punto, rol, esik] of [['text-6xl', 'yolcu adı', 7], ['text-3xl', 'u
   const r = ratio(CANON[TW_INK[cls]], CANON.surface);
   // Tabela UZAKTAN okunuyor: eşik gövde metninden yüksek tutulur.
   check(`tabela ${rol} = ${cls} → ${r.toFixed(2)}`, r >= esik, `bu ekranda eşik ${esik}`);
+}
+
+// ── GECE PALETİ (2026-09-12, A1) — MOBİLLE İKİZ ────────────────────────────
+//
+// Gece paleti mobil `theme.js`in GECE bloğuyla BİREBİR aynı olmak zorunda:
+// aynı transfer iki platformda farklı görünmemeli. Kurallar da gündüzle aynı;
+// ayrı bir standart uydurmak gece modunu ikinci sınıf tema yapardı.
+//
+// ÖLÇÜM ZEMİNİ KART (`surface`), SAYFA DEĞİL: şerit her zaman bir kartın
+// içinde basılıyor. Gündüzde kart ile sayfa arası 1.06 olduğu için hangisine
+// baktığın ısırmıyordu; gecede 1.40 ve ısırıyor — mobil denetiminde üç ton
+// kartta 1.00–1.02 (fiilen görünmez) çıkmışken kapı sayfaya baktığı için
+// yeşil kalmıştı.
+console.log('\n[9] Gece paleti — mobille ikiz, gündüzle aynı kural seti');
+const GECE_CANON = {
+  'surface': '#1E262B', 'surface-bg': '#14191C', 'surface-alt': '#252E33',
+  'surface-border': '#2B343A', 'surface-borderstrong': '#3A454C',
+  'surface-inputborder': '#6E7C85', 'surface-neutral': '#2F3133',
+  'surface-quiet': '#494029', 'surface-dangerborder': '#6E3B31',
+  'ink': '#E9EDEF', 'ink-soft': '#B7C2C8', 'ink-muted': '#8B99A2',
+  'brand-50': '#1B3A40', 'brand-600': '#56B8CC', 'brand-700': '#7FCEDD',
+  'accent-50': '#40322B', 'accent-600': '#E08A5E', 'accent-800': '#F0A87F',
+  'strip-air': '#0C4658', 'strip-landed': '#2A431B',
+  'strip-cancelled': '#4C251D', 'strip-diverted': '#553B09',
+  'strip-oliveink': '#A9CE8A', 'strip-amberink': '#E8BE74', 'strip-sandink': '#EBD292',
+  'done-scheduled': '#2A2927',
+  'done-air': '#08313D', 'done-airink': '#9DBCC6',
+  'done-landed': '#1F3312', 'done-landedink': '#9CBC82',
+  'done-cancelled': '#3E211B', 'done-cancelledink': '#DFA294',
+  'done-diverted': '#3B2A09', 'done-divertedink': '#D9B87A',
+  'wa-50': '#282F2B', 'wa-700': '#5DC98D',
+  'sms-50': '#212F40', 'sms-700': '#78ADEE',
+  'ok-50': '#203B2E', 'ok-600': '#5FB98C', 'ok-800': '#8FD3AE',
+  'warn-50': '#422F15', 'warn-600': '#D79A46', 'warn-800': '#EDBB72',
+  'bad-50': '#522921', 'bad-600': '#E0705C', 'bad-800': '#F0A192',
+  'onfill': '#0B1417', 'segmentactive': '#2F3940',
+};
+{
+  const G = GECE_CSS;
+  const sapan = Object.entries(GECE_CANON).filter(([k, v]) => G[k] !== v);
+  check(`gece paleti kanonik (${Object.keys(GECE_CANON).length} token)`, sapan.length === 0,
+    sapan.map(([k, v]) => `${k}: ${G[k]} ≠ ${v}`).join(', '));
+  // GÜNDÜZDE TANIMLI HER DEĞİŞKEN GECEDE DE TANIMLI OLMALI. Eksik olan,
+  // gündüz değerini MİRAS ALIR ve o yüzey gece temasında yanlış renkte
+  // kalır — hiçbir hata vermeden.
+  const eksik = Object.keys(GUNDUZ_CSS).filter((k) => !(k in G));
+  check('gecede eksik değişken yok', eksik.length === 0, eksik.join(', '));
+
+  for (const m of ['ink', 'ink-soft', 'ink-muted']) {
+    for (const z of ['surface', 'surface-bg', 'surface-alt']) {
+      const r = ratio(G[m], G[z]);
+      check(`gece ${m} / ${z} = ${r.toFixed(2)}`, r >= 4.5, 'AA eşiği 4.5');
+    }
+  }
+  for (const z of ['surface', 'surface-bg', 'surface-alt']) {
+    const r = ratio(G['surface-inputborder'], G[z]);
+    check(`gece girdi sınırı / ${z} = ${r.toFixed(2)}`, r >= 3, 'WCAG 1.4.11 eşiği 3.0');
+  }
+  // DOLU KONTROLÜN MÜREKKEBİ — gündüzde bu soru yoktu (beyaz her koyu dolguda
+  // geçiyordu); gecede dolgu açık bir yama olduğu için ayrı ölçülür.
+  for (const d of ['brand-600', 'brand-700', 'accent-600', 'ok-600', 'warn-600', 'bad-600']) {
+    const r = ratio(G.onfill, G[d]);
+    check(`gece onfill / ${d} = ${r.toFixed(2)}`, r >= 4.5, 'dolu kontrolün yazısı okunmuyor');
+  }
+  for (const [t, b] of [['sms-700', 'sms-50'], ['wa-700', 'wa-50'],
+                        ['ok-800', 'ok-50'], ['warn-800', 'warn-50'],
+                        ['bad-800', 'bad-50'], ['accent-800', 'accent-50'],
+                        ['brand-700', 'brand-50'],
+                        ['ink-soft', 'surface-quiet'], ['ink-soft', 'surface-neutral'],
+                        ['strip-sandink', 'surface-quiet'], ['brand-700', 'strip-air'],
+                        ['strip-oliveink', 'strip-landed'], ['bad-800', 'strip-cancelled'],
+                        ['strip-amberink', 'strip-diverted'],
+                        ['ink-soft', 'done-scheduled'], ['done-airink', 'done-air'],
+                        ['done-landedink', 'done-landed'], ['done-cancelledink', 'done-cancelled'],
+                        ['done-divertedink', 'done-diverted']]) {
+    const r = ratio(G[t], G[b]);
+    check(`gece ${t} / ${b} = ${r.toFixed(2)}`, r >= 4.5, 'AA eşiği 4.5');
+  }
+  const gS = { active: G['strip-air'], landed: G['strip-landed'],
+               cancelled: G['strip-cancelled'], diverted: G['strip-diverted'],
+               scheduled: G['surface-quiet'], tur: G['surface-neutral'] };
+  const ad = Object.keys(gS);
+  for (let i = 0; i < ad.length; i++) for (let j = i + 1; j < ad.length; j++) {
+    const d = deltaE(gS[ad[i]], gS[ad[j]]);
+    check(`gece şerit ${ad[i]} ↔ ${ad[j]} = ΔE ${d.toFixed(1)}`, d >= 12);
+  }
+  for (const [a, h] of Object.entries(gS)) {
+    check(`gece şerit ${a} / kart = ${ratio(h, G.surface).toFixed(2)}`,
+      ratio(h, G.surface) <= 1.6 && ratio(h, G.surface) >= 1.12,
+      'bant ya kartla birleşiyor ya fazla bağırıyor');
+    // KARTTAN AÇIK OLMALI: kontrast oranı mutlak fark ölçtüğü için karttan
+    // KOYU bir ton da eşiği geçer, ama o bant değil DELİKtir.
+    check(`gece şerit ${a} karttan AÇIK`, lum(h) > lum(G.surface));
+  }
+  const gB = { scheduled: G['done-scheduled'], active: G['done-air'],
+               landed: G['done-landed'], cancelled: G['done-cancelled'],
+               diverted: G['done-diverted'] };
+  for (const [a, h] of Object.entries(gB)) {
+    check(`gece biten ${a} / kart = ${ratio(h, G.surface).toFixed(2)}`,
+      ratio(h, G.surface) <= 1.3 && ratio(h, G.surface) >= 1.04, 'susmalı ama YOK OLMAMALI');
+    check(`gece biten ${a} karttan AÇIK`, lum(h) > lum(G.surface));
+    if (gS[a]) {
+      check(`gece biten ${a} canlıdan ayrı = ΔE ${deltaE(h, gS[a]).toFixed(1)}`,
+        deltaE(h, gS[a]) >= 6);
+      check(`gece biten ${a} canlıdan SAKİN`, ratio(h, G.surface) < ratio(gS[a], G.surface));
+    }
+  }
+  const gb = Object.keys(gB);
+  for (let i = 0; i < gb.length; i++) for (let j = i + 1; j < gb.length; j++) {
+    check(`gece biten ${gb[i]} ↔ ${gb[j]} = ΔE ${deltaE(gB[gb[i]], gB[gb[j]]).toFixed(1)}`,
+      deltaE(gB[gb[i]], gB[gb[j]]) >= 6);
+  }
+  // ROZET ZEMİNLERİ DE KARTIN ÜSTÜNDE: metni okunur olsa bile çip kartla
+  // birleşiyorsa rozet yok demektir.
+  for (const t of ['brand-50', 'accent-50', 'ok-50', 'warn-50', 'bad-50',
+                   'sms-50', 'wa-50', 'surface-alt']) {
+    const r = ratio(G[t], G.surface);
+    check(`gece ${t} / kart = ${r.toFixed(2)}`, r >= 1.10 && r <= 1.32,
+      'çip kartla birleşiyor ya da fazla bağırıyor');
+  }
+}
+
+// ── [9b] `bg-white` / `text-white` YÜZEY VE MÜREKKEP OLARAK KULLANILAMAZ ────
+//
+// `white` temadan BAĞIMSIZDIR: kart zemini olarak kullanıldığı her yer gece
+// modunda koyu sayfanın üstünde bembeyaz kalır, dolu kontrolün üstünde ise
+// gece dolgusu açıldığı için okunmaz olur. 70 `bg-white` → `bg-surface`,
+// 55 `text-white` → `text-onfill`.
+console.log('\n[9b] Temadan bağımsız `white` sınıfı kullanılmıyor');
+{
+  const kacak = [];
+  for (const f of walkSrc(join(root, 'src'))) {
+    const s = stripComments(readFileSync(f, 'utf8'));
+    for (const m of s.matchAll(/\b(bg|text)-white\b/g)) {
+      kacak.push(`${relative(root, f).replace(/\\/g, '/')}:${s.slice(0, m.index).split('\n').length} (${m[0]})`);
+    }
+  }
+  check('bg-white / text-white yok', kacak.length === 0,
+    kacak.join(', ') + ' — zemin için bg-surface, dolgu üstü için text-onfill');
+}
+
+// ── [9c] TEMA ALTYAPISI — üç sessiz kırılma noktası ────────────────────────
+//
+// Üçü de denetimde MUTASYONLA kanıtlandı: her biri bozulduğunda kapılar
+// 313/313 yeşil kalıyor ve kusur ancak koyu temalı bir cihazda görülüyor.
+console.log('\n[9c] Tema altyapısı');
+// 1) `t()` ALPHA SARMALAYICISI. `var(--c-x)` düz yazılırsa Tailwind'in `/30`
+//    sözdizimi sessizce çalışmaz: denetimde 23 opaklık kuralının 16'sı yok
+//    oldu — uygulamadaki HER klavye odak halkası ve yumuşak uyarı kenarlığı.
+//    Build temiz geçti, kapılar yeşil kaldı.
+check('t() alpha sarmalayıcısını koruyor',
+  /rgb\(var\(--c-\$\{ad\}\) \/ <alpha-value>\)/.test(cfg),
+  'opaklık son ekleri (ring-brand-600/30 …) sessizce çalışmaz olur');
+// 2) `color-scheme` — kaydırma çubuğunu, `<select>` açılırını, onay kutusunu
+//    ve `datetime-local` TAKVİM İKONUNU çeviren tek satır. Dispatcher o
+//    alanda sürekli çalışıyor; silinirse koyu formun üstünde bembeyaz takvim
+//    açılır ve hiçbir yerde hata olmaz.
+check('gündüz bloğu color-scheme: light bildiriyor', /color-scheme:\s*light/.test(blokAl(':root')));
+check('gece bloğu color-scheme: dark bildiriyor', /color-scheme:\s*dark/.test(geceBlok));
+// 3) YAZDIRMA GÜNDÜZE DÖNMELİ. Karşılama tabelası kağıda basılıyor ve kağıt
+//    her zaman beyaz: gece paletiyle yolcu adı kağıda karşı 1.18 kontrast
+//    verir, yani dispatcher BOŞ SAYFA alır ve ekranda hiçbir uyarı olmaz.
+check('@media print bloğu var', yazdirBlok.length > 0,
+  'gece paletiyle yazdırılan tabela boş kağıt basar');
+{
+  const Y = { ...GUNDUZ_CSS, ...paletOku(yazdirBlok) };
+  // Kağıt HER ZAMAN beyazdır — ölçüm zemini `surface` değil, kağıdın kendisi.
+  for (const [ad, esik] of [['ink', 7], ['ink-soft', 4.5], ['brand-600', 3]]) {
+    const r = ratio(Y[ad], '#FFFFFF');
+    check(`yazdırmada ${ad} / kağıt = ${r.toFixed(2)}`, r >= esik, `bu yüzeyde eşik ${esik}`);
+  }
+}
+// 4) TANIMLI HER RENK AİLESİ KULLANILMALI. `segmentactive` tanımlandı,
+//    ölçüldü, kanona girdi ve HİÇ KULLANILMADI — önlemek için yazıldığı hata
+//    (gecede seçili sekmenin çukura dönmesi) yerinde duruyordu. "Tanım var ≠
+//    kullanılıyor" bu projenin tekrarlayan hatası.
+{
+  const kaynak = walkSrc(join(root, 'src')).map((f) => stripComments(readFileSync(f, 'utf8'))).join('\n');
+  const aileler = [...cfg.matchAll(/^\s{8}(\w+):\s*(?:t\('|\{)/gm)].map((m) => m[1]);
+  const kullanilmayan = aileler.filter((a) => !new RegExp(`-${a}\\b`).test(kaynak));
+  check(`tanımlı ${aileler.length} renk ailesinin hepsi kullanılıyor`,
+    kullanilmayan.length === 0,
+    kullanilmayan.join(', ') + ' — tanımlı ama hiçbir ekranda yok');
 }
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
