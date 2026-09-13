@@ -101,8 +101,35 @@ console.log('[1c] Gerekçe EKRANDA basılıyor');
 const notifPage = readFileSync(join(root, 'src', 'pages', 'NotificationsPage.jsx'), 'utf8');
 check('bildirim listesi üç hâli de basıyor', /notifyKey\(/.test(notifPage));
 check('bildirim listesi gerekçeyi basıyor', /notifyReason\(/.test(notifPage));
-check('üç hâlin de kendi etiketi var',
-  /skipped:\s*'Denenmedi'/.test(notifPage), 'NOTIFY_LABEL eksik');
+// ETİKET HARİTASI ÇÖZÜLÜR, TEK BİR DİZE ARANMAZ (B8 — mobil ikiziyle aynı
+// kural). İlk hâli `/skipped:\s*'Denenmedi'/` idi: üç hâlden yalnız BİRİNİ
+// ölçüyor, onu da metne çiviliyordu. "Denenmedi" bir gün "Gönderilmedi"
+// olsa kapı yanlış sebepten kırılır; `sent` ya da `failed` etiketi silinse
+// yanlış sebepten geçerdi.
+{
+  // HARİTA JSX'TE GERÇEKTEN İNDEKSLENİYOR MU? Kapının ilk hâli yalnız haritayı
+  // okuyordu; denetimde rozetin içi `{NOTIFY_LABEL[notifyKey(n.status)]}` →
+  // `{'Gönderildi'}` yapıldı (harita yerinde DURUYOR) ve kapı 38/38 yeşil
+  // kaldı — üç hâl tek kelimeye çöküyor, yani kapının varlık sebebi
+  // ("X1'in ayırdığı hâller ekranda yeniden birleşmesin") ıskalanıyordu.
+  // Ayrımı SÖZLÜKTE değil ROZETTE ölçmek gerekiyor.
+  check('rozet etiketi NOTIFY_LABEL[notifyKey(...)] ile çözülüyor',
+    /NOTIFY_LABEL\[\s*notifyKey\(/.test(notifPage),
+    'rozet sabit metne çökmüş olabilir — harita tanımlı olsa bile kullanılmıyor');
+  const blok = notifPage.match(/NOTIFY_LABEL\s*=\s*\{([^}]*)\}/);
+  check('NOTIFY_LABEL haritası bulundu', !!blok);
+  const etiket = Object.fromEntries(
+    [...(blok?.[1] || '').matchAll(/(\w+):\s*'([^']*)'/g)].map((m) => [m[1], m[2]]),
+  );
+  for (const hal of ['sent', 'failed', 'skipped']) {
+    check(`${hal} etiketi tanımlı`, typeof etiket[hal] === 'string' && etiket[hal].trim() !== '',
+      etiket[hal] === undefined ? 'YOK' : `bulunan ${JSON.stringify(etiket[hal])}`);
+  }
+  // ÜÇ HÂL ÜÇ AYRI METİN: aynı dizeye düşerlerse rozet üç durumu da aynı
+  // kelimeyle anlatır ve X1'in ayırdığı hâller ekranda yeniden birleşir.
+  const metinler = ['sent', 'failed', 'skipped'].map((h) => etiket[h]);
+  check('üç hâlin metni birbirinden farklı', new Set(metinler).size === 3, metinler.join(' / '));
+}
 // Anlam yalnız renkle verilmez: her hâlin kendi ikonu olmalı (erişilebilirlik).
 check('üç hâlin de kendi ikonu var',
   /NOTIFY_ICON\s*=\s*\{[^}]*sent:[^}]*failed:[^}]*skipped:/.test(notifPage));
