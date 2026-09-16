@@ -408,7 +408,18 @@ export default function OrganizationPage() {
                 <div key={p.key} className="bg-surface border border-surface-border rounded-card p-4 flex items-center justify-between gap-3">
                   <div>
                     <p className="font-semibold text-ink">{p.label}</p>
-                    <p className="text-sm text-ink-muted">{p.driver_limit} kişi · {p.price}₺/ay</p>
+                    {/* KOTA SATIŞ NOKTASINDA GÖRÜNÜR (S1/D10). Eski
+                        Professional 499₺'ydi, yenisi 3990₺; kartta yalnız
+                        "10 kişi" yazsaydı admin ödediği paranın sekiz katına
+                        çıkmasının karşılığında ne aldığını göremezdi —
+                        S1'in tüm tezi (hacim satıyoruz) satış noktasında
+                        görünmez kalırdı. Mobil ikizi: TeamScreen.js */}
+                    <p className="text-sm text-ink-muted">
+                      {p.driver_limit} kişi
+                      {p.transfer_limit ? ` · ayda ${p.transfer_limit} transfer` : ' · sınırsız transfer'}
+                      {' · '}{p.price}₺/ay
+                      {p.overage_price ? ` · aşım ${p.overage_price}₺` : ''}
+                    </p>
                   </div>
                   <button
                     onClick={() => handleUpgrade(p.key)}

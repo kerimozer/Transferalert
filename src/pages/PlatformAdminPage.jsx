@@ -7,7 +7,12 @@ export default function PlatformAdminPage() {
   const [orgs, setOrgs]       = useState([]);
   const [stats, setStats]     = useState(null);
   const [plans, setPlans]     = useState([]);
-  const [edits, setEdits]     = useState({}); // key -> { price, driver_limit }
+  // key -> { price, driver_limit, transfer_limit, overage_price }
+  // KOTA ALANLARI DA BURADA (S1/D9): admin ucu (routes/admin.js) ikisini de
+  // kabul ediyordu ama arayuz gondermiyordu — plani "duzenlenebilir" yapan
+  // kararin yarisi uygulanmamisti ve kota degistirmenin tek yolu canli
+  // veritabanina elle SQL yazmakti.
+  const [edits, setEdits]     = useState({});
   const [saving, setSaving]   = useState(null); // key kaydediliyor mu
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +21,10 @@ export default function PlatformAdminPage() {
   async function loadPlans() {
     const list = await api.listPlans();
     setPlans(list || []);
-    setEdits(Object.fromEntries((list || []).map(p => [p.key, { price: p.price ?? '', driver_limit: p.driver_limit }])));
+    setEdits(Object.fromEntries((list || []).map(p => [p.key, {
+      price: p.price ?? '', driver_limit: p.driver_limit,
+      transfer_limit: p.transfer_limit ?? '', overage_price: p.overage_price ?? '',
+    }])));
   }
 
   useEffect(() => {
@@ -32,10 +40,15 @@ export default function PlatformAdminPage() {
   async function handleSavePlan(key) {
     setSaving(key);
     try {
-      const { price, driver_limit } = edits[key];
+      const { price, driver_limit, transfer_limit, overage_price } = edits[key];
       await api.updatePlan(key, {
         price: price === '' ? null : Number(price),
         driver_limit: Number(driver_limit),
+        // BOŞ = NULL = SINIRSIZ (`utils/quota.js` ile aynı sözleşme), 0 DEĞİL:
+        // 0 yazmak o planı kotasız değil SIFIR kotalı yapardı ve o plandaki
+        // her firma ilk transferinde "kotanızı aştınız" görürdü.
+        transfer_limit: transfer_limit === '' ? null : Number(transfer_limit),
+        overage_price:  overage_price  === '' ? null : Number(overage_price),
       });
       await loadPlans();
     } finally {
@@ -92,6 +105,8 @@ export default function PlatformAdminPage() {
               <th className="px-4 py-3 font-semibold">Plan</th>
               <th className="px-4 py-3 font-semibold">Fiyat (₺/ay)</th>
               <th className="px-4 py-3 font-semibold">Kişi Limiti</th>
+              <th className="px-4 py-3 font-semibold">Aylık Transfer</th>
+              <th className="px-4 py-3 font-semibold">Aşım (₺)</th>
               <th className="px-4 py-3 font-semibold"></th>
             </tr>
           </thead>
@@ -114,6 +129,27 @@ export default function PlatformAdminPage() {
                     value={edits[p.key]?.driver_limit ?? ''}
                     onChange={e => setEdits(s => ({ ...s, [p.key]: { ...s[p.key], driver_limit: e.target.value } }))}
                     className={`w-20 border border-surface-inputborder rounded-control px-2.5 py-1.5 text-sm ${FOCUS}`}
+                  />
+                </td>
+                {/* AYLIK TRANSFER KOTASI ve AŞIM (S1). Boş bırakmak =
+                    sınırsız; `placeholder` bunu söylüyor ki admin boş alanı
+                    "unutulmuş" sanmasın. */}
+                <td className="px-4 py-3">
+                  <input
+                    type="number"
+                    value={edits[p.key]?.transfer_limit ?? ''}
+                    onChange={e => setEdits(s => ({ ...s, [p.key]: { ...s[p.key], transfer_limit: e.target.value } }))}
+                    placeholder="sınırsız"
+                    className={`w-24 border border-surface-inputborder rounded-control px-2.5 py-1.5 text-sm ${FOCUS}`}
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    type="number"
+                    value={edits[p.key]?.overage_price ?? ''}
+                    onChange={e => setEdits(s => ({ ...s, [p.key]: { ...s[p.key], overage_price: e.target.value } }))}
+                    placeholder="ücretsiz"
+                    className={`w-24 border border-surface-inputborder rounded-control px-2.5 py-1.5 text-sm ${FOCUS}`}
                   />
                 </td>
                 <td className="px-4 py-3">

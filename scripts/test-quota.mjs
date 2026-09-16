@@ -105,6 +105,13 @@ check('pano kota uyarısını çağırıyor VE sonucunu bağlıyor',
   /const uyari = kotaUyarisi\(usage\);/.test(dash),
   'çağrı var ama dönen değer kullanılmıyor olabilir');
 check('pano kotayı sunucudan çekiyor', /api\.orgUsage\(\)/.test(dash));
+// ÇEKMEK YETMEZ, STATE'E İNMELİ. Denetimde `setUsage(...)` → `setUsage(null)`
+// mutasyonu 31/31 yeşil geçti: çağrı yerinde duruyor, `usage` sonsuza kadar
+// `null` kalıyor, şerit HİÇ basılmıyor. "Saydığın şeyin doğru yere indiğini
+// de ölç" (A7-2) bulgusunun birebir tekrarı.
+check('çekilen kota state\'e YAZILIYOR',
+  /setUsage\(u\.status === 'fulfilled' \? u\.value : null\)/.test(dash),
+  'kota çekiliyor ama state\'e inmiyor — şerit hiç basılmaz');
 check('şerit koşullu basılıyor', /if \(!uyari\) return null;/.test(dash));
 check('şerit metni ortak yardımcıdan geliyor',
   /uyari\.baslik/.test(dash) && /uyari\.detay/.test(dash),
@@ -114,6 +121,38 @@ check('şerit metni ortak yardımcıdan geliyor',
 check('kota hatası loadError\'a karışmıyor',
   /const errs = \[r, n\]\.filter/.test(dash),
   'kota reddi ana hata şeridine düşüyor');
+
+console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
+// DENETİM BULGUSU (S1): fiyatın YAPISI değişti ama fiyatı GÖSTEREN yüzeyler
+// değişmedi ve bu ÜÇ ayrı bloklayıcı üretti. En ağırı canlıdaydı: landing
+// sayfası kotalı planlara "Sınırsız uçuş takibi" diyordu — müşteri "490 ₺ ·
+// Sınırsız" okuyup satın alır, ertesi ay 30 transferi aşınca 16 ₺/transfer
+// fatura görürdü. Panoda "Aylık kotanızı aştınız" diyen bir ürünün satış
+// sayfasında "sınırsız" demesi, üründen önce bir dürüstlük sorunu.
+//
+// KAPI ADA DEĞİL ŞEKLE BAKAR: fiyat basan dosyalar `p.price` ile bulunuyor,
+// yani yarın eklenecek üçüncü bir fiyat yüzeyi de kendiliğinden kapsama girer.
+{
+  const { readdirSync, statSync } = await import('node:fs');
+  const walk = (d) => readdirSync(d).flatMap((n) => {
+    const p = join(d, n);
+    return statSync(p).isDirectory() ? walk(p) : (/\.(jsx?|tsx?)$/.test(n) ? [p] : []);
+  });
+  const soy = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  const fiyatYuzeyleri = walk(join(root, 'src'))
+    .map((f) => [f, soy(readFileSync(f, 'utf8'))])
+    .filter(([, s]) => /p\.price/.test(s));
+  check(`fiyat basan yüzey bulundu (${fiyatYuzeyleri.length})`, fiyatYuzeyleri.length >= 2,
+    'tarama boşaldı — aşağıdaki kontrol anlamsız');
+  const kotasiz = fiyatYuzeyleri.filter(([, s]) => !/transfer_limit/.test(s));
+  check('fiyat basan her yüzey transfer kotasını da basıyor', kotasiz.length === 0,
+    kotasiz.map(([f]) => String(f).split(/[\\/]/).pop()).join(', ') +
+    ' — fiyat görünüyor, karşılığı görünmüyor');
+  // VE "SINIRSIZ" VAADİ KOTALI PLANLA BİR ARADA DURAMAZ.
+  const yalan = fiyatYuzeyleri.filter(([, s]) => /Sınırsız uçuş takibi/.test(s));
+  check('kotalı planlara "sınırsız" denmiyor', yalan.length === 0,
+    yalan.map(([f]) => String(f).split(/[\\/]/).pop()).join(', '));
+}
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);
 process.exit(failed ? 1 : 0);

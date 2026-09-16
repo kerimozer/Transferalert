@@ -10,17 +10,36 @@ const FEATURES = [
   { icon: Zap,            title: 'Tek Tıkla Takip',              desc: 'Sadece uçuş numarası girin. Sistem geri kalanı halleder. Karmaşık form yok, gereksiz adım yok.' },
 ];
 
-// Planlar arası tek fark ekip/sürücü limiti — özellik seti hepsinde aynı.
-// Uydurma ayrıcalık listesi yerine gerçekte var olanı gösteriyoruz.
+// Planlar arası fark İKİ EKSENDE: ekip/sürücü limiti ve AYLIK TRANSFER KOTASI
+// (S1, migration 032). Uydurma ayrıcalık listesi yerine gerçekte var olanı
+// gösteriyoruz.
 const PLAN_COPY = {
   individual:   { desc: 'Tek başına çalışan sürücüler için',   highlight: false },
+  basic:        { desc: 'Yeni kurulan küçük ekipler için',      highlight: false },
   professional: { desc: 'Büyüyen transfer firmaları için',      highlight: true  },
   enterprise:   { desc: 'Büyük filolar için',                   highlight: false },
 };
 
-function baseFeatures(driverLimit) {
-  const team = driverLimit === 1 ? '1 kullanıcı' : `${driverLimit} sürücüye kadar ekip`;
-  return [team, 'Sınırsız uçuş takibi', 'WhatsApp + SMS bildirimi', 'Firma yönetim paneli'];
+// ÖZELLİK LİSTESİ PLANIN TAMAMINI ALIR, yalnız şoför limitini değil.
+//
+// Burada "Sınırsız uçuş takibi" yazıyordu ve migration 032 canlıya çıktığı an
+// bu bir YALAN oldu: planların artık aylık transfer kotası ve aşım ücreti var.
+// Müşteri "490 ₺ · Sınırsız uçuş takibi" okuyup satın alır, ertesi ay 30
+// transferi aşınca 16 ₺/transfer fatura görürdü — Türkiye'de mesafeli satış
+// açısından yanıltıcı, üründe ise kendi kendisiyle çelişkili: panoda "Aylık
+// kotanızı aştınız" diyen bir ürün, satış sayfasında "sınırsız" diyordu.
+//
+// DERS (CLAUDE.md'ye yazıldı): fiyatın YAPISI değiştiğinde, fiyatı GÖSTEREN
+// her yüzey aynı turda değişmek zorundadır.
+function baseFeatures(p) {
+  const team = p.driver_limit === 1 ? '1 kullanıcı' : `${p.driver_limit} sürücüye kadar ekip`;
+  // `transfer_limit` yoksa (null) gerçekten sınırsız — özel anlaşmalar için
+  // güvenli taraf, `utils/quota.js` ile aynı sözleşme.
+  const kota = p.transfer_limit
+    ? `Ayda ${p.transfer_limit} transfer` +
+      (p.overage_price ? ` · aşım ${p.overage_price} ₺` : '')
+    : 'Sınırsız transfer';
+  return [team, kota, 'Uçuş takibi ve rötar uyarısı', 'WhatsApp + SMS bildirimi', 'Firma yönetim paneli'];
 }
 
 export default function LandingPage() {
@@ -35,7 +54,7 @@ export default function LandingPage() {
         price:     `${p.price} ₺`,
         period:    '/ay',
         desc:      PLAN_COPY[p.key]?.desc || '',
-        features:  baseFeatures(p.driver_limit),
+        features:  baseFeatures(p),
         cta:       'Başla',
         highlight: PLAN_COPY[p.key]?.highlight || false,
       }))))
