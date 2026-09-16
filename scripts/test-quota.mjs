@@ -144,10 +144,30 @@ console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
     .filter(([, s]) => /p\.price/.test(s));
   check(`fiyat basan yüzey bulundu (${fiyatYuzeyleri.length})`, fiyatYuzeyleri.length >= 2,
     'tarama boşaldı — aşağıdaki kontrol anlamsız');
-  const kotasiz = fiyatYuzeyleri.filter(([, s]) => !/transfer_limit/.test(s));
-  check('fiyat basan her yüzey transfer kotasını da basıyor', kotasiz.length === 0,
-    kotasiz.map(([f]) => String(f).split(/[\\/]/).pop()).join(', ') +
+
+  // KİMLİĞİN DOSYADA BULUNMASI YETMEZ (mutasyon turunda İKİ KEZ kaçtı).
+  // `/transfer_limit/` araması, alanı yalnız bir koşulda ya da bir `value=`
+  // bağlamasında taşıyan ama EKRANA BASMAYAN/GÖNDERMEYEN dosyayı yeşil
+  // geçiriyordu. İki farklı yüzey türü, iki farklı sözleşme:
+  //   · SATIŞ yüzeyi (alıcıya fiyat gösteren) → kota DEĞERİNİ basmalı
+  //   · DÜZENLEME yüzeyi (`updatePlan` çağıran) → kotayı GÖNDERMELİ
+  // Ayrım dosya adına değil, dosyanın NE YAPTIĞINA bakıyor.
+  const duzenleyen = fiyatYuzeyleri.filter(([, s]) => /updatePlan\(/.test(s));
+  const satan = fiyatYuzeyleri.filter(([, s]) => !/updatePlan\(/.test(s));
+
+  const basmayan = satan.filter(([, s]) =>
+    !/\$\{p\.transfer_limit\}|\{p\.transfer_limit\}/.test(s));
+  check(`satış yüzeyi kota DEĞERİNİ basıyor (${satan.length} yüzey)`,
+    satan.length > 0 && basmayan.length === 0,
+    basmayan.map(([f]) => String(f).split(/[\\/]/).pop()).join(', ') +
     ' — fiyat görünüyor, karşılığı görünmüyor');
+
+  const gondermeyen = duzenleyen.filter(([, s]) =>
+    !/transfer_limit:\s*transfer_limit/.test(s) || !/overage_price:\s*overage_price/.test(s));
+  check(`düzenleme yüzeyi kotayı GÖNDERİYOR (${duzenleyen.length} yüzey)`,
+    duzenleyen.length > 0 && gondermeyen.length === 0,
+    gondermeyen.map(([f]) => String(f).split(/[\\/]/).pop()).join(', ') +
+    ' — alan ekranda var ama kaydedilmiyor');
   // VE "SINIRSIZ" VAADİ KOTALI PLANLA BİR ARADA DURAMAZ.
   const yalan = fiyatYuzeyleri.filter(([, s]) => /Sınırsız uçuş takibi/.test(s));
   check('kotalı planlara "sınırsız" denmiyor', yalan.length === 0,
