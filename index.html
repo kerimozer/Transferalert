@@ -18,23 +18,33 @@
          BEYAZ görür; bu betik `<head>` ayrıştırılırken senkron koşar.
          Damganın tek tüketicisi `src/index.css` → `:root[data-theme="dark"]`;
          aynı kararı `src/lib/theme.js` elle seçimde tekrar uygular.
-         Tercih yoksa ("system") karar yine işletim sistemine ait. -->
+
+         A8 (2026-09-16): varsayılan artık SAATE göre ("auto", 21:00–07:00
+         koyu). Bu betik `temaSemasi()`nin KOPYASIDIR ve kopya olduğu için
+         kapıda GERÇEKTEN koşturulup sahte bir saatle o fonksiyonun sonucuyla
+         karşılaştırılıyor — bu projede kopyalanan her kural er geç ayrıştı ve
+         ayrıştığını kimse görmedi. Sınırı değiştiren tur BURAYI da
+         değiştirmek zorunda; kapı unutulursa CI'ı kırar. -->
     <script>
       (function () {
+        var h = new Date().getHours();
+        var gece = h >= 21 || h < 7;   // lib/theme.js → GECE_BASI / GECE_SONU
+        var sistem = function () {
+          try { return window.matchMedia('(prefers-color-scheme: dark)').matches; }
+          catch (e) { return false; }
+        };
+        var t = null;
         try {
-          var t = localStorage.getItem('app_theme');
-          var koyu = t === 'dark' || (t !== 'light' &&
-            window.matchMedia('(prefers-color-scheme: dark)').matches);
-          document.documentElement.setAttribute('data-theme', koyu ? 'dark' : 'light');
+          t = localStorage.getItem('app_theme');
         } catch (e) {
           // localStorage erişimi engellenmiş olabilir (site verisi kapalı
           // Chrome, bazı gömülü webview'lar). Bu, "kullanıcı açık tema
-          // istiyor" demek DEĞİL: sisteme sormaya devam et, yoksa gece
-          // OS'undaki kullanıcı her yüklemede beyaz çakma yer.
-          var k = false;
-          try { k = window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e2) {}
-          document.documentElement.setAttribute('data-theme', k ? 'dark' : 'light');
+          // istiyor" demek DEĞİL: okunamayan tercih = tercih yok = varsayılan,
+          // yani saate bak. Aksi hâlde gecenin ortasındaki kullanıcı her
+          // yüklemede beyaz çakma yerdi.
         }
+        var koyu = t === 'dark' || (t !== 'light' && (t === 'system' ? sistem() : gece));
+        document.documentElement.setAttribute('data-theme', koyu ? 'dark' : 'light');
       })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />

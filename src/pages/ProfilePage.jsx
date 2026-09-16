@@ -2,14 +2,21 @@ import { FOCUS } from '../lib/focus';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { User, Phone, Save, CheckCircle, Monitor, Sun, Moon } from 'lucide-react';
-import { TEMA_DEGERLERI, temaOku, temaUygula, temaYaz } from '../lib/theme';
+import { User, Phone, Save, CheckCircle, Monitor, Sun, Moon, Clock } from 'lucide-react';
+import { TEMA_DEGERLERI, temaOku, temaUygula, temaYaz, GECE_BASI, GECE_SONU } from '../lib/theme';
 
 // Etiket ve ikon — seçeneklerin KENDİSİ `TEMA_DEGERLERI`den gelir (tek
-// kaynak, mobil ikiziyle aynı üç değer). Bilinmeyen bir değer ham hâliyle
+// kaynak, mobil ikiziyle aynı dört değer). Bilinmeyen bir değer ham hâliyle
 // basılır, yani EKRANDA görünür; sessizce listeden düşmez.
-const TEMA_ETIKET = { system: 'Sistem', light: 'Açık', dark: 'Koyu' };
-const TEMA_IKON   = { system: Monitor, light: Sun, dark: Moon };
+const TEMA_ETIKET = { auto: 'Otomatik', system: 'Sistem', light: 'Açık', dark: 'Koyu' };
+const TEMA_IKON   = { auto: Clock, system: Monitor, light: Sun, dark: Moon };
+
+// SAAT ARALIĞI EKRANDA YAZAR ve sayılar PALETİN KAYNAĞINDAN gelir. "Otomatik"
+// tek başına neye göre otomatik olduğunu söylemez; kullanıcı 15:00'te seçer,
+// hiçbir şey değişmez ve özelliğin çalışmadığını sanır — bu projenin
+// "tepki vermiyor = cevabı göremiyorum" dersinin aynısı. Elle yazılsaydı
+// sınırı değiştiren bir sonraki tur burayı unutur ve ekran yalan söylerdi.
+const ss = (h) => String(h).padStart(2, '0') + ':00';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -185,9 +192,11 @@ export default function ProfilePage() {
           <Sun size={13} className="text-ink-muted" />
           <span className="text-sm font-semibold text-ink-soft">Görünüm</span>
         </div>
-        {/* SEÇENEKLER `TEMA_DEGERLERI`DEN ÜRETİLİR, elle yazılmaz — üç değerin
-            tek kaynağı orası ve mobil ikiziyle aynı olmak zorunda. */}
-        <div className="flex gap-2">
+        {/* SEÇENEKLER `TEMA_DEGERLERI`DEN ÜRETİLİR, elle yazılmaz — dört değerin
+            tek kaynağı orası ve mobil ikiziyle aynı olmak zorunda.
+            IZGARA, tek sıra DEĞİL: dördüncü seçenekle birlikte "Otomatik"
+            dar ekranda sığmıyordu ve metin kırpılıyordu. */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {TEMA_DEGERLERI.map((v) => {
             const Ikon = TEMA_IKON[v] || Monitor;
             const secili = tema === v;
@@ -197,7 +206,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => secTema(v)}
                 aria-pressed={secili}
-                className={`flex-1 flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-card border text-sm font-semibold transition-colors ${FOCUS} ${
+                className={`flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-card border text-sm font-semibold transition-colors ${FOCUS} ${
                   secili
                     ? 'border-brand-600 bg-brand-50 text-brand-600'
                     : 'border-surface-borderstrong text-ink-soft hover:bg-surface-alt'
@@ -209,6 +218,11 @@ export default function ProfilePage() {
             );
           })}
         </div>
+
+        {/* "OTOMATİK" NEYE GÖRE OTOMATİK — sayılar tek kaynaktan. */}
+        <p className="mt-2 text-xs text-ink-muted">
+          Otomatik: {ss(GECE_BASI)}–{ss(GECE_SONU)} arası koyu görünüm.
+        </p>
 
         {/* YAZMA HATASI EKRANDA. Sessizce yutulsaydı seçim işaretlenir,
             kullanıcı sayfayı yenilediğinde eski paleti bulurdu. */}

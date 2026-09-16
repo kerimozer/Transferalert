@@ -1222,7 +1222,8 @@ check('@media print bloğu var', yazdirBlok.length > 0,
 // yapılmamış sayılır. Mobil ikizi: mobile/scripts/test-tokens.mjs [9].
 console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
 {
-  const { temaSemasi, temaOku, temaYaz, temaUygula, temaIzle, TEMA_DEGERLERI } =
+  const { temaSemasi, temaOku, temaYaz, temaUygula, temaIzle, saatGece, TEMA_DEGERLERI,
+          GECE_BASI, GECE_SONU } =
     await import(new URL('../src/lib/theme.js', import.meta.url));
 
   // Saf çözücü — MOBİLLE BİREBİR AYNI davranmak zorunda: aynı kullanıcı
@@ -1231,10 +1232,32 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
     'elle seçim sistem ayarını ezmiyor: seçici görünür ama işlevsiz');
   check('temaSemasi("light", "dark") = light', temaSemasi('light', 'dark') === 'light');
   check('temaSemasi("system", "dark") = dark', temaSemasi('system', 'dark') === 'dark');
-  check('bilinmeyen tercih sisteme düşüyor', temaSemasi('mor', 'dark') === 'dark');
-  check('üç değer tanımlı', Array.isArray(TEMA_DEGERLERI) && TEMA_DEGERLERI.length === 3 &&
-    ['system', 'light', 'dark'].every((v) => TEMA_DEGERLERI.includes(v)),
+  check('dört değer tanımlı', Array.isArray(TEMA_DEGERLERI) && TEMA_DEGERLERI.length === 4 &&
+    ['auto', 'system', 'light', 'dark'].every((v) => TEMA_DEGERLERI.includes(v)),
     JSON.stringify(TEMA_DEGERLERI));
+
+  // ── A8: SAATE GÖRE OTOMATİK — MOBİL İKİZİYLE AYNI SAYILAR ────────────
+  // İki depo CI'da yan yana duramaz, o yüzden kanonik sınırlar İKİ kapıda
+  // da SABİT yazılı (`test-transfer.mjs` deseni). Sınırı değiştiren tur
+  // üçünü birden güncellemek zorunda: iki kapı + `index.html`.
+  check('gece penceresi mobille aynı (21→07)', GECE_BASI === 21 && GECE_SONU === 7,
+    `${GECE_BASI}→${GECE_SONU} — telefonda ve tarayıcıda farklı saatte dönen bir ayar`);
+  const saat = (h) => new Date(2026, 0, 15, h, 30, 0);
+  check('20:00 gündüz', saatGece(saat(20)) === false);
+  check('21:00 gece (sınır DAHİL)', saatGece(new Date(2026, 0, 15, GECE_BASI, 0, 0)) === true);
+  check('00:30 gece (gün döndü)', saatGece(saat(0)) === true,
+    'gece yarısını aşan pencere kurulmamış — 00:00\'da tema gündüze dönüyor');
+  check('06:00 gece', saatGece(saat(6)) === true);
+  check('07:00 gündüz (sınır HARİÇ)', saatGece(new Date(2026, 0, 15, GECE_SONU, 0, 0)) === false);
+  // ÇÖZÜCÜ SAATİ GERÇEKTEN KULLANIYOR MU: `saatGece` doğru olup `temaSemasi`
+  // onu hiç çağırmazsa özellik tanımlı ve ERİŞİLEMEZ kalır.
+  check('temaSemasi("auto", -, gece) = dark', temaSemasi('auto', 'light', saat(22)) === 'dark',
+    'otomatik seçeneği saate bakmıyor — seçilebilir ama işlevsiz');
+  check('temaSemasi("auto", -, gündüz) = light', temaSemasi('auto', 'dark', saat(12)) === 'light',
+    'otomatik CİHAZA bakıyor — "Sistem"in kopyası olmuş');
+  check('bilinmeyen tercih saate düşüyor (varsayılanla aynı)',
+    temaSemasi('mor', 'light', saat(22)) === 'dark' &&
+    temaSemasi('mor', 'dark', saat(12)) === 'light');
 
   // KALICILIK — saf çözücüyü ölçmek yetmez, o bozulamaz; bozulabilen
   // tercihin yazılıp geri okunabilmesi.
@@ -1243,7 +1266,14 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
     const depo = { oku: () => kutu.v ?? null, yaz: (v) => { kutu.v = v; } };
     check('yaz → oku gidiş-dönüşü', temaYaz('dark', depo) === true && temaOku(depo) === 'dark');
     check('geçersiz değer reddediliyor', temaYaz('mor', depo) === false && kutu.v === 'dark');
-    check('boş depo system döner', temaOku({ oku: () => null, yaz: () => {} }) === 'system');
+    // VARSAYILAN 'auto' (A8) — mobille aynı. Hiç seçim yapmamış tarayıcının
+    // deposu BOŞ, yani göç gerekmeden saate geçiyor; yazılı 'system' ise
+    // kullanıcının AÇIK tercihi ve korunuyor.
+    check('boş depo auto döner', temaOku({ oku: () => null, yaz: () => {} }) === 'auto',
+      'varsayılan değişmemiş — kimse otomatik moda geçmez');
+    check('bozuk kayıt auto döner', temaOku({ oku: () => 'mor', yaz: () => {} }) === 'auto');
+    check('yazılı "system" KORUNUYOR', temaOku({ oku: () => 'system', yaz: () => {} }) === 'system',
+      'kullanıcının açık seçimi sessizce üzerine yazılıyor');
     // `localStorage.setItem` bazı gömülü tarayıcılarda atmadan SESSİZCE
     // hiçbir şey yapmaz; geri okunmasaydı ekran "seçildi" der, kullanıcı
     // sayfayı yenilediğinde eski paleti bulurdu.
@@ -1294,16 +1324,53 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
     //    `null` okur, sisteme düşer ve 'light' basar — yani depo anahtarının
     //    iki dosyada aynı olduğu bu testin İÇİNDE ölçülüyor.
     const betik = (html.match(/<script>([\s\S]*?)<\/script>/) || [])[1] || '';
-    let basilan = null;
-    new Function('localStorage', 'window', 'document', betik)(
-      { getItem: (k) => (k === 'app_theme' ? 'dark' : null) },
-      { matchMedia: () => ({ matches: false }) },
-      { documentElement: { setAttribute: (k, v) => { basilan = [k, v]; } } },
-    );
+    // SAAT DE ENJEKTE EDİLİYOR (A8). `Date` bir parametre olarak veriliyor,
+    // yani betiğin içindeki `new Date()` bizim sahte saatimizi okuyor.
+    // Bu olmadan betiğin saat dalı ölçülemezdi ve `index.html` ile
+    // `lib/theme.js` sessizce ayrışabilirdi — bu projede kopyalanan her
+    // kural er geç ayrıştı ve ayrıştığını kimse görmedi.
+    const kosBetik = (tercih, sistemKoyu, h) => {
+      let cikti = null;
+      const SahteDate = function () { return { getHours: () => h }; };
+      new Function('localStorage', 'window', 'document', 'Date', betik)(
+        { getItem: (k) => (k === 'app_theme' ? tercih : null) },
+        { matchMedia: () => ({ matches: sistemKoyu }) },
+        { documentElement: { setAttribute: (k, v) => { cikti = [k, v]; } } },
+        SahteDate,
+      );
+      return cikti;
+    };
+    const basilan = kosBetik('dark', false, 12);
     check('satır içi betik damgayı basıyor', basilan && basilan[0] === 'data-theme',
       JSON.stringify(basilan));
     check('betiğin bastığı değer CSS seçicisiyle aynı', basilan && basilan[1] === cssDeger,
       `${basilan && basilan[1]} ≠ ${cssDeger} — damga değeri ya da depo anahtarı ayrışmış`);
+
+    // ── SATIR İÇİ BETİK = `temaSemasi()` (A8) ──────────────────────────
+    // KOPYA OLDUĞU İÇİN DAVRANIŞI KARŞILAŞTIRILIYOR, metni değil. Betikte
+    // sınır 20'ye kaysa ya da `'auto'` dalı sisteme düşse, modül doğru
+    // kalır ve İLK BOYA yanlış temayı basar: kullanıcı her yüklemede bir
+    // kare (çoğu zaman kalıcı olarak) yanlış palet görür ve hiçbir kontrol
+    // bunu söylemez.
+    const senaryolar = [
+      // [depodaki tercih, sistem koyu mu, saat]
+      [null, false, 22], [null, false, 3],  [null, false, 12], [null, true, 12],
+      ['auto', false, 21], ['auto', false, 7], ['auto', false, 6],
+      ['auto', true, 20], ['system', true, 22], ['system', false, 22],
+      ['light', false, 23], ['dark', true, 12], ['mor', false, 22],
+    ];
+    const ayrisan = senaryolar.filter(([tercih, sis, h]) => {
+      const b = kosBetik(tercih, sis, h);
+      const beklenen = temaSemasi(tercih, sis ? 'dark' : 'light',
+        new Date(2026, 0, 15, h, 30, 0)) === 'dark' ? 'dark' : 'light';
+      return !b || b[1] !== beklenen;
+    });
+    check(`satır içi betik modülle AYNI kararı veriyor (${senaryolar.length} senaryo)`,
+      ayrisan.length === 0,
+      ayrisan.map((s) => JSON.stringify(s)).join(' '));
+    // SIFIR KAPSAM DA ARIZADIR: senaryo listesi boşalırsa yukarısı hiçbir
+    // şey ölçmez ve yeşil kalır.
+    check('senaryo listesi dolu', senaryolar.length >= 10);
 
     // 2) `temaUygula` DAVRANIŞI: aynı damgayı basıyor mu, tarayıcı çubuğunu
     //    paletten mi okuyor. Çağrı yerini metinle görmek YETMEZ — gövde
@@ -1319,17 +1386,46 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
       matchMedia: () => ({ matches: false, addEventListener: () => { abone++; }, removeEventListener: () => {} }),
     };
     globalThis.getComputedStyle = () => ({ getPropertyValue: () => ' 20 25 28 ' });
-    let donen, izleDondu;
+    // SAAT ABONELİĞİ (A8) sahte zamanlayıcıyla ölçülüyor: sayfa açıkken
+    // 21:00 geçildiğinde tema kendiliğinden dönmeli. `setInterval` gerçek
+    // kalsaydı kapı ya bekler ya da hiçbir şey ölçmezdi.
+    const yedekZaman = { s: globalThis.setInterval, c: globalThis.clearInterval };
+    let tikAbone = 0, tikIptal = 0, tikEl = null;
+    globalThis.setInterval = (fn, ms) => { tikAbone++; tikEl = { fn, ms }; return 42; };
+    globalThis.clearInterval = () => { tikIptal++; };
+    let donen, izleDondu, otoGece, tikBasti = false, ilk = null;
     try {
       donen = temaUygula('dark');
+      // ANLIK GÖRÜNTÜ: aşağıdaki çağrılar `uygulanan`ı yeniden yazıyor.
+      ilk = uygulanan;
+      // `'auto'` + GECE saati → koyu. `temaUygula` saati geçirmezse burası
+      // gündüz basar ve otomatik mod webde hiç çalışmaz.
+      temaUygula('auto', new Date(2026, 0, 15, 22, 0, 0));
+      otoGece = uygulanan && uygulanan[1];
       izleDondu = temaIzle();
+      // TİK GÖVDESİ SAHTE DOM HÂLÂ AYAKTAYKEN koşturulur; dışarıda
+      // çağrılsaydı gerçek `document`e uzanıp patlardı.
+      uygulanan = null;
+      if (tikEl) tikEl.fn();
+      tikBasti = uygulanan !== null;
+      if (typeof izleDondu === 'function') izleDondu();
     } finally {
       globalThis.document = yedek.d; globalThis.window = yedek.w; globalThis.getComputedStyle = yedek.g;
+      globalThis.setInterval = yedekZaman.s; globalThis.clearInterval = yedekZaman.c;
     }
-    check('temaUygula damgayı GERÇEKTEN basıyor', uygulanan && uygulanan[0] === 'data-theme',
+    check('temaUygula SAATİ hesaba katıyor ("auto" + 22:00 → dark)', otoGece === cssDeger,
+      `${otoGece} — webde otomatik mod saate bakmıyor`);
+    check('temaIzle saat tikine de abone oluyor', tikAbone === 1, `tik ${tikAbone}`);
+    check('tik periyodu dakikayı aşmıyor', tikEl && tikEl.ms > 0 && tikEl.ms <= 60000,
+      `${tikEl && tikEl.ms}ms — sınırdan çok sonra dönen bir tema, dönmeyen temadır`);
+    check('tik fonksiyonu temayı yeniden uyguluyor', tikBasti,
+      'zamanlayıcı kuruluyor ama içi boş — sınır geçilince sayfa dönmez');
+    check('abonelik iptali tiki de kapatıyor', tikIptal === 1,
+      'sayfa kapanınca zamanlayıcı sızıyor');
+    check('temaUygula damgayı GERÇEKTEN basıyor', ilk && ilk[0] === 'data-theme',
       'seçime basılıyor, tercih kaydediliyor ve sayfa dönmüyor');
-    check('temaUygula ile CSS aynı değerde buluşuyor', uygulanan && uygulanan[1] === cssDeger,
-      `${uygulanan && uygulanan[1]} ≠ ${cssDeger}`);
+    check('temaUygula ile CSS aynı değerde buluşuyor', ilk && ilk[1] === cssDeger,
+      `${ilk && ilk[1]} ≠ ${cssDeger}`);
     check('temaUygula geçerli şemayı döndürüyor', donen === cssDeger);
     check('tarayıcı çubuğu paletten güncelleniyor', meta === 'rgb(20 25 28)', String(meta));
     // 3) SİSTEM DEĞİŞİMİNE ABONELİK — yalnız `temaIzle()` çağrısının metinde
@@ -1368,6 +1464,13 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
     'hata state\'e yazılıyor ama hiçbir yere basılmıyor');
   check('seçili değer her mount\'ta depodan okunuyor', /useState\(temaOku\)/.test(kod),
     'bayat değer yanlış seçeneği işaretler');
+  // "OTOMATİK" NEYE GÖRE OTOMATİK (A8) — aralık EKRANDA yazmalı ve sayıları
+  // tek kaynaktan almalı. Yoksa kullanıcı öğlen seçer, hiçbir şey değişmez
+  // ve özelliğin çalışmadığını sanar; elle yazılmış bir saat de sınır
+  // değiştiğinde ekranı yalancı yapar.
+  check('otomatik aralığı ekranda yazıyor',
+    /GECE_BASI/.test(kod) && /GECE_SONU/.test(kod) && /Otomatik:/.test(kod),
+    '"Otomatik" neye göre olduğunu söylemiyor ya da saat elle yazılmış');
   // FORMUN İÇİNE KONMASIN: `<button>` varsayılanı `submit`tir ve profil
   // kaydını tetiklerdi.
   check('seçenekler type="button"', /type="button"/.test(kod));
