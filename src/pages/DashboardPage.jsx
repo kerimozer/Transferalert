@@ -8,6 +8,7 @@ import { FOCUS } from '../lib/focus';
 // Transferlerim sayfası kalıyor: orası YÖNETİM (ekle, toplu içe aktar, geçmiş,
 // ödeme, tabela). Burası bakma ve bulma.
 import { useEffect, useMemo, useState } from 'react';
+import { kotaUyarisi } from '../lib/quota';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, jobBadge } from '../lib/status';
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+  const [usage, setUsage] = useState(null);
   const [query, setQuery]     = useState('');
   const [assignFor, setAssignFor] = useState(null);
   // Şoförsüz uyarı şeridinin "Göster"i — listeyi şoförsüz işlere daraltır.
@@ -40,10 +42,18 @@ export default function DashboardPage() {
   //
   // `allSettled` geleni gösterir, gelmeyeni SÖYLER (ReportsPage ile aynı karar;
   // mobil `DashboardScreen` de aynı yere getirildi — üç ekran ayrışmasın).
-  const load = () => Promise.allSettled([api.listReservations(), api.listNotifications()])
-    .then(([r, n]) => {
+  // KOTA ÜÇÜNCÜ UÇ olarak eklendi ve HATASI YUTULUYOR — bilerek. Diğer
+  // ikisinden farklı: kota bilgisi gelmezse ekranda eksik bir şey yok,
+  // yalnız bir uyarı basılmamış olur. Onu da `loadError`a yazmak, kotası
+  // rahat olan kullanıcıya her açılışta korkutucu kırmızı bir şerit
+  // gösterirdi (ör. şoför rolündeki bir hesap: o uç 403 döner ve bu DOĞRU
+  // davranış). "Sessiz yol yasağı" burada UYGULANMAZ çünkü kullanıcının
+  // beklediği bir cevap yok — hiçbir eylemin karşılığı değil.
+  const load = () => Promise.allSettled([api.listReservations(), api.listNotifications(), api.orgUsage()])
+    .then(([r, n, u]) => {
       if (r.status === 'fulfilled') setReservations(r.value || []);
       if (n.status === 'fulfilled') setNotifications(n.value || []);
+      setUsage(u.status === 'fulfilled' ? u.value : null);
       const errs = [r, n].filter(x => x.status === 'rejected')
         .map(x => x.reason?.message || String(x.reason));
       setLoadError(errs.length ? errs.join(' · ') : null);
@@ -121,6 +131,26 @@ export default function DashboardPage() {
           </p>
         </div>
       )}
+
+      {/* KOTA ŞERİDİ (S1) — KOŞULLU. Kota rahatken hiç basılmaz: kalıcı bir
+          "84/100" göstergesi her gün görülür, görüldükçe okunmaz olur ve
+          gerçekten önemli olduğu gün de okunmaz. Cümle ortak `lib/quota.js`ten
+          gelir (mobil ikiziyle birebir aynı), rengi yalnız burası seçer.
+          `warn` ailesi kullanılır, `bad` DEĞİL: aşım bir ARIZA değil, ücretli
+          bir hâl — kırmızı basmak dispatcher'a işinin durduğunu düşündürür. */}
+      {(() => {
+        const uyari = kotaUyarisi(usage);
+        if (!uyari) return null;
+        return (
+          <div className="mb-6 flex items-start gap-2 rounded-card bg-warn-50 px-4 py-3" role="status">
+            <AlertTriangle size={16} className="text-warn-800 shrink-0 mt-0.5" aria-hidden="true" />
+            <p className="text-sm text-warn-800">
+              <span className="font-semibold">{uyari.baslik}</span>{' '}
+              <span>{uyari.detay}</span>
+            </p>
+          </div>
+        );
+      })()}
 
       <div className="relative mb-6">
         {/* Aktifken büyüteç marka rengine döner: "ekran seni dinliyor"

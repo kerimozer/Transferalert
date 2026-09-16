@@ -49,6 +49,9 @@ export const api = {
 
   // Firma (Organization)
   getMyOrg:      ()     => req('GET',    '/api/organizations/my'),
+  // Aylik transfer kotasi (S1). AYRI cagri: /api/me her acilista kosuyor ve
+  // bu uc bir count sorgusu yapiyor.
+  orgUsage:      ()     => req('GET',    '/api/organizations/usage'),
   createOrg:     (data) => req('POST',   '/api/organizations', data),
   renameOrg:     (name) => req('PATCH',  '/api/organizations', { name }),
   listOrgMembers: ()    => req('GET',    '/api/organizations/members'),
