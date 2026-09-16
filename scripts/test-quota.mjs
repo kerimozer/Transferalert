@@ -22,6 +22,15 @@ console.log('[1] Sessiz hâller — kota rahatken şerit BASILMAZ');
 // gerçekten önemli olduğu gün de okunmaz.
 check('durum ok → null', kotaUyarisi({ limit: 100, kullanim: 10, durum: 'ok' }) === null);
 check('sınırsız (limit null) → null', kotaUyarisi({ limit: null, kullanim: 999, durum: 'ok' }) === null);
+// ↑ BU KONTROL TEK BAŞINA YETMİYORDU ve mutasyon turunda yakalandı: yukarıdaki
+// satır `durum: 'ok'` taşıdığı için LİMİT kapısı silinse bile DURUM kapısına
+// takılıp yeşil kalıyordu — yani doğru sebepten geçmiyordu. Aşağıdaki hâl iki
+// kapıyı AYIRIYOR: sınırsız bir kayıt, durumu ne olursa olsun sessiz kalmalı
+// (sunucu böyle bir cevap üretmiyor ama savunma derinliği ölçülebilir olmalı).
+check('sınırsız + "asildi" → yine null',
+  kotaUyarisi({ limit: null, kullanim: 999, asim: 5, asimTutari: 70, durum: 'asildi' }) === null,
+  'limit kapısı yok — kotasız firmaya aşım uyarısı basılır');
+check('limit 0 → null', kotaUyarisi({ limit: 0, kullanim: 5, asim: 5, durum: 'asildi' }) === null);
 check('veri yok → null', kotaUyarisi(null) === null);
 check('boş nesne → null', kotaUyarisi({}) === null);
 // Uç 403 döndüğünde (şoför rolü) istemci `null` yazıyor; çökmemeli.
@@ -35,6 +44,17 @@ check('1680 → "1.680 TL"', tl(1680) === '1.680 TL', tl(1680));
 check('1234567 → "1.234.567 TL"', tl(1234567) === '1.234.567 TL', tl(1234567));
 check('0 → "0 TL"', tl(0) === '0 TL', tl(0));
 check('bozuk değer 0 sayılıyor', tl(undefined) === '0 TL' && tl('abc') === '0 TL');
+// DAVRANIŞ BURADA YETMİYOR — ŞEKLE DE BAKILIR. Node tam ICU taşıdığı için
+// `toLocaleString('tr-TR')` burada DOĞRU sonucu üretir ve testler yeşil kalır;
+// arıza yalnız Hermes'te, yani ölçemediğimiz yerde doğar. Mutasyon turunda
+// tam olarak bu kaçtı. Kaynağı yasaklamak, ölçülemeyen bir riski ölçülebilir
+// bir kurala çeviriyor.
+const quotaSrc = readFileSync(join(root, 'src', 'lib', 'quota.js'), 'utf8')
+  .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+check('toLocaleString KULLANILMIYOR (Hermes Intl güvenilmez)',
+  !/toLocaleString/.test(quotaSrc),
+  'telefonda ayraçsız sayı basar; web "1.680 TL" derken mobil "1680 TL" gösterir');
+check('Intl API\'si de kullanılmıyor', !/\bIntl\b/.test(quotaSrc));
 
 console.log('\n[3] Cümleler — İKİZ SÖZLEŞME (mobil kapıda BİREBİR aynısı var)');
 const yak = kotaUyarisi({ limit: 100, kullanim: 85, kalan: 15, asim: 0, asimTutari: 0, durum: 'yaklasiyor' });
@@ -75,7 +95,15 @@ console.log('\n[5] EKRANDA BASILIYOR MU — tanımlı ≠ kullanılan');
 // Yardımcı doğru olup hiçbir ekran çağırmazsa yukarıdaki her kontrol yeşil
 // kalır ve kullanıcı kotasını hiç görmez.
 const dash = readFileSync(join(root, 'src', 'pages', 'DashboardPage.jsx'), 'utf8');
-check('pano kota uyarısını çağırıyor', /kotaUyarisi\(usage\)/.test(dash));
+// ÇAĞRININ BULUNMASI YETMEZ, SONUCUNUN KULLANILMASI GEREKİR. İlk hâli yalnız
+// `/kotaUyarisi\(usage\)/` arıyordu ve mutasyon turunda kaçtı:
+// `const uyari = null; kotaUyarisi(usage);` yazmak kapıdan geçiyordu — çağrı
+// yerinde duruyor, sonucu çöpe gidiyor, şerit hiç basılmıyor. Bu projede
+// tekrar eden sınıf (`setLoadError(null)`, `if (1) return null` kaması):
+// **kimliğin varlığı değil, değerin AKIŞI ölçülmeli.**
+check('pano kota uyarısını çağırıyor VE sonucunu bağlıyor',
+  /const uyari = kotaUyarisi\(usage\);/.test(dash),
+  'çağrı var ama dönen değer kullanılmıyor olabilir');
 check('pano kotayı sunucudan çekiyor', /api\.orgUsage\(\)/.test(dash));
 check('şerit koşullu basılıyor', /if \(!uyari\) return null;/.test(dash));
 check('şerit metni ortak yardımcıdan geliyor',
