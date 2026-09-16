@@ -1468,9 +1468,20 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
   // tek kaynaktan almalı. Yoksa kullanıcı öğlen seçer, hiçbir şey değişmez
   // ve özelliğin çalışmadığını sanar; elle yazılmış bir saat de sınır
   // değiştiğinde ekranı yalancı yapar.
-  check('otomatik aralığı ekranda yazıyor',
-    /GECE_BASI/.test(kod) && /GECE_SONU/.test(kod) && /Otomatik:/.test(kod),
-    '"Otomatik" neye göre olduğunu söylemiyor ya da saat elle yazılmış');
+  //
+  // "DOSYADA GEÇİYOR" YETMEZ (mobil ikizinde mutasyonla kanıtlandı): ipucu
+  // JSX'ten çıkarıldığında kimlikler dosyada kalıyor ve kapı yeşil geçiyordu.
+  // Aranan, saatlerin GERÇEKTEN bir metin düğümünde ve AYNI blokta basılması.
+  const ipk = kod.indexOf('Otomatik:');
+  const oncesi = ipk < 0 ? '' : kod.slice(0, ipk);
+  const sonPAc = oncesi.lastIndexOf('<p');
+  check('otomatik aralığı ekranda BASILIYOR',
+    ipk >= 0 && sonPAc >= 0 && !oncesi.slice(sonPAc).includes('</p>'),
+    '"Otomatik" ipucu bir metin düğümünün içinde render edilmiyor');
+  check('ipucu saatleri tek kaynaktan alıyor',
+    ipk >= 0 && /GECE_BASI/.test(kod.slice(ipk, ipk + 180)) &&
+                /GECE_SONU/.test(kod.slice(ipk, ipk + 180)),
+    'saat elle yazılmış — sınır değişince ekran yalan söyler');
   // FORMUN İÇİNE KONMASIN: `<button>` varsayılanı `submit`tir ve profil
   // kaydını tetiklerdi.
   check('seçenekler type="button"', /type="button"/.test(kod));
