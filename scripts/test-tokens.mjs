@@ -1482,6 +1482,16 @@ console.log('\n[A6] Tema seçici — kullanıcı gece moduna ulaşabiliyor mu');
     ipk >= 0 && /GECE_BASI/.test(kod.slice(ipk, ipk + 180)) &&
                 /GECE_SONU/.test(kod.slice(ipk, ipk + 180)),
     'saat elle yazılmış — sınır değişince ekran yalan söyler');
+  // ── ETİKET/İKON HARİTALARI HER DEĞERİ KAPSIYOR MU (denetim D4) ──────
+  // Haritadan bir değer düşerse düğme ham anahtarıyla ("auto") basılır ve
+  // hiçbir kapı görmez — mobil ikizinde mutasyonla kanıtlandı. `|| Monitor`
+  // yedeği ikonu kurtarır ama ETİKETİ kurtarmaz.
+  for (const harita of ['TEMA_ETIKET', 'TEMA_IKON']) {
+    const satir = (kod.match(new RegExp(`const ${harita} += \\{[^}]*\\}`)) || [''])[0];
+    const eksik = TEMA_DEGERLERI.filter((v) => !new RegExp(`\\b${v}:`).test(satir));
+    check(`${harita} her tema değerini kapsıyor`, eksik.length === 0,
+      `${eksik.join(', ')} — düğme ham anahtarıyla basılır`);
+  }
   // FORMUN İÇİNE KONMASIN: `<button>` varsayılanı `submit`tir ve profil
   // kaydını tetiklerdi.
   check('seçenekler type="button"', /type="button"/.test(kod));
