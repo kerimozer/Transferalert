@@ -71,6 +71,32 @@ check('aşıldı metni',
   ast?.detay === 'Bu ay 130 / 100 transfer kullandınız. Transferleriniz devam ediyor; 30 aşım transferi 420 TL olarak faturalanacak.',
   ast?.detay);
 
+// KOTA TAM DOLDUĞU AN (denetim bulgusu D7): 100/100'de ekran hem "sonuna
+// YAKLAŞTINIZ" diyor hem "100 / 100" gösteriyor, üstelik "kota DOLDUĞUNDA"
+// diye GELECEK ZAMAN kullanıyordu — kota zaten dolu. Kullanıcının şeridi en
+// dikkatli okuyacağı an tam olarak bu andı ve ekran kendi kendisiyle
+// çelişiyordu. Hâl `kalan`/`asim`den TÜRETİLİR; backend'in `durum` alanı
+// (hâlâ 'yaklasiyor') DEĞİŞMEZ — o bir eşik ölçüsü, bu bir cümle kararı.
+const dolu = kotaUyarisi({ limit: 100, kullanim: 100, kalan: 0, asim: 0, asimTutari: 0, asimFiyat: 16, durum: 'yaklasiyor' });
+check('tam doluda BAŞLIK "doldu" diyor', dolu?.baslik === 'Aylık kotanız doldu', dolu?.baslik);
+check('tam doluda metin gelecek zaman KULLANMIYOR',
+  !/dolduğunda|yaklaştınız/.test(dolu?.detay || '') && !/yaklaştınız/.test(dolu?.baslik || ''),
+  dolu?.detay);
+check('tam dolu metni',
+  dolu?.detay === 'Bu ay 100 / 100 transfer kullandınız. Transferleriniz DURMAZ; bundan sonraki her transfer 16 TL olarak faturaya eklenir.',
+  dolu?.detay);
+// BİRİM FİYAT ŞART: tam doluda aşım henüz 0 olduğu için `asimTutari` de 0'dır
+// ve toplamdan geri hesaplanamaz (0/0). Fiyat gelmiyorsa kullanıcı yükseltme
+// kararını ödeyeceği tutarı görmeden vermek zorunda kalır.
+const doluBedava = kotaUyarisi({ limit: 20, kullanim: 20, kalan: 0, asim: 0, asimTutari: 0, asimFiyat: 0, durum: 'yaklasiyor' });
+check('tam dolu + ücretsiz aşımda farklı cümle',
+  doluBedava?.detay === 'Bu ay 20 / 20 transfer kullandınız. Transferleriniz DURMAZ; bundan sonraki transferler için ek ücret alınmaz.',
+  doluBedava?.detay);
+// 99/100 hâlâ "yaklaşıyor" olmalı — yeni dal bir öncekini yutmamalı.
+check('99/100 hâlâ "yaklaşıyor"',
+  kotaUyarisi({ limit: 100, kullanim: 99, kalan: 1, asim: 0, asimTutari: 0, durum: 'yaklasiyor' })?.baslik
+    === 'Aylık kotanızın sonuna yaklaştınız');
+
 // AŞIM ÜCRETSİZSE FARKLI CÜMLE: "0 TL olarak faturalanacak" saçma ve
 // kullanıcıya ödeyeceği bir şey varmış hissi verir.
 const bedava = kotaUyarisi({ limit: 20, kullanim: 25, asim: 5, asimTutari: 0, durum: 'asildi' });
@@ -84,8 +110,12 @@ console.log('\n[4] ÜRÜN SÖZÜ: metin "durmaz/devam ediyor" demek ZORUNDA');
 // sonunda transfer kaydetmekten çekinir — ürünün işe yaramaz hâle geldiği an.
 check('yaklaşıyor metni DURMAZ diyor', /DURMAZ/.test(yak?.detay || ''));
 check('aşıldı metni devam ettiğini söylüyor', /devam ediyor/.test(ast?.detay || ''));
+check('tam dolu metni DURMAZ diyor', /DURMAZ/.test(dolu?.detay || ''));
 // Ve HİÇBİR metin engellemeden bahsetmemeli.
-for (const [ad, u] of [['yaklasiyor', yak], ['asildi', ast], ['bedava', bedava]]) {
+// YENİ DAL MEVCUT SÖZLEŞMENİN KAPSAMINA ALINIR. 'dolu' buraya eklenmeseydi
+// ürün sözü (engelleme dili yok) yalnız eski üç dalda ölçülür ve yeni dal
+// kalıcı serbest bölgeye dönerdi — bu projenin tekrar eden dersi.
+for (const [ad, u] of [['yaklasiyor', yak], ['asildi', ast], ['bedava', bedava], ['dolu', dolu], ['doluBedava', doluBedava]]) {
   check(`${ad}: engelleme/kilit dili yok`,
     !/durduruldu|engellend|kilitlend|kullanamazs|ekleyemezs/i.test(`${u.baslik} ${u.detay}`),
     u.detay);

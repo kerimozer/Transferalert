@@ -33,6 +33,29 @@ export function kotaUyarisi(k) {
 
   const sayac = `${k.kullanim} / ${k.limit} transfer`;
 
+  // KOTA TAM DOLDUĞU AN AYRI BİR CÜMLE İSTER (denetim bulgusu D7).
+  //
+  // Bu hâl sunucudaki `durum` alanında YOK: backend eşiğe göre hâlâ
+  // `'yaklasiyor'` diyor ve bu DOĞRU — `durum` bir eşik ölçüsü, cümle ise
+  // kullanıcıya söylenen şey. Yeni bir `durum` değeri eklemek backend
+  // sözleşmesini değiştirirdi; hâl `kalan`/`asim`den TÜRETİLİYOR (projenin
+  // "anahtar değişmez, metin türe göre seçilir" deseni).
+  //
+  // Düzeltilen çelişki: 100/100'de ekran hem "sonuna YAKLAŞTINIZ" diyordu
+  // hem "100 / 100" gösteriyordu, üstelik "kota DOLDUĞUNDA" diye gelecek
+  // zaman kullanıyordu — kota zaten doluydu. Kullanıcının şeridi en dikkatli
+  // okuyacağı an tam olarak bu andır.
+  if (k.kalan === 0 && k.asim === 0) {
+    const ucret = k.asimFiyat > 0
+      ? `bundan sonraki her transfer ${tl(k.asimFiyat)} olarak faturaya eklenir.`
+      : 'bundan sonraki transferler için ek ücret alınmaz.';
+    return {
+      tone: 'warn',
+      baslik: 'Aylık kotanız doldu',
+      detay: `Bu ay ${sayac} kullandınız. Transferleriniz DURMAZ; ${ucret}`,
+    };
+  }
+
   if (k.durum === 'asildi') {
     // AŞIM METNİ ÖNCE "DEVAM EDİYOR" DER. Kullanıcının ilk düşüncesi
     // "transferlerim durdu mu?" olur; cevabı cümlenin başında vermek,
