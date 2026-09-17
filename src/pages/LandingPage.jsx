@@ -1,3 +1,4 @@
+import { KOTA_KURALI } from '../lib/quota';
 import { FOCUS, FOCUS_INSET } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -203,6 +204,15 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          )}
+          {/* KOTANIN NASIL SAYILDIĞI SATIŞ SAYFASINDA DA YAZILI (D8).
+              Yukarıdaki kartlar "ayda 100 transfer · aşım 14 ₺" diyor; bu
+              sayının NASIL dolduğunu söylememek, S1 denetiminde yakalanan
+              "sınırsız" hatasının daha küçük bir kopyası olurdu — müşteri
+              faturayı gördüğünde öğrenmemeli. Metin ikiz `lib/quota.js`ten,
+              yani panoda ve telefonda okuyacağı cümlenin AYNISI. */}
+          {plans?.length > 0 && (
+            <p className="mt-6 text-center text-xs text-ink-muted max-w-2xl mx-auto">{KOTA_KURALI}</p>
           )}
         </div>
       </section>

@@ -1,3 +1,4 @@
+import { KOTA_KURALI } from '../lib/quota';
 import { FOCUS } from '../lib/focus';
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
@@ -431,6 +432,13 @@ export default function OrganizationPage() {
                 </div>
               ))}
           </div>
+          {/* NEYİN KOTADAN DÜŞTÜĞÜ, SATIN ALMADAN ÖNCE (D8). Kota artık
+              silinemez bir defterden türüyor: kaydı silmek sayacı düşürmüyor.
+              Kural yazılı olmazsa dispatcher sayacın neden düşmediğini üründe
+              hata sanar; ayda 30 transferlik pakette bu fark faturayı
+              değiştirir. Metin ikiz `lib/quota.js`ten — telefonda ve
+              tarayıcıda aynı cümle. */}
+          <p className="mt-3 text-xs text-ink-muted">{KOTA_KURALI}</p>
         </div>
       )}
 

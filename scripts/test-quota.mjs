@@ -15,7 +15,7 @@ const check = (ad, kosul, ek = '') => {
   else { failed++; console.log(`  ✗ ${ad} ${ek}`); }
 };
 
-const { kotaUyarisi, tl } = await import(new URL('../src/lib/quota.js', import.meta.url));
+const { kotaUyarisi, tl, KOTA_KURALI } = await import(new URL('../src/lib/quota.js', import.meta.url));
 
 console.log('[1] Sessiz hâller — kota rahatken şerit BASILMAZ');
 // Kalıcı bir "84/100" göstergesi her gün görülür, görüldükçe okunmaz olur ve
@@ -202,6 +202,45 @@ console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
   const yalan = fiyatYuzeyleri.filter(([, s]) => /Sınırsız uçuş takibi/.test(s));
   check('kotalı planlara "sınırsız" denmiyor', yalan.length === 0,
     yalan.map(([f]) => String(f).split(/[\\/]/).pop()).join(', '));
+
+  console.log('\n[7] KOTA KURALI — müşteriye söylenen cümle (D8, 2026-09-17)');
+  // NEDEN SABİT YAZILI: `KOTA_KURALI` ikiz dosyada da var ve iki depo CI'da
+  // yan yana duramıyor. Cümle bir tarafta değişirse o taraftaki kapı kırılır
+  // (`test-transfer.mjs` deseni).
+  //
+  // BU BİR SÖZ: sayaç artık silinemez bir defterden türüyor (migration 033)
+  // ve kaydı silmenin kotayı düşürmediğini kullanıcı bir yerden öğrenmek
+  // zorunda. Öğrenmezse üründe hata olduğunu sanar — D8 tam olarak "ya
+  // append-only'e taşı YA DA müşteriye yazılı söyle" diyordu; ikisi de yapıldı.
+  const BEKLENEN_KURAL =
+    'Kota, transfer kaydı açıldığında düşer. Alış saatinden önce iptal ettiğiniz ' +
+    'ya da sildiğiniz transferler kotanıza geri eklenir; alış saati geçmiş bir ' +
+    'kaydı silmek kotayı geri getirmez.';
+  check('kota kuralı cümlesi ikiz sözleşmeye uyuyor', KOTA_KURALI === BEKLENEN_KURAL,
+    JSON.stringify(KOTA_KURALI));
+  // CÜMLE İKİ TARAFI BİRDEN SÖYLEMELİ. Yalnız "silmek düşürmez" kalsaydı ceza
+  // gibi okunurdu; yalnız "iptal iade edilir" kalsaydı asıl değişiklik hiç
+  // söylenmemiş olurdu. Sabit karşılaştırma bunu zaten yakalar; bu iki satır
+  // kuralın GEREKÇESİNİ kapıda görünür tutuyor.
+  check('kural İADE tarafını söylüyor', /geri eklenir/.test(KOTA_KURALI));
+  check('kural SİLME tarafını söylüyor', /silmek kotayı geri getirmez/.test(KOTA_KURALI));
+
+  // VE EKRANDA BASILIYOR. Tanımlı ama hiçbir yüzeyin çağırmadığı bir cümle,
+  // bu projede defalarca yaşanan "tanımlı ≠ kullanılan" sınıfıdır: kural
+  // yazılı olur, kullanıcı asla görmez, D8'in ikinci yarısı fiilen yapılmaz.
+  //
+  // TARAMA ŞEKLE BAKIYOR: `src/` altındaki HER dosya. Sayfa adına çivilenseydi
+  // yarın eklenecek bir fiyat yüzeyi kapsama girmezdi.
+  const tumDosyalar = walk(join(root, 'src')).map((f) => [f, readFileSync(f, 'utf8')]);
+  const basanlar = tumDosyalar.filter(([, s]) => /\{KOTA_KURALI\}/.test(s));
+  check(`kural ekranda basılıyor (${basanlar.length} yüzey)`, basanlar.length >= 2,
+    'kural tanımlı ama ekranda görünmüyor — kullanıcı hiç öğrenmez');
+  // SATIŞ SAYFASI AYRICA ÖLÇÜLÜYOR: kotanın nasıl sayıldığını müşteri
+  // faturayı gördüğünde değil, SATIN ALMADAN ÖNCE okumalı. S1 denetiminde
+  // yakalanan "sınırsız" hatasının aynı sınıfı.
+  check('satış sayfası da kuralı gösteriyor',
+    basanlar.some(([f]) => /LandingPage/.test(String(f))),
+    'fiyat sayfasında kotanın nasıl sayıldığı yazmıyor');
 }
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);

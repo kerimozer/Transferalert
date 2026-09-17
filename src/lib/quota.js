@@ -20,6 +20,23 @@ export function tl(n) {
   return String(tam).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' TL';
 }
 
+// NEYİN KOTADAN DÜŞTÜĞÜ — müşteriye söylenen TEK cümle (D8, 2026-09-17).
+//
+// Kota artık silinemez bir defterden (`usage_events`, migration 033) türüyor:
+// kaydı silmek sayacı düşürmüyor. Bu, faturayı doğru yapan bir değişiklik ama
+// aynı zamanda kullanıcının GÖREMEDİĞİ bir değişiklik — ve bu projede
+// "keşfedilemeyen özellik yapılmamış sayılır". Sayaç neden düşmediğini
+// anlamayan bir dispatcher, üründe hata olduğunu düşünür.
+//
+// Cümle İKİ tarafı birden söylüyor. Yalnız "silmek düşürmez" denseydi ceza
+// gibi okunurdu; yalnız "iptal iade edilir" denseydi eksik olurdu. İkisi
+// birlikte kuralın gerekçesini de taşıyor: gerçekleşmemiş transfer için para
+// alınmaz, gerçekleşmiş transfer kaydı silinerek geri alınmaz.
+export const KOTA_KURALI =
+  'Kota, transfer kaydı açıldığında düşer. Alış saatinden önce iptal ettiğiniz ' +
+  'ya da sildiğiniz transferler kotanıza geri eklenir; alış saati geçmiş bir ' +
+  'kaydı silmek kotayı geri getirmez.';
+
 // `/api/organizations/usage` cevabından kullanıcıya gösterilecek uyarı.
 // `null` = gösterilecek bir şey yok.
 //
