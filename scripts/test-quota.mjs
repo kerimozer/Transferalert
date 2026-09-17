@@ -15,7 +15,7 @@ const check = (ad, kosul, ek = '') => {
   else { failed++; console.log(`  ✗ ${ad} ${ek}`); }
 };
 
-const { kotaUyarisi, tl, KOTA_KURALI } = await import(new URL('../src/lib/quota.js', import.meta.url));
+const { kotaUyarisi, tl, KOTA_KURALI, KOTA_KURALI_EN } = await import(new URL('../src/lib/quota.js', import.meta.url));
 
 console.log('[1] Sessiz hâller — kota rahatken şerit BASILMAZ');
 // Kalıcı bir "84/100" göstergesi her gün görülür, görüldükçe okunmaz olur ve
@@ -231,7 +231,11 @@ console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
   //
   // TARAMA ŞEKLE BAKIYOR: `src/` altındaki HER dosya. Sayfa adına çivilenseydi
   // yarın eklenecek bir fiyat yüzeyi kapsama girmezdi.
-  const tumDosyalar = walk(join(root, 'src')).map((f) => [f, readFileSync(f, 'utf8')]);
+  const tumDosyalar = walk(join(root, 'src'))
+    // Sabitin TANIMLANDIĞI dosya sayılmaz: tanım her zaman oradadır ve onu
+    // saymak "tanımlı ≠ kullanılan" kapısını kendi kendine yeşile boyar.
+    .filter((f) => !/lib[\\/]quota\.js$/.test(String(f)))
+    .map((f) => [f, readFileSync(f, 'utf8')]);
   const basanlar = tumDosyalar.filter(([, s]) => /\{KOTA_KURALI\}/.test(s));
   check(`kural ekranda basılıyor (${basanlar.length} yüzey)`, basanlar.length >= 2,
     'kural tanımlı ama ekranda görünmüyor — kullanıcı hiç öğrenmez');
@@ -241,6 +245,32 @@ console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
   check('satış sayfası da kuralı gösteriyor',
     basanlar.some(([f]) => /LandingPage/.test(String(f))),
     'fiyat sayfasında kotanın nasıl sayıldığı yazmıyor');
+
+  // VE SAYININ YANINDA (denetim bulgusu Ö3). İlk hâlinde kural yalnız
+  // `OrganizationPage`in plan yükseltme bloğundaydı: o blok `role === 'admin'`
+  // VE "yükseltilebilir plan var" koşullarının içinde. Yani kaydı SİLEN ve
+  // "sayaç neden düşmedi?" diyen DISPATCHER kuralı hiç göremiyordu — üstelik
+  // `lib/quota.js`teki gerekçe tam olarak o kişiyi anlatıyor; en üst paketteki
+  // admin de göremiyordu. Kapı yalnız "bir yerde basılıyor mu" diye sorsaydı
+  // bu hâli onaylardı: sayacın göründüğü TEK yüzey kota şeridi.
+  check('kural, sayacın basıldığı şeritte de var',
+    basanlar.some(([f]) => /DashboardPage/.test(String(f))),
+    'kuralı yalnız plan yükseltme bloğunda gören admin okur, dispatcher HİÇ okumaz');
+
+  // İNGİLİZCESİ İKİZDE DURUYOR (denetim bulgusu Ö4). Web panelinde dil seçimi
+  // yok — burada kullanılmıyor ama İKİZ SÖZLEŞME gereği tanımlı ve aynı
+  // olmak zorunda: mobil ekran `lang === 'en'` dalında bunu basıyor ve cümle
+  // iki depoda ayrışırsa aynı kullanıcı telefonunda başka, tarayıcısında
+  // başka bir söz okur.
+  const BEKLENEN_KURAL_EN =
+    'Quota is used when a transfer is created. Transfers you cancel or delete ' +
+    'before their pickup time are credited back; deleting a record after its ' +
+    'pickup time does not restore the quota.';
+  check('kuralın İngilizcesi ikiz sözleşmeye uyuyor', KOTA_KURALI_EN === BEKLENEN_KURAL_EN,
+    JSON.stringify(KOTA_KURALI_EN));
+  check('İngilizce metin Türkçesinden FARKLI',
+    KOTA_KURALI_EN !== KOTA_KURALI,
+    'çeviri yapılmamış — İngilizce kullanıcı Türkçe paragraf görür');
 }
 
 console.log(`\nSONUÇ: ${passed} geçti, ${failed} kaldı`);

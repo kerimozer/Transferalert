@@ -8,7 +8,7 @@ import { FOCUS } from '../lib/focus';
 // Transferlerim sayfası kalıyor: orası YÖNETİM (ekle, toplu içe aktar, geçmiş,
 // ödeme, tabela). Burası bakma ve bulma.
 import { useEffect, useMemo, useState } from 'react';
-import { kotaUyarisi } from '../lib/quota';
+import { kotaUyarisi, KOTA_KURALI } from '../lib/quota';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { RES_STATUS_BADGE as STATUS_BADGE, FLIGHT_BADGE, jobBadge } from '../lib/status';
@@ -146,7 +146,16 @@ export default function DashboardPage() {
             <AlertTriangle size={16} className="text-warn-800 shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-sm text-warn-800">
               <span className="font-semibold">{uyari.baslik}</span>{' '}
-              <span>{uyari.detay}</span>
+              <span>{uyari.detay}</span>{' '}
+              {/* KURAL SAYININ YANINDA (denetim bulgusu Ö3). Cümle önce yalnız
+                  plan yükseltme bloğundaydı: o blok `role === 'admin'` VE
+                  "yükseltilebilir plan var" koşullarının içinde, yani kaydı
+                  SİLEN ve "sayaç neden düşmedi?" diyen dispatcher onu hiç
+                  göremiyordu — üstelik `lib/quota.js`teki gerekçe tam olarak o
+                  kişiyi anlatıyor. En üst paketteki admin de göremezdi.
+                  Sayacın göründüğü TEK yer burası (şerit %80 altında sessiz),
+                  dolayısıyla kuralın asıl evi burası. */}
+              <span className="opacity-80">{KOTA_KURALI}</span>
             </p>
           </div>
         );

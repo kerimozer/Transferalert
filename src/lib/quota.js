@@ -37,6 +37,21 @@ export const KOTA_KURALI =
   'ya da sildiğiniz transferler kotanıza geri eklenir; alış saati geçmiş bir ' +
   'kaydı silmek kotayı geri getirmez.';
 
+// İNGİLİZCESİ İKİZ DOSYADA DURUR, mobil çeviri sözlüğünde DEĞİL. Mobil her
+// metni `t('...')` ile alıyor ve bu cümle ham basılınca İngilizce kullanan
+// admin planların arasında tek başına Türkçe bir paragraf görüyordu; üstelik
+// `test-i18n.mjs` bunu göremez, çünkü bir `t()` çağrısı değil.
+//
+// Sözlüğe taşımak ikiz sözleşmeyi bozardı: cümle o zaman mobilde
+// `translations.js`te, webde `quota.js`te olur ve iki depo arasındaki tek
+// koruma (aynı dosyanın birebir aynı olması) kalkardı. İki sabit birlikte
+// burada durur, ekran dile göre seçer, kapı İKİSİNİ de sabit karşılaştırır.
+// Web panelinde dil seçimi YOK — orada yalnız Türkçesi kullanılır.
+export const KOTA_KURALI_EN =
+  'Quota is used when a transfer is created. Transfers you cancel or delete ' +
+  'before their pickup time are credited back; deleting a record after its ' +
+  'pickup time does not restore the quota.';
+
 // `/api/organizations/usage` cevabından kullanıcıya gösterilecek uyarı.
 // `null` = gösterilecek bir şey yok.
 //
