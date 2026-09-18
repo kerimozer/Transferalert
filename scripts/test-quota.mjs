@@ -235,8 +235,19 @@ console.log('\n[6] FİYATI GÖSTEREN HER YÜZEY KOTAYI BASIYOR MU');
     // Sabitin TANIMLANDIĞI dosya sayılmaz: tanım her zaman oradadır ve onu
     // saymak "tanımlı ≠ kullanılan" kapısını kendi kendine yeşile boyar.
     .filter((f) => !/lib[\\/]quota\.js$/.test(String(f)))
-    .map((f) => [f, readFileSync(f, 'utf8')]);
-  const basanlar = tumDosyalar.filter(([, s]) => /\{KOTA_KURALI\}/.test(s));
+    // YORUMLAR SOYULUYOR — bu kapının ilk hâli soymuyordu ve denetimde
+    // kırıldı: şeritteki satırı `{/* eski hal: <span>{KOTA_KURALI}</span> */}`
+    // JSX yorumuna çevirmek 52/52 YEŞİL geçiyordu, yani kural ekrandan
+    // kalkıyor ve kapı hiçbir şey demiyordu. CLAUDE.md'nin kendi kuralı:
+    // "Metin tarayan her kapı önce YORUMLARI SOYMALI." JSX yorumu
+    // `{/* ... */}` biçiminde, yani blok yorumu soymak onu da götürüyor —
+    // ama süslü parantezler kalmasın diye `{}` kabuğu da temizleniyor.
+    .map((f) => [f, soy(readFileSync(f, 'utf8')).replace(/\{\s*\}/g, '')]);
+  // VE `import` SATIRLARI SAYILMIYOR. Sabiti içe aktarıp HİÇ kullanmayan bir
+  // dosya, ada bakan bir aramada "basıyor" görünür.
+  const basanlar = tumDosyalar
+    .map(([f, s]) => [f, s.replace(/^\s*import[^;]*;/gm, '')])
+    .filter(([, s]) => /\{\s*KOTA_KURALI\s*\}/.test(s));
   check(`kural ekranda basılıyor (${basanlar.length} yüzey)`, basanlar.length >= 2,
     'kural tanımlı ama ekranda görünmüyor — kullanıcı hiç öğrenmez');
   // SATIŞ SAYFASI AYRICA ÖLÇÜLÜYOR: kotanın nasıl sayıldığını müşteri

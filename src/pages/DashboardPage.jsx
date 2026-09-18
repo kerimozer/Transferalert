@@ -155,7 +155,15 @@ export default function DashboardPage() {
                   kişiyi anlatıyor. En üst paketteki admin de göremezdi.
                   Sayacın göründüğü TEK yer burası (şerit %80 altında sessiz),
                   dolayısıyla kuralın asıl evi burası. */}
-              <span className="opacity-80">{KOTA_KURALI}</span>
+              {/* OPAKLIK YOK. İlk hâlinde `opacity-80` vardı ve ölçüldü:
+                  `text-warn-800` × `bg-warn-50` zemininde kontrast 6.76'dan
+                  **4.27**'ye düşüyordu — 14px metinde AA eşiği 4.5, yani
+                  kuralın asıl evi olarak seçilen yüzeyde cümle okunaklılık
+                  eşiğinin ALTINDAYDI. Palet kapısı bunu göremez: `test-tokens`
+                  token ÇİFTLERİNİ ölçüyor, opaklık son ekini değil.
+                  (CLAUDE.md: "bir kontrastı yükseltirken/düşürürken o rengin
+                  ayırt edici olduğu çiftleri yeniden ölç.") */}
+              <span>{KOTA_KURALI}</span>
             </p>
           </div>
         );
